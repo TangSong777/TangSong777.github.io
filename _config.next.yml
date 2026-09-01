@@ -1,0 +1,43 @@
+# NexT overrides. Kept outside node_modules so theme upgrades are safe.
+scheme: Muse
+darkmode: true
+
+avatar:
+  url: /images/avatar.jpg
+  rounded: true
+  rotated: false
+
+menu:
+  home: / || fa fa-home
+  学习笔记: /siyuan/ || fa fa-book-open
+  archives: /archives/ || fa fa-archive
+
+sidebar:
+  position: right
+  display: always
+
+toc:
+  enable: true
+  number: false
+  wrap: true
+  expand_all: false
+
+back2top:
+  enable: true
+  sidebar: false
+  scrollpercent: true
+
+reading_progress:
+  enable: true
+  start_at: left
+  position: top
+  reversed: false
+  color: '#5f8f82'
+  height: 3px
+
+# Disable NexT's page entrance animation so navigation feels immediate.
+motion:
+  enable: false
+
+custom_file_path:
+  style: source/_data/styles.styl

@@ -1,0 +1,23 @@
+// Small site-wide refinements. Knowledge-base layout lives in siyuan-knowledge.css.
+:root {
+  --knowledge-accent: #5f8f82;
+}
+
+body {
+  letter-spacing: .01em;
+}
+
+// Keep NexT's right-hand table of contents stable between document loads.
+.sidebar,
+.sidebar-inner,
+.sidebar-toggle,
+.sidebar-nav,
+.post-toc,
+.post-toc .animated {
+  animation: none !important;
+  transition: none !important;
+}
+
+.site-brand-container {
+  background: linear-gradient(135deg, #355b55, #6d988d);
+}
