@@ -3,8 +3,11 @@ Thumbs.db
 db.json
 *.log
 node_modules/
-public/
+/public/
 .deploy*/
 _multiconfig.yml
 tools/siyuan-private-values.txt
 siyuan-import-report.txt
+origin/
+/项目说明.md
+/.article-studio-renames.json

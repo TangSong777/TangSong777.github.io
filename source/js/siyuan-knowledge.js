@@ -10,6 +10,47 @@
 
   var currentPath = normalize(location.pathname);
 
+  function setupResponsiveTables() {
+    function enhance() {
+      Array.prototype.forEach.call(document.querySelectorAll('.post-body .table-container'), function (container) {
+        container.tabIndex = 0;
+        container.setAttribute('role', 'region');
+        container.setAttribute('aria-label', '可横向滑动的表格');
+      });
+    }
+    enhance();
+    if (document.readyState === 'complete') window.setTimeout(enhance, 0);
+    else window.addEventListener('load', enhance, { once: true });
+  }
+
+  function setupSiteRuntime() {
+    var footer = document.querySelector('.footer-inner');
+    if (!footer || footer.querySelector('.site-runtime')) return;
+    var runtime = document.createElement('div');
+    runtime.className = 'site-runtime';
+    runtime.setAttribute('aria-label', '网站运行时间');
+    var value = document.createElement('span');
+    runtime.appendChild(value);
+    footer.appendChild(runtime);
+
+    var startedAt = new Date('2026-09-01T00:00:00+08:00').getTime();
+    function pad(number) { return String(number).padStart(2, '0'); }
+    function updateRuntime() {
+      var elapsed = Math.max(0, Date.now() - startedAt);
+      var totalSeconds = Math.floor(elapsed / 1000);
+      var days = Math.floor(totalSeconds / 86400);
+      var hours = Math.floor(totalSeconds % 86400 / 3600);
+      var minutes = Math.floor(totalSeconds % 3600 / 60);
+      var seconds = totalSeconds % 60;
+      value.textContent = '建站已有 ' + days + ' day ' + pad(hours) + ' h ' + pad(minutes) + ' min ' + pad(seconds) + ' s';
+    }
+    updateRuntime();
+    window.setInterval(updateRuntime, 1000);
+  }
+
+  setupResponsiveTables();
+  setupSiteRuntime();
+
   function setupBlogHome() {
     var homeMain = document.querySelector('.main-inner.index');
     if (!homeMain) return;

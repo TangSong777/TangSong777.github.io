@@ -38,3 +38,5 @@ $ hexo deploy
 ```
 
 更多信息：[部署](https://hexo.io/docs/one-command-deployment.html)
+
+PS：我是不会删除这篇默认文档的口牙！！！

@@ -8,6 +8,9 @@
     "deploy": "hexo deploy",
     "server": "hexo server",
     "preview": "hexo clean && hexo generate && hexo server",
+    "article:studio": "node ./tools/article-studio/server.mjs",
+    "article:studio:no-open": "node ./tools/article-studio/server.mjs --no-open",
+    "article:studio:mobile": "node ./tools/article-studio/server.mjs --network --no-open",
     "siyuan:check": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/Test-SiyuanKnowledgeBase.ps1",
     "siyuan:dry-run": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/Import-SiyuanNotes.ps1 -DryRun",
     "siyuan:refresh": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/Import-SiyuanNotes.ps1 && hexo clean && hexo generate && powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/Test-SiyuanKnowledgeBase.ps1"

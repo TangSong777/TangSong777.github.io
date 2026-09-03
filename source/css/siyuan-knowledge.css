@@ -98,6 +98,64 @@ body.blog-post-mode .post-body blockquote { background: #f1f6f3; border-left-col
 body.blog-post-mode .post-body table { border-color: var(--sy-line); }
 body.blog-post-mode .post-body th { background: #edf3ef; color: var(--sy-ink); }
 
+/* Markdown tables keep their columns readable on narrow screens. NexT creates
+   .table-container for every table; reusing it avoids nested scroll areas. */
+.post-body .table-container {
+  background: rgba(255, 255, 255, .72);
+  border: 1px solid var(--sy-line);
+  border-radius: 12px;
+  box-shadow: 0 7px 22px rgba(45, 67, 59, .055);
+  margin: 1.4em 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-color: #b8c9c0 transparent;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.post-body .table-container:focus-visible {
+  outline: 3px solid rgba(95, 143, 130, .35);
+  outline-offset: 3px;
+}
+
+.post-body .table-container::-webkit-scrollbar { height: 7px; }
+.post-body .table-container::-webkit-scrollbar-thumb { background: #b8c9c0; border-radius: 999px; }
+.post-body .table-container::-webkit-scrollbar-track { background: transparent; }
+
+.post-body .table-container > table {
+  border: 0 !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  display: table !important;
+  margin: 0 !important;
+  min-width: 640px;
+  width: 100%;
+}
+
+.post-body .table-container th,
+.post-body .table-container td {
+  border: 0 !important;
+  border-bottom: 1px solid var(--sy-line) !important;
+  border-right: 1px solid var(--sy-line) !important;
+  line-height: 1.65;
+  padding: 11px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.post-body .table-container th:last-child,
+.post-body .table-container td:last-child { border-right: 0 !important; }
+.post-body .table-container tbody tr:last-child td { border-bottom: 0 !important; }
+.post-body .table-container thead th {
+  background: #e8f1ed;
+  color: var(--sy-ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.post-body .table-container tbody tr:nth-child(even) { background: rgba(237, 243, 239, .52); }
+.post-body .table-container tbody tr:hover { background: rgba(226, 238, 233, .72); }
+
 body.blog-post-mode .sidebar {
   background:
     radial-gradient(circle at 100% 0, rgba(220, 164, 111, .12), transparent 230px),
@@ -472,7 +530,16 @@ body.siyuan-mode {
 }
 
 .siyuan-tree-search:focus { border-color: var(--sy-accent); box-shadow: 0 0 0 3px var(--sy-accent-soft); }
-.siyuan-tree-scroll { flex: 1; overflow: auto; padding: 12px 10px 28px; }
+.siyuan-tree-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 10px max(28px, env(safe-area-inset-bottom));
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
 .siyuan-tree, .siyuan-tree ul { list-style: none; margin: 0; padding: 0; }
 .siyuan-tree ul { margin-left: 13px; padding-left: 10px; border-left: 1px solid var(--sy-line); }
 .siyuan-tree li { margin: 2px 0; }
@@ -587,9 +654,12 @@ body.siyuan-mode .sidebar-panel-container {
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding-bottom: 36px;
   scrollbar-color: #b9c9c0 transparent;
   scrollbar-width: thin;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 body.siyuan-mode .sidebar-panel-container::-webkit-scrollbar { width: 6px; }
 body.siyuan-mode .sidebar-panel-container::-webkit-scrollbar-thumb { background: #b9c9c0; border-radius: 6px; }
@@ -744,7 +814,12 @@ body.siyuan-mode .sidebar-toggle {
 }
 
 @media (max-width: 1100px) {
-  .siyuan-tree-panel { transform: translateX(-101%); transition: transform .22s ease; }
+  .siyuan-tree-panel {
+    height: 100dvh;
+    max-height: 100dvh;
+    transform: translateX(-101%);
+    transition: transform .22s ease;
+  }
   .siyuan-tree-panel.is-open { transform: translateX(0); }
   .siyuan-tree-toggle { display: flex; }
   .siyuan-tree-overlay.is-open { display: block; }
@@ -785,9 +860,29 @@ body.siyuan-mode .sidebar-toggle {
   body.archive-mode .footer-inner { width: calc(100% - 24px) !important; }
   body.blog-post-mode .post-block { border-radius: 14px; padding: 30px 22px; }
   body.siyuan-mode .post-block { border-radius: 0; padding: 28px 20px; }
+  .post-body .table-container { border-radius: 9px; margin-left: 0; margin-right: 0; }
+  .post-body .table-container > table { font-size: 13px; min-width: 560px; }
+  .post-body .table-container th,
+  .post-body .table-container td { padding: 9px 11px; }
   .siyuan-hero { border-radius: 14px; padding: 30px 24px; }
   .siyuan-hero h1 { font-size: 29px; }
   .siyuan-home-grid { grid-template-columns: 1fr; }
+}
+
+.site-runtime {
+  align-items: center;
+  color: var(--sy-muted);
+  display: flex;
+  font-size: 12px;
+  gap: 7px;
+  justify-content: center;
+  margin-top: 7px;
+}
+
+.site-runtime::before {
+  color: var(--sy-accent);
+  content: '\25F7';
+  font-size: 13px;
 }
 
 @media (prefers-color-scheme: dark) {

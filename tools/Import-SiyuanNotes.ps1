@@ -18,7 +18,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$SourceDir = 'D:\桌面\tmp\学习笔记.md',
+    [string]$SourceDir = '',
     [string]$BlogDir = 'D:\WorkSpace\MyServer\MyBlog',
     [string]$PrivateValuesFile = '',
     [bool]$ExcludeDailyNote = $false,
@@ -162,11 +162,12 @@ function Resolve-AssetTarget([string]$CurrentFile, [string]$Target) {
     }
 }
 
-if (-not (Test-Path -LiteralPath $SourceDir -PathType Container)) {
-    throw "找不到思源导出目录：$SourceDir"
-}
 if (-not (Test-Path -LiteralPath (Join-Path $BlogDir '_config.yml') -PathType Leaf)) {
     throw "目标不是有效的 Hexo 项目：$BlogDir"
+}
+if (-not $SourceDir) { $SourceDir = Join-Path $BlogDir 'origin\学习笔记.md' }
+if (-not (Test-Path -LiteralPath $SourceDir -PathType Container)) {
+    throw "找不到思源导出目录：$SourceDir"
 }
 
 if (-not $PrivateValuesFile) { $PrivateValuesFile = Join-Path $BlogDir 'tools\siyuan-private-values.txt' }

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>文章工作台 · YangHanLin</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">文</span>
+      <div><strong>文章工作台</strong><small>Markdown · Hexo · Git</small></div>
+    </div>
+    <div class="top-actions">
+      <span id="saveState" class="save-state">尚未选择文章</span>
+      <button id="saveButton" class="button secondary" disabled>保存 <kbd>Ctrl S</kbd></button>
+      <button id="publishButton" class="button primary" disabled>上传文章</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="article-panel">
+      <div class="panel-heading">
+        <div><span class="eyebrow">CONTENT</span><h1>文章</h1></div>
+        <button id="newButton" class="icon-button" title="新建文章" aria-label="新建文章">＋</button>
+      </div>
+      <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索文章"></label>
+      <div id="articleList" class="article-list" aria-live="polite"></div>
+      <div class="local-note">内容只在本机处理。上传时仅提交当前文章及其图片。</div>
+    </aside>
+
+    <section class="editor-shell">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">✦</div>
+        <h2>开始写一篇文章</h2>
+        <p>从左侧选择文章，或者创建一篇新文章。</p>
+        <button id="emptyNewButton" class="button primary">新建文章</button>
+      </div>
+
+      <div id="editorView" class="editor-view hidden">
+        <div class="document-bar">
+          <div><span id="documentPath" class="document-path"></span><h2 id="documentTitle">未命名文章</h2></div>
+          <div class="document-actions">
+            <button id="renameButton" class="rename-button" title="修改 Markdown 文件名">重命名</button>
+            <div class="view-tabs" role="tablist">
+              <button class="view-tab active" data-view="split">分栏</button>
+              <button class="view-tab" data-view="write">编辑</button>
+              <button class="view-tab" data-view="preview">预览</button>
+            </div>
+          </div>
+        </div>
+        <div class="format-bar" aria-label="Markdown 工具栏">
+          <button data-wrap="**" title="加粗">B</button>
+          <button data-wrap="*" title="斜体"><em>I</em></button>
+          <button data-prefix="## " title="标题">H2</button>
+          <button data-prefix="> " title="引用">❞</button>
+          <button data-prefix="- " title="列表">☷</button>
+          <button data-wrap="`" title="行内代码">&lt;/&gt;</button>
+          <button data-action="link" title="链接">↗</button>
+          <label class="image-button" title="插入图片">▧<input id="imageInput" type="file" accept="image/*" multiple></label>
+          <span class="format-hint">可粘贴或拖入图片</span>
+        </div>
+        <div id="splitPane" class="split-pane">
+          <div class="write-pane">
+            <textarea id="markdownEditor" spellcheck="false" aria-label="Markdown 编辑器"></textarea>
+            <div class="pane-footer"><span id="cursorPosition">行 1，列 1</span><span id="wordCount">0 字</span></div>
+          </div>
+          <div class="preview-pane">
+            <div id="previewStatus" class="preview-status">正在准备 Hexo 预览…</div>
+            <iframe id="markdownPreview" class="site-preview" title="与博客一致的文章预览" sandbox="allow-same-origin"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="newDialog">
+    <form id="newForm" method="dialog">
+      <span class="eyebrow">NEW ARTICLE</span><h2>创建文章</h2>
+      <label>文章标题<input id="newTitle" required placeholder="例如：如何搭建个人博客"></label>
+      <label>文章 slug<input id="newSlug" required placeholder="例如：build-personal-blog"><small>用于文件名和网址，发布后不建议修改。</small></label>
+      <div class="dialog-actions"><button id="cancelCreate" type="button" class="button secondary">取消</button><button id="createButton" type="submit" class="button primary">创建</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="publishDialog">
+    <form id="publishForm" method="dialog">
+      <span class="eyebrow">PUBLISH</span><h2>构建并上传</h2>
+      <p>将保存当前内容、执行 Hexo 构建检查，然后只提交当前文章及其图片并推送到 GitHub。</p>
+      <label>提交说明<input id="commitMessage" placeholder="Publish article: 文章标题"></label>
+      <div id="warningBox" class="warning-box hidden"></div>
+      <label id="warningConfirmLabel" class="confirm-row hidden"><input id="warningConfirm" type="checkbox">我已检查并确认这些内容可以公开</label>
+      <pre id="publishLog" class="publish-log hidden"></pre>
+      <div class="dialog-actions"><button id="cancelPublish" type="button" class="button secondary">取消</button><button id="confirmPublish" type="submit" class="button primary">开始上传</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="renameDialog">
+    <form id="renameForm" method="dialog">
+      <span class="eyebrow">RENAME</span><h2>修改文章文件名</h2>
+      <p>文件名会影响文章网址。已发布文章改名后，原网址可能失效；对应的文章图片目录和 Markdown 图片链接会一并更新。</p>
+      <label>新文件名<input id="renameFileName" required placeholder="例如：build-personal-blog"><small>无需输入 .md 后缀。</small></label>
+      <div class="dialog-actions"><button id="cancelRename" type="button" class="button secondary">取消</button><button type="submit" class="button primary">确认修改</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
