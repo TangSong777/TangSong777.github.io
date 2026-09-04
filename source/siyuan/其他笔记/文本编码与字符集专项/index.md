@@ -174,7 +174,6 @@ with open("old.txt", "r", encoding="gbk") as f:         # 读 GBK（Windows 历�
 ## 文档关系
 
 ### 反向引用
-- [能力规划](/siyuan/能力体系/能力规划/)
 - [学习笔记](/siyuan/)
 
 </section>

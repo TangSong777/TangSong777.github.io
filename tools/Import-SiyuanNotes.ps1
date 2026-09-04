@@ -32,6 +32,28 @@ $script:RedactionCount = 0
 $PrivateValues = [System.Collections.Generic.List[string]]::new()
 $ReferencedAssets = @{}
 
+# Permanent publication denylist. A root entry excludes both Root.md and every
+# document below Root/. This privacy boundary is intentionally not exposed as a
+# command-line switch, so a routine refresh cannot accidentally publish it.
+$PrivateDocumentRoots = @('能力体系')
+$PrivateDocumentTitles = @('能力体系', '能力评估', '能力规划', '学习方法论')
+$ExcludedDocuments = [System.Collections.Generic.List[string]]::new()
+$PrivateBlockIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+function Test-PrivateDocumentRelative([string]$Relative) {
+    $normalized = $Relative.Replace('\', '/').TrimStart('/')
+    foreach ($root in $PrivateDocumentRoots) {
+        if ($normalized -ieq "$root.md" -or $normalized.StartsWith("$root/", [System.StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+    return $false
+}
+
+function Test-PrivateDocumentTitle([string]$Title) {
+    return $PrivateDocumentTitles -icontains $Title.Trim()
+}
+
 function Write-Utf8NoBom([string]$Path, [string]$Text) {
     $parent = Split-Path -Parent $Path
     if (-not (Test-Path -LiteralPath $parent)) {
@@ -193,6 +215,14 @@ $BlockIndex = @{}
 Write-Host "[扫描] $SourceDir" -ForegroundColor Cyan
 foreach ($file in Get-ChildItem -LiteralPath $SourceDir -Recurse -File -Filter '*.md' | Sort-Object FullName) {
     $relative = Get-RelativeUnixPath $SourceDir $file.FullName
+    if (Test-PrivateDocumentRelative $relative) {
+        $ExcludedDocuments.Add($relative)
+        $privateText = [System.IO.File]::ReadAllText($file.FullName)
+        foreach ($m in [regex]::Matches($privateText, '(?i)\b(?<id>\d{14}-[a-z0-9]{7})\b')) {
+            [void]$PrivateBlockIds.Add($m.Groups['id'].Value)
+        }
+        continue
+    }
     $segments = $relative -split '/'
     $isDaily = $segments[0] -ieq 'daily note' -or $relative -ieq 'daily note.md'
     if ($ExcludeDailyNote -and $isDaily) { continue }
@@ -237,6 +267,10 @@ foreach ($file in Get-ChildItem -LiteralPath $SourceDir -Recurse -File -Filter '
         $id = $m.Groups['id'].Value
         if (-not $BlockIndex.ContainsKey($id)) { $BlockIndex[$id] = $doc }
     }
+}
+
+if ($ExcludedDocuments.Count) {
+    Write-Host "[隐私] 已永久排除 $($ExcludedDocuments.Count) 篇私密文档及其页面、目录和引用关系" -ForegroundColor Cyan
 }
 
 function Resolve-Document([object]$Current, [string]$Target) {
@@ -315,6 +349,18 @@ foreach ($doc in $Documents) {
         $label = $m.Groups['label'].Value
         $target = $m.Groups['target'].Value.Trim().Trim('<', '>')
         if ($target.StartsWith('#')) { return $m.Value }
+        $pathOnly = ($target -split '#', 2)[0]
+        if ($pathOnly -match '(?i)\.md$') {
+            $relativeTarget = Normalize-SourceTarget $doc.SourcePath $pathOnly
+            if ($relativeTarget -and (Test-PrivateDocumentRelative $relativeTarget)) {
+                $Warnings.Add("已移除指向私密文档的链接：$($doc.Relative)")
+                return $label
+            }
+        }
+        if ($target -match '^siyuan://blocks/(?<id>\d{14}-[a-z0-9]{7})' -and $PrivateBlockIds.Contains($Matches.id)) {
+            $Warnings.Add("已移除指向私密文档块的链接：$($doc.Relative)")
+            return $label
+        }
         $resolved = Resolve-Document $doc $target
         if ($resolved) {
             [void]$doc.Outgoing.Add($resolved.Relative)
@@ -335,6 +381,10 @@ foreach ($doc in $Documents) {
         param($m)
         $targetName = $m.Groups['target'].Value.Trim()
         $label = if ($m.Groups['label'].Success) { $m.Groups['label'].Value.Trim() } else { $targetName }
+        if (Test-PrivateDocumentTitle $targetName) {
+            $Warnings.Add("已移除指向私密文档的双链：$($doc.Relative)")
+            return $label
+        }
         $key = $targetName.ToLowerInvariant()
         if ($ByTitle.ContainsKey($key) -and $ByTitle[$key].Count -eq 1) {
             $resolved = $ByTitle[$key][0]
@@ -349,6 +399,10 @@ foreach ($doc in $Documents) {
     $body = [regex]::Replace($body, 'siyuan://blocks/(?<id>\d{14}-[a-z0-9]{7})', {
         param($m)
         $id = $m.Groups['id'].Value
+        if ($PrivateBlockIds.Contains($id)) {
+            $Warnings.Add("已移除指向私密文档块的裸链接：$($doc.Relative)")
+            return '[私密文档]'
+        }
         if ($BlockIndex.ContainsKey($id)) { return $BlockIndex[$id].Url + '#' + $id }
         $Warnings.Add("无法解析裸块链接：$($doc.Relative) -> $id")
         return $id
@@ -467,6 +521,7 @@ if (-not $DryRun) {
     $report.Add("思源知识库导入报告 - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
     $report.Add("源目录：$SourceDir")
     $report.Add("文档数量：$($Documents.Count)")
+    $report.Add("永久排除私密文档：$($ExcludedDocuments.Count) 篇")
     $report.Add("引用资源数量：$($ReferencedAssets.Count)")
     $report.Add("警告数量：$($Warnings.Count)")
     $report.Add("隐私脱敏：$script:RedactionCount 处")

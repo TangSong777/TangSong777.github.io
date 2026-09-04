@@ -156,6 +156,46 @@ body.blog-post-mode .post-body th { background: #edf3ef; color: var(--sy-ink); }
 .post-body .table-container tbody tr:nth-child(even) { background: rgba(237, 243, 239, .52); }
 .post-body .table-container tbody tr:hover { background: rgba(226, 238, 233, .72); }
 
+/* NexT wraps every table in .table-container, including the internal table
+   used by highlight.js to align the gutter and source code. Undo the regular
+   Markdown table card styles for that internal layout table. */
+figure.highlight > .table-container {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  max-width: none;
+  overflow: visible;
+}
+
+figure.highlight > .table-container > table {
+  border-collapse: collapse;
+  display: table !important;
+  font-size: inherit;
+  margin: 0 !important;
+  min-width: 0;
+  width: auto;
+}
+
+figure.highlight > .table-container td {
+  background: transparent;
+  border: 0 !important;
+  line-height: inherit;
+  padding: 0;
+  text-align: left;
+  vertical-align: top;
+}
+
+figure.highlight > .table-container .gutter {
+  width: 1%;
+  white-space: nowrap;
+}
+
+figure.highlight > .table-container .gutter pre { text-align: right; }
+figure.highlight > .table-container tbody tr,
+figure.highlight > .table-container tbody tr:hover { background: transparent; }
+
 body.blog-post-mode .sidebar {
   background:
     radial-gradient(circle at 100% 0, rgba(220, 164, 111, .12), transparent 230px),
@@ -484,7 +524,8 @@ body.siyuan-mode {
   position: fixed;
   top: 0;
   width: 300px;
-  z-index: 1200;
+  /* Keep the drawer above its mobile backdrop so links and touch scrolling work. */
+  z-index: 1350;
 }
 
 .siyuan-tree-header {
@@ -801,7 +842,7 @@ body.siyuan-mode .sidebar-toggle {
   left: 18px;
   position: fixed;
   width: 48px;
-  z-index: 1300;
+  z-index: 1400;
 }
 
 .siyuan-tree-overlay {
@@ -812,6 +853,8 @@ body.siyuan-mode .sidebar-toggle {
   position: fixed;
   z-index: 1250;
 }
+
+body.siyuan-tree-open { overflow: hidden !important; }
 
 @media (max-width: 1100px) {
   .siyuan-tree-panel {

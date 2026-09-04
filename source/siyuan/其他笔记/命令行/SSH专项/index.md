@@ -305,7 +305,6 @@ ssh-keygen -R x.x.x.x
 
 ### 反向引用
 - [命令行](/siyuan/其他笔记/命令行/)
-- [能力规划](/siyuan/能力体系/能力规划/)
 - [学习笔记](/siyuan/)
 
 </section>

@@ -22,6 +22,8 @@ function Add-Warning([string]$Message) { $Warnings.Add($Message) }
 $knowledgeRoot = Join-Path $BlogDir 'source\siyuan'
 $assetRoot = Join-Path $BlogDir 'source\images\siyuan'
 $dataPath = Join-Path $BlogDir 'source\js\siyuan-data.js'
+$privateKnowledgeRelative = '能力体系'
+$privateKnowledgeUrl = '/siyuan/能力体系/'
 
 if (-not (Test-Path -LiteralPath $knowledgeRoot -PathType Container)) { Add-Error "缺少知识库目录：$knowledgeRoot" }
 if (-not (Test-Path -LiteralPath $dataPath -PathType Leaf)) { Add-Error "缺少目录数据：$dataPath" }
@@ -31,10 +33,17 @@ if ($Errors.Count) {
 }
 
 $dataText = [System.IO.File]::ReadAllText($dataPath)
+if ($dataText.IndexOf($privateKnowledgeUrl, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+    Add-Error '目录数据包含永久私密的能力体系 URL'
+}
 $jsonText = $dataText -replace '^\s*window\.SiyuanKnowledgeData\s*=\s*', '' -replace ';\s*$', ''
 try { $data = $jsonText | ConvertFrom-Json } catch { Add-Error "siyuan-data.js 不是有效 JSON：$($_.Exception.Message)" }
 
 $pages = @(Get-ChildItem -LiteralPath $knowledgeRoot -Recurse -File -Filter 'index.md')
+$privateKnowledgeRoot = Join-Path $knowledgeRoot $privateKnowledgeRelative
+if (Test-Path -LiteralPath $privateKnowledgeRoot) {
+    Add-Error "永久私密目录被生成：$privateKnowledgeRoot"
+}
 if ($data -and $pages.Count -ne @($data.documents).Count) {
     Add-Error "页面数量 $($pages.Count) 与目录数据 $(@($data.documents).Count) 不一致"
 }
@@ -103,6 +112,10 @@ if (Test-Path -LiteralPath (Join-Path $BlogDir 'public')) {
     if (-not (Test-Path -LiteralPath $publicIndex -PathType Leaf)) { Add-Error 'public 目录存在，但缺少首页 index.html' }
     foreach ($required in @('public\siyuan\index.html', 'public\archives\index.html', 'public\js\site-shell.js', 'public\js\siyuan-knowledge.js', 'public\css\siyuan-knowledge.css')) {
         if (-not (Test-Path -LiteralPath (Join-Path $BlogDir $required) -PathType Leaf)) { Add-Error "构建产物缺失：$required" }
+    }
+    $privatePublicRoot = Join-Path $BlogDir 'public\siyuan\能力体系'
+    if (Test-Path -LiteralPath $privatePublicRoot) {
+        Add-Error "构建产物包含永久私密目录：$privatePublicRoot"
     }
 }
 

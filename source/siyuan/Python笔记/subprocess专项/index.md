@@ -169,7 +169,6 @@ proc.wait()
 
 ### 反向引用
 - [Python笔记](/siyuan/Python笔记/)
-- [能力规划](/siyuan/能力体系/能力规划/)
 - [学习笔记](/siyuan/)
 
 </section>

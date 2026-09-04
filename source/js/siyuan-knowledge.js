@@ -13,6 +13,12 @@
   function setupResponsiveTables() {
     function enhance() {
       Array.prototype.forEach.call(document.querySelectorAll('.post-body .table-container'), function (container) {
+        if (container.closest('figure.highlight')) {
+          container.removeAttribute('tabindex');
+          container.removeAttribute('role');
+          container.removeAttribute('aria-label');
+          return;
+        }
         container.tabIndex = 0;
         container.setAttribute('role', 'region');
         container.setAttribute('aria-label', '可横向滑动的表格');
@@ -103,7 +109,7 @@
 
     var rail = document.createElement('aside');
     rail.className = 'blog-home-rail';
-    rail.innerHTML = '<section class="blog-home-profile"><img src="/images/avatar.jpg" width="82" height="82" alt="YangHanLin"><h2>YangHanLin</h2><p>相遇是知识连接的开始。</p><div class="blog-home-stats"><a href="/archives/"><strong>' + (Number.isFinite(articleCount) ? articleCount : postBlocks.length) + '</strong><span>文章</span></a><a href="/siyuan/"><strong>' + (data.documents.length - dailyCount) + '</strong><span>笔记</span></a></div></section><section class="blog-home-side-card"><span class="blog-home-side-label">公告</span><p>保持好奇，尊重事实，让每次记录都能成为下一次思考的起点。</p></section><section class="blog-home-side-card"><span class="blog-home-side-label">快速抵达</span><nav><a href="/siyuan/Python笔记/">Python 笔记</a><a href="/siyuan/待学习/">待学习</a><a href="/siyuan/能力体系/">能力体系</a><a href="/archives/">文章归档</a></nav></section><section class="blog-home-side-card blog-home-site-info"><span class="blog-home-side-label">网站信息</span><dl><div><dt>知识文档</dt><dd>' + data.documents.length + '</dd></div><div><dt>非日记笔记</dt><dd>' + (data.documents.length - dailyCount) + '</dd></div><div><dt>内容组织</dt><dd>双向引用</dd></div></dl></section>';
+    rail.innerHTML = '<section class="blog-home-profile"><img src="/images/avatar.jpg" width="82" height="82" alt="YangHanLin"><h2>YangHanLin</h2><p>相遇是知识连接的开始。</p><div class="blog-home-stats"><a href="/archives/"><strong>' + (Number.isFinite(articleCount) ? articleCount : postBlocks.length) + '</strong><span>文章</span></a><a href="/siyuan/"><strong>' + (data.documents.length - dailyCount) + '</strong><span>笔记</span></a></div></section><section class="blog-home-side-card"><span class="blog-home-side-label">公告</span><p>保持好奇，尊重事实，让每次记录都能成为下一次思考的起点。</p></section><section class="blog-home-side-card"><span class="blog-home-side-label">快速抵达</span><nav><a href="/siyuan/Python笔记/">Python 笔记</a><a href="/siyuan/待学习/">待学习</a><a href="/siyuan/其他笔记/命令行/">命令行</a><a href="/archives/">文章归档</a></nav></section><section class="blog-home-side-card blog-home-site-info"><span class="blog-home-side-label">网站信息</span><dl><div><dt>知识文档</dt><dd>' + data.documents.length + '</dd></div><div><dt>非日记笔记</dt><dd>' + (data.documents.length - dailyCount) + '</dd></div><div><dt>内容组织</dt><dd>双向引用</dd></div></dl></section>';
 
     layout.appendChild(feed);
     layout.appendChild(rail);
@@ -230,7 +236,10 @@
   }
   treeScroll.addEventListener('scroll', scheduleTreeScrollSave, { passive: true });
   panel.addEventListener('click', function (event) {
-    if (event.target.closest('a.siyuan-tree-link')) saveTreeScrollPosition();
+    if (event.target.closest('a.siyuan-tree-link')) {
+      saveTreeScrollPosition();
+      setPanelOpen(false);
+    }
   });
   window.addEventListener('pagehide', saveTreeScrollPosition);
   restoreTreeScrollPosition();
@@ -247,7 +256,9 @@
   function setPanelOpen(open) {
     panel.classList.toggle('is-open', open);
     overlay.classList.toggle('is-open', open);
+    document.body.classList.toggle('siyuan-tree-open', open);
     toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? '关闭学习笔记目录' : '打开学习笔记目录');
   }
   toggle.setAttribute('aria-expanded', 'false');
   toggle.addEventListener('click', function () { setPanelOpen(!panel.classList.contains('is-open')); });

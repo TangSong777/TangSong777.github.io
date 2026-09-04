@@ -320,6 +320,5 @@ d[(1, 2)] = "ok"     # tuple 可哈希，可以做键
 ### 反向引用
 - [Python笔记](/siyuan/Python笔记/)
 - [学习笔记](/siyuan/)
-- [学习方法论](/siyuan/能力体系/学习方法论/)
 
 </section>

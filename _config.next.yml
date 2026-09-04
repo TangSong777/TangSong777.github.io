@@ -2,6 +2,12 @@
 scheme: Muse
 darkmode: true
 
+favicon:
+  small: /images/avatar.jpg?v=20260904
+  medium: /images/avatar.jpg?v=20260904
+  apple_touch_icon: /images/avatar.jpg?v=20260904
+  safari_pinned_tab: false
+
 avatar:
   url: /images/avatar.jpg
   rounded: true
