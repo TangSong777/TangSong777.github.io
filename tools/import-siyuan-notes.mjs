@@ -604,7 +604,8 @@ async function main() {
         }
         const target = path.join(stagedKnowledge, ...doc.parts, 'index.md');
         await fs.mkdir(path.dirname(target), { recursive: true });
-        await fs.writeFile(target, `${yaml.join('\n')}\n\n${doc.convertedBody}\n${references.join('\n')}\n`, 'utf8');
+        const markdown = `${yaml.join('\n')}\n\n${doc.convertedBody}\n${references.join('\n')}`.trimEnd() + '\n';
+        await fs.writeFile(target, markdown, 'utf8');
       }
 
       const articleRoot = path.join(options.blogDir, 'source', '_posts');
