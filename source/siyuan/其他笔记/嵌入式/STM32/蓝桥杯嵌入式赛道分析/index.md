@@ -95,14 +95,14 @@ categories:
 ## 文档关系
 
 ### 本文引用
-- [STM32CubeMX配置](/siyuan/其他笔记/嵌入式/STM32/STM32CubeMX配置/)
 - [旋转编码器与电机详解](/siyuan/其他笔记/嵌入式/STM32/旋转编码器与电机详解/)
 - [知识点大纲](/siyuan/其他笔记/嵌入式/STM32/知识点大纲/)
+- [STM32CubeMX配置](/siyuan/其他笔记/嵌入式/STM32/STM32CubeMX配置/)
 
 ### 反向引用
-- [STM32](/siyuan/其他笔记/嵌入式/STM32/)
 - [其他笔记](/siyuan/其他笔记/)
 - [嵌入式](/siyuan/其他笔记/嵌入式/)
 - [学习笔记](/siyuan/)
+- [STM32](/siyuan/其他笔记/嵌入式/STM32/)
 
 </section>

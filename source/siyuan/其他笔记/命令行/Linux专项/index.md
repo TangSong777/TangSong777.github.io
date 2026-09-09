@@ -545,14 +545,14 @@ sudo apt install zip unzip xz-utils    # 示例：补齐常用压缩工具
 - [SSH学习（已归档）](/siyuan/已归档/SSH学习（已归档）/)
 
 ### 反向引用
+- [命令行](/siyuan/其他笔记/命令行/)
+- [其他笔记](/siyuan/其他笔记/)
+- [学习笔记](/siyuan/)
 - [CMD专项](/siyuan/其他笔记/命令行/CMD专项/)
 - [PathLib专项](/siyuan/Python笔记/PathLib专项/)
 - [PowerShell专项](/siyuan/其他笔记/命令行/PowerShell专项/)
 - [Python文件操作学习（已归档）](/siyuan/已归档/Python文件操作学习（已归档）/)
 - [SSH学习（已归档）](/siyuan/已归档/SSH学习（已归档）/)
 - [SSH专项](/siyuan/其他笔记/命令行/SSH专项/)
-- [命令行](/siyuan/其他笔记/命令行/)
-- [其他笔记](/siyuan/其他笔记/)
-- [学习笔记](/siyuan/)
 
 </section>

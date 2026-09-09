@@ -1,12 +1,12 @@
 ---
-title: '08'
-date: '2026-08-04T00:17:25+08:00'
-updated: '2026-08-14T10:41:07+08:00'
+title: '09'
+date: '2026-09-08T11:31:11+08:00'
+updated: '2026-09-08T11:31:11+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
-permalink: 'siyuan/daily-note/2026/08/'
-siyuan_source: 'daily note/2026/08.md'
+permalink: 'siyuan/daily-note/2026/09/'
+siyuan_source: 'daily note/2026/09.md'
 comments: false
 categories:
   - '学习笔记'
@@ -22,6 +22,5 @@ categories:
 
 ### 反向引用
 - [学习笔记](/siyuan/)
-- [daily note](/siyuan/daily-note/)
 
 </section>

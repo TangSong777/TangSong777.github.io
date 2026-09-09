@@ -13,6 +13,8 @@ categories:
   - 'Python笔记'
 ---
 
+# 算法专项
+
 > 从力扣刷题中提炼的算法知识点、Python 语法技巧和常见模式，按知识点分类整理。  
 > 每条标注来源题目，方便回溯查看完整笔记。
 
@@ -662,7 +664,7 @@ return (s + s).find(s, 1) != len(s)
 - [2026-08-17](/siyuan/daily-note/2026/08/2026-08-17/)
 
 ### 反向引用
-- [Python笔记](/siyuan/Python笔记/)
 - [学习笔记](/siyuan/)
+- [Python笔记](/siyuan/Python笔记/)
 
 </section>

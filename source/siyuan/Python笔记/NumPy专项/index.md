@@ -445,8 +445,8 @@ SNR 越高，表示信号功率相对于噪声功率越大，通常代表信号�
 - [PathLib专项](/siyuan/Python笔记/PathLib专项/)
 
 ### 反向引用
+- [学习笔记](/siyuan/)
 - [PathLib专项](/siyuan/Python笔记/PathLib专项/)
 - [Python笔记](/siyuan/Python笔记/)
-- [学习笔记](/siyuan/)
 
 </section>

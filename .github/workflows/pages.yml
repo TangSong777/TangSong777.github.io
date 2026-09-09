@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Install dependencies
@@ -36,8 +36,7 @@ jobs:
         run: npm run clean && npm run build
 
       - name: Verify knowledge base
-        shell: pwsh
-        run: ./tools/Test-SiyuanKnowledgeBase.ps1
+        run: npm run siyuan:check
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

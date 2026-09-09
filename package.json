@@ -11,9 +11,16 @@
     "article:studio": "node ./tools/article-studio/server.mjs",
     "article:studio:no-open": "node ./tools/article-studio/server.mjs --no-open",
     "article:studio:mobile": "node ./tools/article-studio/server.mjs --network --no-open",
-    "siyuan:check": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/Test-SiyuanKnowledgeBase.ps1",
-    "siyuan:dry-run": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/Import-SiyuanNotes.ps1 -DryRun",
-    "siyuan:refresh": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/Import-SiyuanNotes.ps1 && hexo clean && hexo generate && powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/Test-SiyuanKnowledgeBase.ps1"
+    "siyuan:check": "node ./tools/run-siyuan.mjs check",
+    "siyuan:dry-run": "node ./tools/run-siyuan.mjs dry-run",
+    "siyuan:refresh": "node ./tools/run-siyuan.mjs refresh",
+    "siyuan:export": "node ./tools/export-siyuan-notebook.mjs",
+    "siyuan:sync": "node ./tools/sync-siyuan-s3.mjs",
+    "siyuan:preview-publish": "node ./tools/publish-siyuan-notes.mjs --preview",
+    "siyuan:publish": "node ./tools/publish-siyuan-notes.mjs --publish"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   },
   "hexo": {
     "version": "8.1.2"
@@ -29,6 +36,7 @@
     "hexo-renderer-stylus": "^3.0.1",
     "hexo-server": "^3.0.0",
     "hexo-theme-landscape": "^1.0.0",
-    "hexo-theme-next": "^8.29.0"
+    "hexo-theme-next": "^8.29.0",
+    "yauzl": "3.4.0"
   }
 }

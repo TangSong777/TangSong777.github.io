@@ -155,9 +155,9 @@ Serial.println(16, BIN);  // 输出：10000（二进制）
 ## 文档关系
 
 ### 反向引用
-- [ESP32](/siyuan/其他笔记/嵌入式/ESP32/)
 - [其他笔记](/siyuan/其他笔记/)
 - [嵌入式](/siyuan/其他笔记/嵌入式/)
 - [学习笔记](/siyuan/)
+- [ESP32](/siyuan/其他笔记/嵌入式/ESP32/)
 
 </section>

@@ -738,10 +738,10 @@ a *= -1j
 ### 反向引用
 - [2026-08-05](/siyuan/daily-note/2026/08/2026-08-05/)
 - [2026-08-06](/siyuan/daily-note/2026/08/2026-08-06/)
-- [daily note](/siyuan/daily-note/)
 - [类型索引](/siyuan/力扣刷题/类型索引/)
 - [时间线索引](/siyuan/力扣刷题/时间线索引/)
 - [算法专项](/siyuan/Python笔记/算法专项/)
 - [学习笔记](/siyuan/)
+- [daily note](/siyuan/daily-note/)
 
 </section>

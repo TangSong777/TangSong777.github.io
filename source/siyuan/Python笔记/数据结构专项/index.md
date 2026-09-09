@@ -13,6 +13,8 @@ categories:
   - 'Python笔记'
 ---
 
+# 数据结构专项
+
 > Python 四大内置数据结构：list、tuple、set、dict 的系统梳理。  
 > 参考来源：[python基础 | がんばろう](https://yhblogs.cn/posts/60233.html)
 
@@ -318,7 +320,7 @@ d[(1, 2)] = "ok"     # tuple 可哈希，可以做键
 ## 文档关系
 
 ### 反向引用
-- [Python笔记](/siyuan/Python笔记/)
 - [学习笔记](/siyuan/)
+- [Python笔记](/siyuan/Python笔记/)
 
 </section>

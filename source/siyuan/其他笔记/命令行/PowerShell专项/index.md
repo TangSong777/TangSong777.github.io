@@ -183,10 +183,10 @@ Test-NetConnection 192.168.1.10 -Port 22 -InformationLevel Detailed
 - [Linux专项](/siyuan/其他笔记/命令行/Linux专项/)
 
 ### 反向引用
-- [CMD专项](/siyuan/其他笔记/命令行/CMD专项/)
-- [Linux专项](/siyuan/其他笔记/命令行/Linux专项/)
 - [命令行](/siyuan/其他笔记/命令行/)
 - [其他笔记](/siyuan/其他笔记/)
 - [学习笔记](/siyuan/)
+- [CMD专项](/siyuan/其他笔记/命令行/CMD专项/)
+- [Linux专项](/siyuan/其他笔记/命令行/Linux专项/)
 
 </section>

@@ -27,9 +27,9 @@ categories:
 ## 文档关系
 
 ### 反向引用
-- [STM32](/siyuan/其他笔记/嵌入式/STM32/)
 - [其他笔记](/siyuan/其他笔记/)
 - [嵌入式](/siyuan/其他笔记/嵌入式/)
 - [学习笔记](/siyuan/)
+- [STM32](/siyuan/其他笔记/嵌入式/STM32/)
 
 </section>

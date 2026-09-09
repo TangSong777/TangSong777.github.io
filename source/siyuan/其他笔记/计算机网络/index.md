@@ -28,13 +28,13 @@ categories:
 ## 文档关系
 
 ### 本文引用
-- [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
-- [Prompt-基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/Prompt-基于OpenWrt与ZeroTier的个人组网/)
-- [ZeroTier专项](/siyuan/其他笔记/计算机网络/学习文档/ZeroTier专项/)
 - [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
 - [基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/基于OpenWrt与ZeroTier的个人组网/)
 - [计算机网络专项](/siyuan/其他笔记/计算机网络/学习文档/计算机网络专项/)
 - [学习文档](/siyuan/其他笔记/计算机网络/学习文档/)
+- [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
+- [Prompt-基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/Prompt-基于OpenWrt与ZeroTier的个人组网/)
+- [ZeroTier专项](/siyuan/其他笔记/计算机网络/学习文档/ZeroTier专项/)
 
 ### 反向引用
 - [其他笔记](/siyuan/其他笔记/)

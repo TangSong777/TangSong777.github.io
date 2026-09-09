@@ -827,8 +827,8 @@ def load_env_config(env_path: Path):
 - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
 
 ### 反向引用
+- [学习笔记](/siyuan/)
 - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
 - [Python笔记](/siyuan/Python笔记/)
-- [学习笔记](/siyuan/)
 
 </section>

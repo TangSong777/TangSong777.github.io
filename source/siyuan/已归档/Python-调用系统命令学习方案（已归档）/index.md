@@ -209,7 +209,7 @@ proc.wait()
 - [Python笔记](/siyuan/Python笔记/)
 
 ### 反向引用
-- [Python笔记](/siyuan/Python笔记/)
 - [学习笔记](/siyuan/)
+- [Python笔记](/siyuan/Python笔记/)
 
 </section>

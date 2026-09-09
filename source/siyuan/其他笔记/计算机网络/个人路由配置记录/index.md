@@ -1,7 +1,7 @@
 ---
 title: '个人路由配置记录'
 date: '2026-08-19T15:09:25+08:00'
-updated: '2026-08-27T09:02:40+08:00'
+updated: '2026-09-03T16:42:14+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -74,7 +74,12 @@ AX6 已完成改版 uboot 刷入，重刷固件方法：
 - **uboot 重刷**：断电 → 长按 reset 按键 → 插上电源 → 持续按住 5 秒以上 → 松开
 - **控制面板刷机**：电脑网卡改为手动获取 IP `[已隐藏 IP 地址]`​，浏览器打开 `[已隐藏 IP 地址]` 即可开始刷入新系统
 
-‍
+```bash
+route -p add [已隐藏 IP 地址] mask [已隐藏 IP 地址] [已隐藏 IP 地址] metric 20
+# 设置外网ping [已隐藏 IP 地址]的时候会自动走[已隐藏 IP 地址]
+route print | findstr 192.168.6
+# 验证
+```
 
 <section class="siyuan-references" aria-label="文档引用">
 
@@ -84,9 +89,9 @@ AX6 已完成改版 uboot 刷入，重刷固件方法：
 - [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 
 ### 反向引用
-- [ZeroTier专项](/siyuan/其他笔记/计算机网络/学习文档/ZeroTier专项/)
 - [计算机网络](/siyuan/其他笔记/计算机网络/)
 - [其他笔记](/siyuan/其他笔记/)
 - [学习笔记](/siyuan/)
+- [ZeroTier专项](/siyuan/其他笔记/计算机网络/学习文档/ZeroTier专项/)
 
 </section>

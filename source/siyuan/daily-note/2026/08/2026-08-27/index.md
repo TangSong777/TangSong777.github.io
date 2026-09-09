@@ -32,7 +32,7 @@ categories:
 ## 文档关系
 
 ### 反向引用
-- [daily note](/siyuan/daily-note/)
 - [学习笔记](/siyuan/)
+- [daily note](/siyuan/daily-note/)
 
 </section>

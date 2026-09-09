@@ -345,7 +345,7 @@ printf("%d\n", *(p + 1)); // 20
 ## 文档关系
 
 ### 反向引用
-- [Python笔记](/siyuan/Python笔记/)
 - [学习笔记](/siyuan/)
+- [Python笔记](/siyuan/Python笔记/)
 
 </section>

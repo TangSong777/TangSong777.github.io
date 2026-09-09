@@ -1,7 +1,7 @@
 ---
 title: '学习笔记'
 date: '2026-06-23T16:54:27+08:00'
-updated: '2026-08-31T16:11:50+08:00'
+updated: '2026-09-03T16:57:31+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -14,13 +14,12 @@ categories:
 
 - 📁 [待学习](/siyuan/待学习/)
 
-  - 📄 [博客网站部署学习方案](/siyuan/待学习/博客网站部署学习方案/)
-  - 📄 [Docker学习方案](/siyuan/待学习/Docker学习方案/)
   - 📄 [OpenCV学习方案](/siyuan/待学习/OpenCV学习方案/)
   - 📄 [PPG与rPPG学习方案](/siyuan/待学习/PPG与rPPG学习方案/)
   - 📄 [PyTorch与CNN基础学习方案](/siyuan/待学习/PyTorch与CNN基础学习方案/)
   - 📄 [数据结构学习方案（CC++ 嵌入式）](/siyuan/待学习/数据结构学习方案（CC++-嵌入式）/)
   - 📄 [嵌入式控制算法PID专项](/siyuan/待学习/嵌入式控制算法PID专项/)
+  - 📄 [Docker学习方案](/siyuan/待学习/Docker学习方案/)
 - 📁 能力体系
 
   - 📄 能力评估
@@ -83,6 +82,9 @@ categories:
 
   - 📑 [2026](/siyuan/daily-note/2026/)
 
+    - 📑 [09](/siyuan/daily-note/2026/09/)
+
+      - 📄 2026-09-03
     - 📑 [08](/siyuan/daily-note/2026/08/)
 
       - 📄 [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
@@ -118,7 +120,9 @@ categories:
 ## 文档关系
 
 ### 本文引用
+- [4 小时彻底掌握 C 指针](/siyuan/4-小时彻底掌握-C-指针/)
 - [08](/siyuan/daily-note/2026/08/)
+- [09](/siyuan/daily-note/2026/09/)
 - [2026](/siyuan/daily-note/2026/)
 - [2026-08-03](/siyuan/daily-note/2026/08/2026-08-03/)
 - [2026-08-04](/siyuan/daily-note/2026/08/2026-08-04/)
@@ -133,37 +137,6 @@ categories:
 - [2026-08-26](/siyuan/daily-note/2026/08/2026-08-26/)
 - [2026-08-27](/siyuan/daily-note/2026/08/2026-08-27/)
 - [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
-- [4 小时彻底掌握 C 指针](/siyuan/4-小时彻底掌握-C-指针/)
-- [CMD专项](/siyuan/其他笔记/命令行/CMD专项/)
-- [daily note](/siyuan/daily-note/)
-- [Docker学习方案](/siyuan/待学习/Docker学习方案/)
-- [ESP32](/siyuan/其他笔记/嵌入式/ESP32/)
-- [Linux命令行学习（已归档）](/siyuan/已归档/Linux命令行学习（已归档）/)
-- [Linux专项](/siyuan/其他笔记/命令行/Linux专项/)
-- [Moonlight专项](/siyuan/其他笔记/Rock5B+/Moonlight专项/)
-- [NumPy基础练习（已归档）](/siyuan/已归档/NumPy基础练习（已归档）/)
-- [NumPy专项](/siyuan/Python笔记/NumPy专项/)
-- [OpenCV学习方案](/siyuan/待学习/OpenCV学习方案/)
-- [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
-- [PathLib专项](/siyuan/Python笔记/PathLib专项/)
-- [PowerShell专项](/siyuan/其他笔记/命令行/PowerShell专项/)
-- [PPG与rPPG学习方案](/siyuan/待学习/PPG与rPPG学习方案/)
-- [Prompt-基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/Prompt-基于OpenWrt与ZeroTier的个人组网/)
-- [Python 调用系统命令学习方案（已归档）](/siyuan/已归档/Python-调用系统命令学习方案（已归档）/)
-- [Python笔记](/siyuan/Python笔记/)
-- [Python容器学习（已归档）](/siyuan/已归档/Python容器学习（已归档）/)
-- [Python文件操作学习（已归档）](/siyuan/已归档/Python文件操作学习（已归档）/)
-- [PyTorch与CNN基础学习方案](/siyuan/待学习/PyTorch与CNN基础学习方案/)
-- [Rock5B+](/siyuan/其他笔记/Rock5B+/)
-- [Skill速查手册](/siyuan/Skill速查手册/)
-- [SSH学习（已归档）](/siyuan/已归档/SSH学习（已归档）/)
-- [SSH专项](/siyuan/其他笔记/命令行/SSH专项/)
-- [STM32](/siyuan/其他笔记/嵌入式/STM32/)
-- [STM32CubeMX配置](/siyuan/其他笔记/嵌入式/STM32/STM32CubeMX配置/)
-- [subprocess专项](/siyuan/Python笔记/subprocess专项/)
-- [Windows命令行学习（已归档）](/siyuan/已归档/Windows命令行学习（已归档）/)
-- [ZeroTier专项](/siyuan/其他笔记/计算机网络/学习文档/ZeroTier专项/)
-- [博客网站部署学习方案](/siyuan/待学习/博客网站部署学习方案/)
 - [串流方案](/siyuan/其他笔记/Rock5B+/串流方案/)
 - [从公网、局域网到 ZeroTier：构建属于自己的虚拟局域网（已归档）](/siyuan/已归档/从公网、局域网到-ZeroTier：构建属于自己的虚拟局域网（已归档）/)
 - [待学习](/siyuan/待学习/)
@@ -194,6 +167,36 @@ categories:
 - [学习文档](/siyuan/其他笔记/计算机网络/学习文档/)
 - [已归档](/siyuan/已归档/)
 - [硬件需求](/siyuan/硬件需求/)
+- [知识点大纲](/siyuan/其他笔记/嵌入式/ESP32/知识点大纲/)
 - [知识点大纲](/siyuan/其他笔记/嵌入式/STM32/知识点大纲/)
+- [CMD专项](/siyuan/其他笔记/命令行/CMD专项/)
+- [daily note](/siyuan/daily-note/)
+- [Docker学习方案](/siyuan/待学习/Docker学习方案/)
+- [ESP32](/siyuan/其他笔记/嵌入式/ESP32/)
+- [Linux命令行学习（已归档）](/siyuan/已归档/Linux命令行学习（已归档）/)
+- [Linux专项](/siyuan/其他笔记/命令行/Linux专项/)
+- [Moonlight专项](/siyuan/其他笔记/Rock5B+/Moonlight专项/)
+- [NumPy基础练习（已归档）](/siyuan/已归档/NumPy基础练习（已归档）/)
+- [NumPy专项](/siyuan/Python笔记/NumPy专项/)
+- [OpenCV学习方案](/siyuan/待学习/OpenCV学习方案/)
+- [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
+- [PathLib专项](/siyuan/Python笔记/PathLib专项/)
+- [PowerShell专项](/siyuan/其他笔记/命令行/PowerShell专项/)
+- [PPG与rPPG学习方案](/siyuan/待学习/PPG与rPPG学习方案/)
+- [Prompt-基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/Prompt-基于OpenWrt与ZeroTier的个人组网/)
+- [Python 调用系统命令学习方案（已归档）](/siyuan/已归档/Python-调用系统命令学习方案（已归档）/)
+- [Python笔记](/siyuan/Python笔记/)
+- [Python容器学习（已归档）](/siyuan/已归档/Python容器学习（已归档）/)
+- [Python文件操作学习（已归档）](/siyuan/已归档/Python文件操作学习（已归档）/)
+- [PyTorch与CNN基础学习方案](/siyuan/待学习/PyTorch与CNN基础学习方案/)
+- [Rock5B+](/siyuan/其他笔记/Rock5B+/)
+- [Skill速查手册](/siyuan/Skill速查手册/)
+- [SSH学习（已归档）](/siyuan/已归档/SSH学习（已归档）/)
+- [SSH专项](/siyuan/其他笔记/命令行/SSH专项/)
+- [STM32](/siyuan/其他笔记/嵌入式/STM32/)
+- [STM32CubeMX配置](/siyuan/其他笔记/嵌入式/STM32/STM32CubeMX配置/)
+- [subprocess专项](/siyuan/Python笔记/subprocess专项/)
+- [Windows命令行学习（已归档）](/siyuan/已归档/Windows命令行学习（已归档）/)
+- [ZeroTier专项](/siyuan/其他笔记/计算机网络/学习文档/ZeroTier专项/)
 
 </section>

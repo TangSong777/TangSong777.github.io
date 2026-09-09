@@ -21,14 +21,14 @@ categories:
 
 家庭 LAN：
 
-- OpenWrt LAN IP：192.168.6.1
-- 家庭设备网段：192.168.6.0/24
-- 示例设备：192.168.6.5
+- OpenWrt LAN IP：[已隐藏]
+- 家庭设备网段：[已隐藏]
+- 示例设备：[已隐藏]
 
 ZeroTier 网络：
 
-- OpenWrt ZeroTier IP：192.168.195.4
-- 笔记本 ZeroTier IP：192.168.195.2
+- OpenWrt ZeroTier IP：[已隐藏]
+- 笔记本 ZeroTier IP：[已隐藏]
 
 需求：
 
@@ -46,12 +46,12 @@ ZeroTier 网络：
 笔记本在外地，通过互联网连接 ZeroTier。  
 此时：
 
-- 笔记本只有 ZeroTier IP：192.168.195.2
+- 笔记本只有 ZeroTier IP：[已隐藏]
 - 希望访问家庭 LAN：
 
-  - 192.168.6.1
-  - 192.168.6.5
-  - 整个 192.168.6.0/24 网段
+  - [已隐藏]
+  - [已隐藏]
+  - 整个 [已隐藏] 网段
 - 不使用 ZeroTier Managed Route
 - 不购买 ZeroTier 付费功能
 
@@ -82,7 +82,7 @@ ZeroTier 网络：
 
   - 有线LAN
   - ZeroTier  
-    时，访问192.168.6.0/24应该走哪个接口？
+    时，访问[已隐藏]应该走哪个接口？
 - Windows/Linux系统如何选择路由？
 - 如何避免ZeroTier路径覆盖本地LAN路径？
 
@@ -108,7 +108,7 @@ ZeroTier 网络：
 
 无论笔记本在家还是外地，都可以透明访问：
 
-192.168.6.0/24
+[已隐藏]
 
 并且自动选择最佳路径。
 
@@ -117,9 +117,9 @@ ZeroTier 网络：
 ## 文档关系
 
 ### 反向引用
-- [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 - [计算机网络](/siyuan/其他笔记/计算机网络/)
 - [其他笔记](/siyuan/其他笔记/)
 - [学习笔记](/siyuan/)
+- [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 
 </section>

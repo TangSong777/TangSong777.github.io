@@ -145,10 +145,10 @@ netstat -ano | findstr :8080     REM 筛选 8080 端口
 - [PowerShell专项](/siyuan/其他笔记/命令行/PowerShell专项/)
 
 ### 反向引用
-- [Linux专项](/siyuan/其他笔记/命令行/Linux专项/)
-- [PowerShell专项](/siyuan/其他笔记/命令行/PowerShell专项/)
 - [命令行](/siyuan/其他笔记/命令行/)
 - [其他笔记](/siyuan/其他笔记/)
 - [学习笔记](/siyuan/)
+- [Linux专项](/siyuan/其他笔记/命令行/Linux专项/)
+- [PowerShell专项](/siyuan/其他笔记/命令行/PowerShell专项/)
 
 </section>

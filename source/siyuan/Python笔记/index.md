@@ -1,7 +1,7 @@
 ---
 title: 'Python笔记'
 date: '2026-08-02T00:01:29+08:00'
-updated: '2026-08-31T16:29:27+08:00'
+updated: '2026-09-01T10:26:17+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -653,16 +653,16 @@ match point:
 
 ### 本文引用
 - [4 小时彻底掌握 C 指针](/siyuan/4-小时彻底掌握-C-指针/)
+- [数据结构专项](/siyuan/Python笔记/数据结构专项/)
+- [算法专项](/siyuan/Python笔记/算法专项/)
 - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
 - [PathLib专项](/siyuan/Python笔记/PathLib专项/)
 - [Python 调用系统命令学习方案（已归档）](/siyuan/已归档/Python-调用系统命令学习方案（已归档）/)
 - [subprocess专项](/siyuan/Python笔记/subprocess专项/)
-- [数据结构专项](/siyuan/Python笔记/数据结构专项/)
-- [算法专项](/siyuan/Python笔记/算法专项/)
 
 ### 反向引用
+- [学习笔记](/siyuan/)
 - [Python 调用系统命令学习方案（已归档）](/siyuan/已归档/Python-调用系统命令学习方案（已归档）/)
 - [subprocess专项](/siyuan/Python笔记/subprocess专项/)
-- [学习笔记](/siyuan/)
 
 </section>
