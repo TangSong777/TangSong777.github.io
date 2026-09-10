@@ -124,7 +124,15 @@
 
   var root = { title: data.notebook, url: knowledgeRoot + '/', children: [], key: '' };
   var nodes = { '': root };
-  var docs = data.documents.slice().sort(function (a, b) { return a.url.localeCompare(b.url, 'zh-CN'); });
+  function navigationOrder(node) {
+    return typeof node.order === 'number' && Number.isFinite(node.order) ? node.order : Number.MAX_SAFE_INTEGER;
+  }
+  function compareNavigationNodes(a, b) {
+    var orderDifference = navigationOrder(a) - navigationOrder(b);
+    if (orderDifference) return orderDifference;
+    return Number(a.daily) - Number(b.daily) || a.title.localeCompare(b.title, 'zh-CN');
+  }
+  var docs = data.documents.slice().sort(compareNavigationNodes);
   var expandedStorageKey = 'siyuan-knowledge-tree-expanded';
   var expandedKeys = [];
   try { expandedKeys = JSON.parse(sessionStorage.getItem(expandedStorageKey) || '[]'); } catch (_) {}
@@ -140,8 +148,10 @@
     parts.forEach(function (part, index) {
       var key = parts.slice(0, index + 1).join('/');
       if (!nodes[key]) {
-        nodes[key] = { title: part.replace(/-/g, ' '), url: '', children: [], key: key, daily: doc.daily };
+        nodes[key] = { title: part.replace(/-/g, ' '), url: '', children: [], key: key, daily: doc.daily, order: doc.order };
         parent.children.push(nodes[key]);
+      } else if (navigationOrder(doc) < navigationOrder(nodes[key])) {
+        nodes[key].order = doc.order;
       }
       parent = nodes[key];
     });
@@ -152,6 +162,7 @@
       parent.title = doc.title;
       parent.url = doc.url;
       parent.daily = doc.daily;
+      parent.order = doc.order;
     }
   });
 
@@ -184,7 +195,7 @@
       var ul = document.createElement('ul');
       ul.className = 'siyuan-tree-children';
       ul.hidden = !shouldOpen;
-      node.children.sort(function (a, b) { return Number(a.daily) - Number(b.daily) || a.title.localeCompare(b.title, 'zh-CN'); });
+      node.children.sort(compareNavigationNodes);
       node.children.forEach(function (child) { ul.appendChild(renderNode(child, depth + 1)); });
       li.appendChild(ul);
       expander.addEventListener('click', function () {
@@ -205,7 +216,7 @@
   panel.innerHTML = '<div class="siyuan-tree-header"><a class="siyuan-tree-home" href="' + root.url + '"></a><p class="siyuan-tree-subtitle">全文档目录 · 双向引用</p><input class="siyuan-tree-search" type="search" placeholder="搜索文档…" aria-label="搜索文档"></div><div class="siyuan-tree-scroll"><ul class="siyuan-tree"></ul><p class="siyuan-tree-empty" hidden>没有找到匹配文档</p></div>';
   panel.querySelector('.siyuan-tree-home').appendChild(document.createTextNode(root.title));
   var list = panel.querySelector('.siyuan-tree');
-  root.children.sort(function (a, b) { return Number(a.daily) - Number(b.daily) || a.title.localeCompare(b.title, 'zh-CN'); });
+  root.children.sort(compareNavigationNodes);
   root.children.forEach(function (node) { list.appendChild(renderNode(node, 0)); });
   document.body.appendChild(panel);
 

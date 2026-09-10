@@ -612,6 +612,22 @@ async function main() {
       const articleCount = await exists(articleRoot, 'directory')
         ? (await walkFiles(articleRoot, (file) => file.toLowerCase().endsWith('.md'))).length
         : 0;
+      // The notebook root is SiYuan's exported full-document outline.  Read
+      // its internal links after conversion so Markdown links, block refs and
+      // URL-encoded paths all contribute to one authoritative visual order.
+      // Documents absent from that outline are appended deterministically.
+      const navigationOrder = new Map();
+      const rootDocument = documents.find((doc) => doc.parts.length === 0);
+      const appendNavigationDocument = (doc) => {
+        if (doc && !navigationOrder.has(doc.relative)) navigationOrder.set(doc.relative, navigationOrder.size);
+      };
+      appendNavigationDocument(rootDocument);
+      if (rootDocument) {
+        for (const match of rootDocument.convertedBody.matchAll(/(?<!!)\[[^\]\r\n]*\]\((\/siyuan\/[^\s)#]*(?:\/)?)(?:#[^)]*)?\)/gu)) {
+          appendNavigationDocument(routeIndex.get(key(match[1])));
+        }
+      }
+      for (const doc of documents) appendNavigationDocument(doc);
       const payload = {
         notebook: notebookTitle,
         generatedAt: documents.map((doc) => doc.updated).sort().at(-1) || null,
@@ -621,6 +637,7 @@ async function main() {
           url: doc.url,
           parts: doc.parts,
           daily: doc.isDaily,
+          order: navigationOrder.get(doc.relative),
         })),
       };
       const report = [
