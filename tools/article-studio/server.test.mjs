@@ -4,7 +4,22 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync, sign } from 'node:crypto';
-import { normalizeArticlePath, resolveInside, safeSlug, scanSensitive, validateAndSanitizeImage, verifyAccessJwtWithKeys } from './server.mjs';
+import { normalizeArticlePath, normalizeAutoSaveMinutes, normalizeSiyuanPrivacyRules, resolveInside, safeSlug, scanSensitive, validateAndSanitizeImage, verifyAccessJwtWithKeys } from './server.mjs';
+
+test('自动保存间隔只接受合理的整数分钟', () => {
+  assert.equal(normalizeAutoSaveMinutes(3), 3);
+  assert.equal(normalizeAutoSaveMinutes('30'), 30);
+  assert.throws(() => normalizeAutoSaveMinutes(0));
+  assert.throws(() => normalizeAutoSaveMinutes(1.5));
+  assert.throws(() => normalizeAutoSaveMinutes(1441));
+});
+
+test('思源隐私规则去空、去重并拒绝过短隐私词', () => {
+  assert.deepEqual(normalizeSiyuanPrivacyRules({
+    excludedDocuments: [' 网络/路由器.md ', '网络\\路由器.md'],
+    privateValues: ['192.168.1.1', '192.168.1.1', 'abc'],
+  }), { excludedDocuments: ['网络/路由器.md'], privateValues: ['192.168.1.1'] });
+});
 
 test('safeSlug 保留中文并清理路径字符', () => {
   assert.equal(safeSlug('  我的 / 文章?.md  '), '我的-文章-.md');

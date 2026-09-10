@@ -22,6 +22,7 @@ function parseArgs(argv) {
     sourceDir: '',
     notebookTitle: '',
     privateValuesFile: '',
+    privacyRulesFile: '',
     excludeDailyNote: false,
     dryRun: false,
   };
@@ -37,6 +38,7 @@ function parseArgs(argv) {
     else if (arg === '--source') options.sourceDir = next();
     else if (arg === '--notebook-title') options.notebookTitle = next().trim();
     else if (arg === '--private-values') options.privateValuesFile = next();
+    else if (arg === '--privacy-rules') options.privacyRulesFile = next();
     else if (arg === '--exclude-daily-note') options.excludeDailyNote = true;
     else if (arg === '--dry-run') options.dryRun = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
@@ -48,6 +50,8 @@ function parseArgs(argv) {
   options.privateValuesFile = path.resolve(
     options.privateValuesFile || path.join(options.blogDir, 'tools', 'siyuan-private-values.txt'),
   );
+  options.privacyRulesFile = path.resolve(options.privacyRulesFile || process.env.SIYUAN_PRIVACY_RULES_FILE
+    || (process.platform === 'linux' ? '/srv/blog/state/siyuan-privacy-rules.json' : path.join(options.blogDir, '.siyuan-privacy-rules.json')));
   return options;
 }
 
@@ -58,6 +62,7 @@ function printHelp() {
   --source <目录>           思源 Markdown 导出目录
   --notebook-title <名称>   笔记本名称；自动化临时导出时必须显式传入
   --private-values <文件>   自定义隐私值列表
+  --privacy-rules <文件>    工作台管理的私密文档与隐私词规则
   --exclude-daily-note      排除 daily note
   --dry-run                 只扫描和转换，不写入文件`);
 }
@@ -135,10 +140,10 @@ function parseFrontMatter(text) {
   return { raw: match[1], body: text.slice(match[0].length), fields };
 }
 
-function isPrivateRelative(relative) {
+function isPrivateRelative(relative, configuredDocuments = []) {
   const normalized = relative.replaceAll('\\', '/').replace(/^\/+/, '');
   const normalizedKey = key(normalized);
-  return PRIVATE_DOCUMENT_ROOTS.some((root) => {
+  return configuredDocuments.some((item) => key(item) === normalizedKey) || PRIVATE_DOCUMENT_ROOTS.some((root) => {
     const rootKey = key(root);
     return normalizedKey === `${rootKey}.md` || normalizedKey.startsWith(`${rootKey}/`);
   });
@@ -251,6 +256,7 @@ async function main() {
   const warnings = [];
   const fatalIssues = [];
   const privateValues = [];
+  const privateDocuments = [];
   const referencedAssets = new Map();
   const excludedDocuments = [];
   const privateBlockIds = new Set();
@@ -263,6 +269,19 @@ async function main() {
       if (value && !value.startsWith('#')) privateValues.push(value);
     }
     console.log(`[隐私] 已载入 ${privateValues.length} 条自定义隐藏值`);
+  }
+
+  if (await exists(options.privacyRulesFile, 'file')) {
+    const rules = JSON.parse(await fs.readFile(options.privacyRulesFile, 'utf8'));
+    for (const value of Array.isArray(rules.privateValues) ? rules.privateValues : []) {
+      const normalized = String(value).trim();
+      if (normalized.length >= 4 && !privateValues.includes(normalized)) privateValues.push(normalized);
+    }
+    for (const document of Array.isArray(rules.excludedDocuments) ? rules.excludedDocuments : []) {
+      const normalized = String(document).trim().replaceAll('\\', '/');
+      if (normalized) privateDocuments.push(normalized);
+    }
+    console.log(`[隐私] 工作台规则：排除 ${privateDocuments.length} 篇文档，隐藏 ${privateValues.length} 个指定值`);
   }
 
   function replaceSensitive(text, expression, replacement) {
@@ -304,7 +323,7 @@ async function main() {
     });
 
     for (const value of privateValues) {
-      text = replaceSensitive(text, new RegExp(escapeRegExp(value), 'giu'), '[已隐藏]');
+      text = replaceSensitive(text, new RegExp(escapeRegExp(value), 'giu'), '████');
     }
     return text;
   }
@@ -324,7 +343,7 @@ async function main() {
   for (const sourcePath of markdownFiles) {
     const relative = unixRelative(options.sourceDir, sourcePath);
     const sourceText = await fs.readFile(sourcePath, 'utf8');
-    if (isPrivateRelative(relative)) {
+    if (isPrivateRelative(relative, privateDocuments)) {
       excludedDocuments.push(relative);
       const privateFront = parseFrontMatter(sourceText);
       PRIVATE_DOCUMENT_TITLES.add(key(privateFront.fields.title || path.basename(sourcePath, path.extname(sourcePath))));
@@ -436,7 +455,7 @@ async function main() {
       const pathOnly = target.split('#', 1)[0];
       if (/\.md$/iu.test(pathOnly)) {
         const relativeTarget = normalizeSourceTarget(options.sourceDir, doc.sourcePath, pathOnly);
-        if (isPrivateRelative(relativeTarget)) {
+        if (isPrivateRelative(relativeTarget, privateDocuments)) {
           warnings.push(`已移除指向私密文档的链接：${doc.relative}`);
           return label;
         }

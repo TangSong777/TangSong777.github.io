@@ -7,6 +7,50 @@ body {
   letter-spacing: .01em;
 }
 
+// Keep published article typography aligned with Article Studio's WYSIWYG canvas.
+.post-body {
+  color: #263c37;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 16px;
+  line-height: 2;
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #21594d;
+    line-height: 1.5;
+    margin: 30px 0 15px;
+    padding: 0;
+  }
+
+  p {
+    line-height: 2;
+    margin: 0 0 20px;
+  }
+
+  ul, ol, blockquote, table, pre, figure.highlight {
+    margin-bottom: 20px;
+  }
+
+  li {
+    line-height: 2;
+    margin: 4px 0;
+  }
+
+  blockquote {
+    background: #eef6f3;
+    border-left-color: #4f897b;
+    color: #516c65;
+    padding: 8px 18px;
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  hr {
+    background-image: repeating-linear-gradient(-45deg, #d8e4e0, #d8e4e0 4px, transparent 4px, transparent 8px);
+  }
+}
+
 // Keep NexT's right-hand table of contents stable between document loads.
 .sidebar,
 .sidebar-inner,

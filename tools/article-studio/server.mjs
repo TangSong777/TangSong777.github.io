@@ -9,10 +9,12 @@ import { networkInterfaces } from 'node:os';
 import Hexo from 'hexo';
 
 const studioDir = dirname(fileURLToPath(import.meta.url));
-const repoDir = resolve(studioDir, '..', '..');
+const toolRepoDir = resolve(studioDir, '..', '..');
+const repoDir = resolve(process.env.ARTICLE_STUDIO_REPO_DIR || toolRepoDir);
 const postsDir = join(repoDir, 'source', '_posts');
 const imagesDir = join(repoDir, 'source', 'images', 'posts');
 const publicDir = join(studioDir, 'public');
+const toastEditorDist = join(toolRepoDir, 'node_modules', '@toast-ui', 'editor', 'dist');
 const networkMode = process.argv.includes('--network');
 const authMode = String(process.env.ARTICLE_STUDIO_AUTH_MODE || (networkMode ? 'key' : 'local')).toLowerCase();
 if (!['local', 'key', 'cloudflare'].includes(authMode)) throw new Error('ARTICLE_STUDIO_AUTH_MODE 只允许 local、key 或 cloudflare');
@@ -23,6 +25,13 @@ const accessKey = authMode === 'key' ? randomBytes(24).toString('base64url') : '
 const maxBodyBytes = 25 * 1024 * 1024;
 const renameStateFile = join(repoDir, '.article-studio-renames.json');
 const privateValuesFile = join(repoDir, 'tools', 'siyuan-private-values.txt');
+const studioSettingsFile = resolve(process.env.ARTICLE_STUDIO_SETTINGS_FILE || (process.platform === 'linux'
+  ? '/srv/blog/state/article-studio-settings.json'
+  : join(repoDir, '.article-studio-settings.json')));
+const siyuanPrivacyFile = resolve(process.env.SIYUAN_PRIVACY_RULES_FILE || (process.platform === 'linux'
+  ? '/srv/blog/state/siyuan-privacy-rules.json'
+  : join(repoDir, '.siyuan-privacy-rules.json')));
+const siyuanSourceDir = resolve(process.env.SIYUAN_SOURCE_DIR || join(repoDir, 'origin', '学习笔记.md', '学习笔记.md'));
 const articlePendingFile = '/srv/blog/state/article-pending-push.json';
 const publishLockFile = '/srv/blog/locks/publish.lock';
 const lockHolderFile = join(studioDir, 'lock-holder.mjs');
@@ -464,7 +473,7 @@ function run(command, args, options = {}) {
     const child = spawn(command, args, {
       cwd: repoDir,
       windowsHide: true,
-      shell: false,
+      shell: process.platform === 'win32' && /\.cmd$/i.test(command),
       env: process.env,
       ...options,
     });
@@ -496,6 +505,69 @@ async function writeJsonAtomic(target, value) {
   const temporary = `${target}.${process.pid}.${randomBytes(5).toString('hex')}.tmp`;
   await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
   await rename(temporary, target);
+}
+
+export function normalizeAutoSaveMinutes(value) {
+  const minutes = Number(value);
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) {
+    throw new Error('自动保存间隔必须是 1 到 1440 分钟之间的整数。');
+  }
+  return minutes;
+}
+
+async function loadStudioSettings() {
+  if (!existsSync(studioSettingsFile)) return { autoSaveMinutes: 3 };
+  try {
+    const stored = JSON.parse(await readFile(studioSettingsFile, 'utf8'));
+    return { autoSaveMinutes: normalizeAutoSaveMinutes(stored.autoSaveMinutes) };
+  } catch (error) {
+    console.warn(`无法读取工作台设置，将使用默认值：${error.message}`);
+    return { autoSaveMinutes: 3 };
+  }
+}
+
+async function saveStudioSettings(input) {
+  const settings = { autoSaveMinutes: normalizeAutoSaveMinutes(input.autoSaveMinutes) };
+  await writeJsonAtomic(studioSettingsFile, settings);
+  return settings;
+}
+
+export function normalizeSiyuanPrivacyRules(input = {}) {
+  const clean = (values, minimumLength) => [...new Set((Array.isArray(values) ? values : [])
+    .map((value) => String(value).trim().replaceAll('\\', '/'))
+    .filter((value) => value.length >= minimumLength))].slice(0, 500);
+  return {
+    excludedDocuments: clean(input.excludedDocuments, 3),
+    privateValues: clean(input.privateValues, 4),
+  };
+}
+
+async function loadSiyuanPrivacyRules() {
+  if (!existsSync(siyuanPrivacyFile)) return normalizeSiyuanPrivacyRules();
+  try { return normalizeSiyuanPrivacyRules(JSON.parse(await readFile(siyuanPrivacyFile, 'utf8'))); }
+  catch (error) {
+    console.warn(`无法读取思源隐私规则，将使用空规则：${error.message}`);
+    return normalizeSiyuanPrivacyRules();
+  }
+}
+
+async function listSiyuanDocuments() {
+  const roots = [siyuanSourceDir, join(repoDir, 'source', 'siyuan')].filter((root, index, all) => existsSync(root) && all.indexOf(root) === index);
+  const documents = new Map();
+  async function visit(root, directory) {
+    for (const item of await readdir(directory, { withFileTypes: true })) {
+      const target = join(directory, item.name);
+      if (item.isDirectory()) await visit(root, target);
+      else if (item.isFile() && item.name.toLowerCase().endsWith('.md')) {
+        const content = await readFile(target, 'utf8');
+        const source = frontMatterValue(content, 'siyuan_source') || toPosix(relative(root, target));
+        const title = frontMatterValue(content, 'title') || item.name.replace(/\.md$/i, '');
+        if (!documents.has(source)) documents.set(source, { path: source, title });
+      }
+    }
+  }
+  for (const root of roots) await visit(root, root);
+  return [...documents.values()].sort((left, right) => left.path.localeCompare(right.path, 'zh-CN'));
 }
 
 async function withPublishLock(action) {
@@ -701,11 +773,17 @@ async function routeApi(req, res, url, identity) {
     return send(res, 200, {
       ok: true, token: csrfToken, authMode,
       identity: identity.email ? { email: identity.email } : null,
+      settings: await loadStudioSettings(),
     });
   }
 
   if (req.method === 'GET' && url.pathname === '/api/articles') {
     return send(res, 200, { ok: true, articles: await walkMarkdown(postsDir) });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/siyuan-privacy') {
+    const [rules, documents] = await Promise.all([loadSiyuanPrivacyRules(), listSiyuanDocuments()]);
+    return send(res, 200, { ok: true, rules, documents });
   }
 
   if (req.method === 'GET' && url.pathname === '/api/article') {
@@ -718,6 +796,17 @@ async function routeApi(req, res, url, identity) {
   if (req.method !== 'GET' && !requireLocalMutation(req)) return fail(res, 403, '本地会话校验失败，请刷新页面。');
   if (req.method !== 'GET' && publishRequestActive && url.pathname !== '/api/publish') {
     return fail(res, 423, '文章正在构建并上传，请完成后再修改内容。');
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/settings') {
+    const settings = await saveStudioSettings(await readJson(req));
+    return send(res, 200, { ok: true, settings });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/siyuan-privacy') {
+    const rules = normalizeSiyuanPrivacyRules(await readJson(req));
+    await writeJsonAtomic(siyuanPrivacyFile, rules);
+    return send(res, 200, { ok: true, rules });
   }
 
   if (req.method === 'POST' && url.pathname === '/api/create') {
@@ -844,7 +933,13 @@ const mimeTypes = {
 
 async function routeStatic(req, res, url) {
   let target;
-  if (url.pathname.startsWith('/images/')) {
+  const vendorFiles = {
+    '/vendor/toastui-editor.js': join(publicDir, 'vendor', 'toastui-editor.bundle.js'),
+    '/vendor/toastui-editor.css': join(toastEditorDist, 'toastui-editor.css'),
+  };
+  if (vendorFiles[url.pathname]) {
+    target = vendorFiles[url.pathname];
+  } else if (url.pathname.startsWith('/images/')) {
     target = resolveInside(join(repoDir, 'source'), decodeURIComponent(url.pathname.slice(1)));
   } else if (url.pathname.startsWith('/site-preview/')) {
     target = resolveInside(join(repoDir, 'public'), decodeURIComponent(url.pathname.slice('/site-preview/'.length)));

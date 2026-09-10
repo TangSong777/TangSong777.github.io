@@ -10,23 +10,24 @@
 
   var currentPath = normalize(location.pathname);
 
+  function enhanceResponsiveTables() {
+    Array.prototype.forEach.call(document.querySelectorAll('.post-body .table-container'), function (container) {
+      if (container.closest('figure.highlight')) {
+        container.removeAttribute('tabindex');
+        container.removeAttribute('role');
+        container.removeAttribute('aria-label');
+        return;
+      }
+      container.tabIndex = 0;
+      container.setAttribute('role', 'region');
+      container.setAttribute('aria-label', '可横向滑动的表格');
+    });
+  }
+
   function setupResponsiveTables() {
-    function enhance() {
-      Array.prototype.forEach.call(document.querySelectorAll('.post-body .table-container'), function (container) {
-        if (container.closest('figure.highlight')) {
-          container.removeAttribute('tabindex');
-          container.removeAttribute('role');
-          container.removeAttribute('aria-label');
-          return;
-        }
-        container.tabIndex = 0;
-        container.setAttribute('role', 'region');
-        container.setAttribute('aria-label', '可横向滑动的表格');
-      });
-    }
-    enhance();
-    if (document.readyState === 'complete') window.setTimeout(enhance, 0);
-    else window.addEventListener('load', enhance, { once: true });
+    enhanceResponsiveTables();
+    if (document.readyState === 'complete') window.setTimeout(enhanceResponsiveTables, 0);
+    else window.addEventListener('load', enhanceResponsiveTables, { once: true });
   }
 
   function setupSiteRuntime() {
@@ -247,10 +248,15 @@
   }
   treeScroll.addEventListener('scroll', scheduleTreeScrollSave, { passive: true });
   panel.addEventListener('click', function (event) {
-    if (event.target.closest('a.siyuan-tree-link')) {
-      saveTreeScrollPosition();
-      setPanelOpen(false);
-    }
+    var link = event.target.closest('a.siyuan-tree-link');
+    if (!link) return;
+    saveTreeScrollPosition();
+    setPanelOpen(false);
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    var target = new URL(link.href, location.href);
+    if (target.origin !== location.origin || normalize(target.pathname) === knowledgeRoot) return;
+    event.preventDefault();
+    navigateKnowledge(target.href, true);
   });
   window.addEventListener('pagehide', saveTreeScrollPosition);
   restoreTreeScrollPosition();
@@ -279,6 +285,88 @@
   });
   document.body.appendChild(overlay);
   document.body.appendChild(toggle);
+
+  var pageCache = new Map();
+  var navigationController = null;
+
+  async function loadKnowledgePage(url, signal) {
+    var key = new URL(url, location.href).href;
+    if (pageCache.has(key)) return pageCache.get(key);
+    var request = fetch(key, { credentials: 'same-origin', signal: signal }).then(function (response) {
+      if (!response.ok) throw new Error('页面加载失败：' + response.status);
+      return response.text();
+    });
+    pageCache.set(key, request);
+    try { return await request; }
+    catch (error) { pageCache.delete(key); throw error; }
+  }
+
+  function updateCurrentTreeLink(path) {
+    Array.prototype.forEach.call(panel.querySelectorAll('a.siyuan-tree-link'), function (link) {
+      link.classList.toggle('is-current', normalize(new URL(link.href, location.href).pathname) === path);
+    });
+  }
+
+  async function navigateKnowledge(url, addHistory) {
+    var target = new URL(url, location.href);
+    var targetPath = normalize(target.pathname);
+    if (!(targetPath === knowledgeRoot || targetPath.indexOf(knowledgeRoot + '/') === 0)) {
+      location.href = target.href;
+      return;
+    }
+    navigationController?.abort();
+    var controller = new AbortController();
+    navigationController = controller;
+    var currentMain = document.querySelector('.main-inner');
+    if (!currentMain) return location.assign(target.href);
+    currentMain.setAttribute('aria-busy', 'true');
+    try {
+      var html = await loadKnowledgePage(target.href, controller.signal);
+      if (controller.signal.aborted) return;
+      var incoming = new DOMParser().parseFromString(html, 'text/html');
+      var incomingMain = incoming.querySelector('.main-inner');
+      if (!incomingMain) throw new Error('目标文档缺少正文区域');
+      var previousHeight = currentMain.getBoundingClientRect().height;
+      currentMain.style.minHeight = previousHeight + 'px';
+      currentMain.className = incomingMain.className;
+      currentMain.innerHTML = incomingMain.innerHTML;
+      var currentSidebar = document.querySelector('.sidebar-inner');
+      var incomingSidebar = incoming.querySelector('.sidebar-inner');
+      if (currentSidebar && incomingSidebar) currentSidebar.innerHTML = incomingSidebar.innerHTML;
+      document.title = incoming.title || document.title;
+      var incomingDescription = incoming.querySelector('meta[name="description"]');
+      var currentDescription = document.querySelector('meta[name="description"]');
+      if (incomingDescription && currentDescription) currentDescription.content = incomingDescription.content;
+      currentPath = targetPath;
+      updateCurrentTreeLink(currentPath);
+      if (addHistory) history.pushState({ siyuanPath: target.href }, '', target.href);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      enhanceResponsiveTables();
+      syncKnowledgeToc();
+      focusReferencedBlock();
+      window.requestAnimationFrame(function () {
+        currentMain.style.minHeight = '';
+        currentMain.removeAttribute('aria-busy');
+      });
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      currentMain.removeAttribute('aria-busy');
+      location.href = target.href;
+    }
+  }
+
+  panel.addEventListener('pointerover', function (event) {
+    var link = event.target.closest('a.siyuan-tree-link');
+    if (!link) return;
+    var target = new URL(link.href, location.href);
+    if (target.origin === location.origin && normalize(target.pathname) !== knowledgeRoot) loadKnowledgePage(target.href).catch(function () {});
+  }, { passive: true });
+
+  window.addEventListener('popstate', function () {
+    var path = normalize(location.pathname);
+    if (path !== knowledgeRoot && path.indexOf(knowledgeRoot + '/') === 0) navigateKnowledge(location.href, false);
+    else location.reload();
+  });
 
   var search = panel.querySelector('.siyuan-tree-search');
   search.addEventListener('input', function () {
@@ -349,6 +437,15 @@
   var tocSyncPending = false;
 
   function syncKnowledgeToc() {
+    tocContainer = document.querySelector('.sidebar-panel-container');
+    tocLinks = Array.prototype.slice.call(document.querySelectorAll('.post-toc .nav-link[href^="#"]'));
+    tocEntries = tocLinks.map(function (link) {
+      var hash = link.getAttribute('href').slice(1);
+      var id;
+      try { id = decodeURIComponent(hash); } catch (_) { id = hash; }
+      return { link: link, heading: document.getElementById(id) };
+    }).filter(function (entry) { return entry.heading; });
+    if (lastTocLink && tocLinks.indexOf(lastTocLink) < 0) lastTocLink = null;
     if (!tocEntries.length) return;
     var current = tocEntries[0];
     var threshold = Math.min(180, window.innerHeight * .24);

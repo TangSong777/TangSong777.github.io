@@ -6,6 +6,7 @@
   <title>文章工作台 · YangHanLin</title>
   <link rel="icon" type="image/jpeg" href="/site-preview/images/avatar.jpg?v=20260904">
   <link rel="apple-touch-icon" href="/site-preview/images/avatar.jpg?v=20260904">
+  <link rel="stylesheet" href="/vendor/toastui-editor.css">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -16,6 +17,8 @@
       <div><strong>文章工作台</strong><small>Markdown · Hexo · Git</small></div>
     </div>
     <div class="top-actions">
+      <button id="siyuanPrivacyButton" class="settings-button privacy-button" type="button" title="思源隐私规则">思源隐私</button>
+      <button id="settingsButton" class="settings-button" type="button" title="工作台设置" aria-label="打开工作台设置">设置</button>
       <span id="identityState" class="identity-state"></span>
       <span id="saveState" class="save-state">尚未选择文章</span>
       <button id="saveButton" class="button secondary" disabled>保存 <kbd>Ctrl S</kbd></button>
@@ -49,33 +52,27 @@
           <div class="document-actions">
             <button id="metadataButton" class="rename-button metadata-button" title="编辑标题、发布时间、分类等文章信息">信息</button>
             <button id="renameButton" class="rename-button" title="修改 Markdown 文件名">重命名</button>
+            <button id="markdownHelpButton" class="rename-button" type="button" title="查看 Markdown 语法">语法</button>
             <div class="view-tabs" role="tablist">
-              <button class="view-tab active" data-view="split">分栏</button>
-              <button class="view-tab" data-view="write">编辑</button>
-              <button class="view-tab" data-view="preview">预览</button>
+              <button class="view-tab active" data-view="wysiwyg">所见即所得</button>
+              <button class="view-tab" data-view="source">源码</button>
             </div>
           </div>
         </div>
-        <div class="format-bar" aria-label="Markdown 工具栏">
-          <button data-wrap="**" title="加粗">B</button>
-          <button data-wrap="*" title="斜体"><em>I</em></button>
-          <button data-prefix="## " title="标题">H2</button>
-          <button data-prefix="> " title="引用">❞</button>
-          <button data-prefix="- " title="列表">☷</button>
-          <button data-wrap="`" title="行内代码">&lt;/&gt;</button>
-          <button data-action="link" title="链接">↗</button>
-          <label class="image-button" title="插入图片">▧<input id="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple></label>
-          <span class="format-hint">可粘贴或拖入图片</span>
-        </div>
-        <div id="splitPane" class="split-pane">
-          <div class="write-pane">
-            <textarea id="markdownEditor" spellcheck="false" aria-label="Markdown 编辑器"></textarea>
-            <div class="pane-footer"><span id="cursorPosition">行 1，列 1</span><span id="wordCount">0 字</span></div>
+        <div id="editingSurface" class="editing-surface wysiwyg-mode">
+          <div id="richEditor" class="rich-editor" aria-label="所见即所得编辑器"></div>
+          <div class="source-pane">
+            <div class="format-bar" aria-label="Markdown 工具栏">
+              <button data-wrap="**" title="加粗">B</button><button data-wrap="*" title="斜体"><em>I</em></button>
+              <button data-prefix="## " title="标题">H2</button><button data-prefix="> " title="引用">❞</button>
+              <button data-prefix="- " title="列表">☷</button><button data-wrap="`" title="行内代码">&lt;/&gt;</button>
+              <button data-action="link" title="链接">↗</button><button data-action="divider" title="插入分割线">—</button>
+              <label class="image-button" title="插入图片">▧<input id="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple></label>
+              <span class="format-hint">源码模式 · 可粘贴或拖入图片</span>
+            </div>
+            <textarea id="markdownEditor" spellcheck="false" aria-label="Markdown 源码编辑器"></textarea>
           </div>
-          <div class="preview-pane">
-            <div id="previewStatus" class="preview-status">正在准备 Hexo 预览…</div>
-            <iframe id="markdownPreview" class="site-preview" title="与博客一致的文章预览" sandbox="allow-same-origin"></iframe>
-          </div>
+          <div class="pane-footer"><span id="cursorPosition">所见即所得</span><span id="wordCount">0 字</span></div>
         </div>
       </div>
     </section>
@@ -87,6 +84,47 @@
       <label>文章标题<input id="newTitle" required placeholder="例如：如何搭建个人博客"></label>
       <label>文章 slug<input id="newSlug" required placeholder="例如：build-personal-blog"><small>用于文件名和网址，发布后不建议修改。</small></label>
       <div class="dialog-actions"><button id="cancelCreate" type="button" class="button secondary">取消</button><button id="createButton" type="submit" class="button primary">创建</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="settings-dialog">
+    <form id="settingsForm" method="dialog">
+      <span class="eyebrow">WORKSPACE SETTINGS</span><h2>工作台设置</h2>
+      <p>设置保存在 Rock 本机，刷新页面或重启工作台后仍然有效。</p>
+      <label>自动保存间隔
+        <div class="setting-input-row"><input id="autoSaveMinutes" type="number" min="1" max="1440" step="1" required><span>分钟</span></div>
+        <small>文档持续偏离上次保存状态达到该时长后自动保存，可设置 1～1440 分钟。</small>
+      </label>
+      <div class="setting-presets" aria-label="常用自动保存间隔">
+        <button type="button" data-autosave-minutes="1">1 分钟</button>
+        <button type="button" data-autosave-minutes="3">3 分钟</button>
+        <button type="button" data-autosave-minutes="5">5 分钟</button>
+        <button type="button" data-autosave-minutes="10">10 分钟</button>
+        <button type="button" data-autosave-minutes="30">30 分钟</button>
+      </div>
+      <div class="dialog-actions"><button id="cancelSettings" type="button" class="button secondary">取消</button><button type="submit" class="button primary">保存设置</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="siyuanPrivacyDialog" class="privacy-dialog">
+    <form id="siyuanPrivacyForm" method="dialog">
+      <div class="privacy-dialog-header">
+        <div><span class="eyebrow">SIYUAN PRIVACY</span><h2>思源隐私规则</h2></div>
+        <button id="closeSiyuanPrivacy" class="dialog-close" type="button" aria-label="关闭思源隐私规则">×</button>
+      </div>
+      <p>勾选的文档不会发布；指定的 IP、ID 或其他文本只在公开副本中替换为 <code>████</code>，思源原文保持不变。</p>
+      <section class="privacy-section">
+        <div class="privacy-section-title"><strong>不发布的文档</strong><span id="privateDocumentCount">0 篇</span></div>
+        <input id="privateDocumentSearch" type="search" placeholder="搜索文档标题或路径">
+        <div id="privateDocumentList" class="private-document-list"></div>
+        <label>补充文档路径<textarea id="manualPrivateDocuments" rows="3" placeholder="列表中找不到时，每行填写一个相对于思源笔记本的 Markdown 路径"></textarea></label>
+      </section>
+      <section class="privacy-section">
+        <div class="privacy-section-title"><strong>需要遮盖的文本</strong><span>逐字匹配，不区分大小写</span></div>
+        <textarea id="privateValues" rows="6" placeholder="每行一个值，例如：&#10;192.168.1.10&#10;8056c2e21c000001"></textarea>
+        <small>至少 4 个字符。这里适合填写你已经知道的 IP、设备 ID、网络 ID、账号或名称。</small>
+      </section>
+      <div class="dialog-actions"><button id="cancelSiyuanPrivacy" type="button" class="button secondary">取消</button><button type="submit" class="button primary">保存隐私规则</button></div>
     </form>
   </dialog>
 
@@ -127,8 +165,50 @@
     </form>
   </dialog>
 
+  <dialog id="markdownHelpDialog" class="markdown-help-dialog">
+    <div class="markdown-help-header">
+      <div><span class="eyebrow">MARKDOWN GUIDE</span><h2>Markdown 语法速查</h2></div>
+      <button id="closeMarkdownHelp" class="dialog-close" type="button" aria-label="关闭 Markdown 语法说明">×</button>
+    </div>
+    <div class="markdown-help-content">
+      <section><h3>文字与段落</h3><table><tbody>
+        <tr><th>标题</th><td><code>## 二级标题</code></td></tr>
+        <tr><th>粗体</th><td><code>**粗体文字**</code></td></tr>
+        <tr><th>斜体</th><td><code>*斜体文字*</code></td></tr>
+        <tr><th>删除线</th><td><code>~~删除文字~~</code></td></tr>
+        <tr><th>段落</th><td>段落之间留一个空行</td></tr>
+        <tr><th>换行</th><td>行末输入两个空格后回车</td></tr>
+      </tbody></table></section>
+      <section><h3>列表与引用</h3><table><tbody>
+        <tr><th>无序列表</th><td><code>- 列表项目</code></td></tr>
+        <tr><th>有序列表</th><td><code>1. 列表项目</code></td></tr>
+        <tr><th>任务列表</th><td><code>- [ ] 待办</code>　<code>- [x] 完成</code></td></tr>
+        <tr><th>引用</th><td><code>&gt; 引用内容</code></td></tr>
+        <tr><th>嵌套</th><td>在子项目之前缩进两个空格</td></tr>
+      </tbody></table></section>
+      <section><h3>链接与媒体</h3><table><tbody>
+        <tr><th>链接</th><td><code>[链接文字](https://example.com)</code></td></tr>
+        <tr><th>图片</th><td><code>![图片说明](/images/example.png)</code></td></tr>
+        <tr><th>自动链接</th><td><code>&lt;https://example.com&gt;</code></td></tr>
+      </tbody></table></section>
+      <section><h3>代码与结构</h3><table><tbody>
+        <tr><th>行内代码</th><td><code>`代码`</code></td></tr>
+        <tr><th>代码块</th><td><code>```js<br>const value = 1;<br>```</code></td></tr>
+        <tr><th>分割线</th><td><code>---</code></td></tr>
+        <tr><th>表格</th><td><code>| 名称 | 说明 |<br>| --- | --- |<br>| A | 内容 |</code></td></tr>
+        <tr><th>转义</th><td><code>\*不作为斜体*</code></td></tr>
+      </tbody></table></section>
+      <section><h3>Hexo 文章常用</h3><table><tbody>
+        <tr><th>摘要分界</th><td><code>&lt;!-- more --&gt;</code></td></tr>
+        <tr><th>文章信息</th><td>点击工作台上方的“信息”编辑标题、日期、分类和标签</td></tr>
+        <tr><th>快捷保存</th><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td></tr>
+      </tbody></table></section>
+    </div>
+  </dialog>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="/metadata.js"></script>
+  <script src="/vendor/toastui-editor.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

@@ -7,13 +7,54 @@ if (mobileKeyFromUrl) {
 const state = {
   token: '', articles: [], currentPath: '', content: '', dirty: false, publishing: false,
   undoStack: [], redoStack: [], pendingEdit: null, applyingEdit: false,
-  identity: null, draftTimer: null,
+  identity: null, draftTimer: null, autoSaveTimer: null, autoSaving: false,
+  autoSaveMinutes: 3, dirtySince: null,
+  siyuanDocuments: [], privateSelected: new Set(),
   accessKey: mobileKeyFromUrl || sessionStorage.getItem('articleStudioKey') || '',
 };
 const $ = (selector) => document.querySelector(selector);
-const editor = $('#markdownEditor');
-const preview = $('#markdownPreview');
+const sourceEditor = $('#markdownEditor');
+let richEditor;
+let editorMode = 'wysiwyg';
+let richFrontMatter = '';
+let suppressRichChange = false;
+let richChangeFrame;
+
+function splitEditorDocument(value) {
+  const text = String(value || '');
+  const match = text.match(/^---\s*\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/);
+  return match ? { frontMatter: match[0], body: text.slice(match[0].length) } : { frontMatter: '', body: text };
+}
+
+function setEditorContent(value) {
+  const text = String(value || '');
+  const parts = splitEditorDocument(text);
+  richFrontMatter = parts.frontMatter;
+  sourceEditor.value = text;
+  if (richEditor) {
+    suppressRichChange = true;
+    richEditor.setMarkdown(parts.body, false);
+    suppressRichChange = false;
+  }
+}
+
+function currentEditorContent() {
+  if (editorMode === 'wysiwyg' && richEditor) return `${richFrontMatter}${richEditor.getMarkdown()}`;
+  return sourceEditor.value;
+}
+
+const editor = {
+  get value() { return currentEditorContent(); },
+  set value(value) { setEditorContent(value); },
+  get selectionStart() { return sourceEditor.selectionStart; },
+  get selectionEnd() { return sourceEditor.selectionEnd; },
+  setSelectionRange(...args) { sourceEditor.setSelectionRange(...args); },
+  setRangeText(...args) { sourceEditor.setRangeText(...args); },
+  focus(options) { if (editorMode === 'wysiwyg' && richEditor) richEditor.focus(); else sourceEditor.focus(options); },
+  addEventListener(...args) { sourceEditor.addEventListener(...args); },
+};
 const articleMetadata = globalThis.ArticleMetadata;
+const AUTO_SAVE_RETRY_MS = 60 * 1000;
 
 async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) };
@@ -51,112 +92,68 @@ function titleFromContent(content, fallback) {
   return match ? match[1].trim().replace(/^['"]|['"]$/g, '') : fallback.replace(/\.md$/i, '');
 }
 
-let previewTimer;
-let previewRevision = 0;
-let renderedPreviewHtml = '';
-const PREVIEW_DEBOUNCE_MS = 500;
-
-function previewDocument(html) {
-  return `<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base href="${location.origin}/">
-  <link rel="stylesheet" href="/site-preview/css/main.css">
-  <style>
-    html, body { min-height: 100%; margin: 0; background: #fff; }
-    .main-inner.post.posts-expand { width: auto; max-width: none; margin: 0; padding: 32px clamp(24px, 6vw, 72px); }
-    .post-block { margin: 0; }
-    @media (max-width: 600px) {
-      .main-inner.post.posts-expand { padding: 24px 20px; }
-    }
-  </style>
-</head>
-<body>
-  <main class="main">
-    <div class="main-inner post posts-expand">
-      <div class="post-block">
-        <article class="post-content" lang="zh-CN">
-          <div class="post-body" id="previewBody">${html}</div>
-        </article>
-      </div>
-    </div>
-  </main>
-</body>
-</html>`;
-}
-
-function applyPreviewHtml(html, { resetScroll = false } = {}) {
-  const document = preview.contentDocument;
-  const body = document?.getElementById('previewBody');
-  const status = $('#previewStatus');
-
-  if (!body) {
-    preview.addEventListener('load', () => {
-      renderedPreviewHtml = html;
-      status.classList.add('hidden');
-    }, { once: true });
-    preview.srcdoc = previewDocument(html);
-    return;
-  }
-
-  if (html === renderedPreviewHtml) {
-    status.classList.add('hidden');
-    return;
-  }
-
-  const scroller = document.scrollingElement || document.documentElement;
-  const previousScrollTop = scroller?.scrollTop || 0;
-  body.innerHTML = html;
-  renderedPreviewHtml = html;
-
-  requestAnimationFrame(() => {
-    if (scroller) {
-      const maximumScrollTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
-      scroller.scrollTop = resetScroll ? 0 : Math.min(previousScrollTop, maximumScrollTop);
-    }
-    status.classList.add('hidden');
-  });
-}
-
-function renderPreview({ immediate = false, resetScroll = false } = {}) {
-  const raw = stripFrontMatter(editor.value);
+function renderPreview() {
+  const content = editor.value;
+  const raw = stripFrontMatter(content);
   $('#wordCount').textContent = `${raw.replace(/\s/g, '').length} 字`;
-  $('#documentTitle').textContent = titleFromContent(editor.value, state.currentPath);
-
-  clearTimeout(previewTimer);
-  const revision = ++previewRevision;
-  const status = $('#previewStatus');
-  if (!preview.getAttribute('srcdoc')) {
-    status.textContent = '正在使用 Hexo 渲染预览…';
-    status.className = 'preview-status';
-  }
-  previewTimer = setTimeout(async () => {
-    try {
-      const data = await api('/api/preview', {
-        method: 'POST',
-        body: JSON.stringify({ path: state.currentPath, content: editor.value }),
-      });
-      if (revision !== previewRevision) return;
-      applyPreviewHtml(data.html, { resetScroll });
-    } catch (error) {
-      if (revision !== previewRevision) return;
-      status.textContent = `预览渲染失败：${error.message}`;
-      status.className = 'preview-status error';
-    }
-  }, immediate ? 0 : PREVIEW_DEBOUNCE_MS);
+  $('#documentTitle').textContent = titleFromContent(content, state.currentPath);
 }
 
 function updateCursor() {
+  if (editorMode === 'wysiwyg') {
+    $('#cursorPosition').textContent = '所见即所得';
+    return;
+  }
   const before = editor.value.slice(0, editor.selectionStart);
   const rows = before.split('\n');
   $('#cursorPosition').textContent = `行 ${rows.length}，列 ${rows.at(-1).length + 1}`;
 }
 
+function clearAutoSaveTimer() {
+  clearTimeout(state.autoSaveTimer);
+  state.autoSaveTimer = null;
+}
+
+function autoSaveDelayMs() {
+  return state.autoSaveMinutes * 60 * 1000;
+}
+
+function scheduleAutoSave(delay) {
+  if (!state.currentPath || !state.dirty || state.autoSaveTimer) return;
+  const elapsed = state.dirtySince ? Date.now() - state.dirtySince : 0;
+  const wait = delay ?? Math.max(0, autoSaveDelayMs() - elapsed);
+  state.autoSaveTimer = setTimeout(async () => {
+    state.autoSaveTimer = null;
+    if (!state.dirty || !state.currentPath) return;
+    if (state.publishing || state.autoSaving) {
+      scheduleAutoSave(AUTO_SAVE_RETRY_MS);
+      return;
+    }
+    state.autoSaving = true;
+    try {
+      const data = await saveArticle(false);
+      const suffix = data?.warnings?.length ? `，发现 ${data.warnings.length} 项可能的敏感内容` : '';
+      toast(`已自动保存${suffix}`);
+    } catch (error) {
+      toast(`自动保存失败：${error.message}；将在 1 分钟后重试`, true);
+      scheduleAutoSave(AUTO_SAVE_RETRY_MS);
+    } finally {
+      state.autoSaving = false;
+    }
+  }, wait);
+}
+
 function setDirty(dirty) {
+  const wasDirty = state.dirty;
   state.dirty = dirty;
-  $('#saveState').textContent = state.currentPath ? (dirty ? '有未保存修改' : '已保存到本地') : '尚未选择文章';
+  if (dirty) {
+    if (!wasDirty || !state.dirtySince) state.dirtySince = Date.now();
+    scheduleAutoSave();
+  } else {
+    state.dirtySince = null;
+    clearAutoSaveTimer();
+  }
+  $('#saveState').textContent = state.currentPath ? (dirty ? `有未保存修改 · ${state.autoSaveMinutes} 分钟后自动保存` : '已保存到本地') : '尚未选择文章';
   $('#saveButton').disabled = !state.currentPath || !dirty || state.publishing;
   $('#publishButton').disabled = !state.currentPath || state.publishing;
 }
@@ -241,10 +238,17 @@ async function selectArticle(path) {
 
 async function saveArticle(showToast = true) {
   if (!state.currentPath) return;
-  const data = await api('/api/save', { method: 'POST', body: JSON.stringify({ path: state.currentPath, content: editor.value }) });
-  state.content = editor.value;
-  removeDraft();
-  setDirty(false);
+  const savedPath = state.currentPath;
+  const savedContent = editor.value;
+  const data = await api('/api/save', { method: 'POST', body: JSON.stringify({ path: savedPath, content: savedContent }) });
+  if (state.currentPath !== savedPath) return data;
+  state.content = savedContent;
+  const stillDirty = editor.value !== savedContent;
+  if (!stillDirty) removeDraft();
+  state.dirty = false;
+  state.dirtySince = null;
+  clearAutoSaveTimer();
+  setDirty(stillDirty);
   await loadArticles();
   if (showToast) toast(data.warnings.length ? `已保存；发现 ${data.warnings.length} 项可能的敏感内容` : data.message);
   return data;
@@ -440,6 +444,17 @@ function prefixLines(prefix) {
   applyUndoableEdit(start, end, selected, start + selected.length);
 }
 
+function insertDivider() {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const before = editor.value.slice(0, start);
+  const after = editor.value.slice(end);
+  const prefix = before.length && !before.endsWith('\n\n') ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
+  const suffix = after.length && !after.startsWith('\n\n') ? (after.startsWith('\n') ? '\n' : '\n\n') : '';
+  const replacement = `${prefix}---${suffix}`;
+  applyUndoableEdit(start, end, replacement, start + prefix.length + 3);
+}
+
 async function fileToDataUrl(file) {
   return await new Promise((resolvePromise, reject) => {
     const reader = new FileReader();
@@ -449,15 +464,20 @@ async function fileToDataUrl(file) {
   });
 }
 
+async function uploadImageFile(file) {
+  if (!state.currentPath) throw new Error('请先创建或选择文章。');
+  return api('/api/image', {
+    method: 'POST',
+    body: JSON.stringify({ articlePath: state.currentPath, name: file.name, mime: file.type, data: await fileToDataUrl(file) }),
+  });
+}
+
 async function insertImages(files) {
   if (!state.currentPath) return toast('请先创建或选择文章。', true);
   for (const file of [...files].filter((item) => item.type.startsWith('image/'))) {
     try {
       toast(`正在保存图片：${file.name}`);
-      const data = await api('/api/image', {
-        method: 'POST',
-        body: JSON.stringify({ articlePath: state.currentPath, name: file.name, mime: file.type, data: await fileToDataUrl(file) }),
-      });
+      const data = await uploadImageFile(file);
       const alt = file.name.replace(/\.[^.]+$/, '');
       const markdown = `![${alt}](${data.markdownPath})`;
       applyUndoableEdit(editor.selectionStart, editor.selectionEnd, markdown, editor.selectionStart + markdown.length);
@@ -541,16 +561,160 @@ async function publishArticle(event) {
   }
 }
 
+function handleRichEditorChange() {
+  if (suppressRichChange) return;
+  cancelAnimationFrame(richChangeFrame);
+  richChangeFrame = requestAnimationFrame(() => {
+    sourceEditor.value = currentEditorContent();
+    refreshEditorState();
+  });
+}
+
+function initializeRichEditor() {
+  if (!globalThis.toastui?.Editor) throw new Error('所见即所得编辑器加载失败。');
+  richEditor = new globalThis.toastui.Editor({
+    el: $('#richEditor'),
+    height: '100%',
+    initialValue: '',
+    initialEditType: 'wysiwyg',
+    previewStyle: 'tab',
+    hideModeSwitch: true,
+    autofocus: false,
+    usageStatistics: false,
+    language: 'zh-CN',
+    toolbarItems: [
+      ['heading', 'bold', 'italic', 'strike'],
+      ['hr', 'quote'],
+      ['ul', 'ol', 'task', 'indent', 'outdent'],
+      ['table', 'image', 'link'],
+      ['code', 'codeblock'],
+    ],
+    events: { change: handleRichEditorChange },
+    hooks: {
+      addImageBlobHook(blob, callback) {
+        if (!state.currentPath) {
+          toast('请先创建或选择文章。', true);
+          return false;
+        }
+        toast(`正在保存图片：${blob.name || '粘贴的图片'}`);
+        uploadImageFile(blob).then((data) => {
+          callback(data.markdownPath, (blob.name || '图片').replace(/\.[^.]+$/, ''));
+          toast('图片已插入。');
+        }).catch((error) => toast(error.message, true));
+        return false;
+      },
+    },
+  });
+}
+
+function switchEditorMode(mode) {
+  if (mode === editorMode) return;
+  if (mode === 'source') {
+    sourceEditor.value = currentEditorContent();
+    editorMode = 'source';
+    $('#editingSurface').className = 'editing-surface source-mode';
+    sourceEditor.focus({ preventScroll: true });
+  } else {
+    const parts = splitEditorDocument(sourceEditor.value);
+    richFrontMatter = parts.frontMatter;
+    suppressRichChange = true;
+    richEditor.setMarkdown(parts.body, false);
+    suppressRichChange = false;
+    editorMode = 'wysiwyg';
+    $('#editingSurface').className = 'editing-surface wysiwyg-mode';
+    richEditor.focus();
+  }
+  document.querySelectorAll('.view-tab').forEach((item) => item.classList.toggle('active', item.dataset.view === mode));
+  refreshEditorState();
+}
+
 async function init() {
   try {
     const config = await api('/api/config');
     state.token = config.token;
     state.identity = config.identity;
+    state.autoSaveMinutes = config.settings?.autoSaveMinutes || 3;
     $('#identityState').textContent = config.identity?.email || (config.authMode === 'cloudflare' ? '已安全登录' : '本地模式');
     await loadArticles();
   } catch (error) {
     toast(`无法连接本地后台：${error.message}`, true);
   }
+}
+
+function openSettingsDialog() {
+  $('#autoSaveMinutes').value = state.autoSaveMinutes;
+  $('#settingsDialog').showModal();
+  $('#autoSaveMinutes').focus();
+  $('#autoSaveMinutes').select();
+}
+
+function linesFrom(value) {
+  return [...new Set(String(value || '').split(/\r?\n/).map((item) => item.trim()).filter(Boolean))];
+}
+
+function updatePrivateDocumentCount() {
+  const manual = linesFrom($('#manualPrivateDocuments').value);
+  $('#privateDocumentCount').textContent = `${new Set([...state.privateSelected, ...manual]).size} 篇`;
+}
+
+function renderPrivateDocumentList() {
+  const query = $('#privateDocumentSearch').value.trim().toLowerCase();
+  const documents = state.siyuanDocuments.filter((item) => `${item.title} ${item.path}`.toLowerCase().includes(query));
+  const list = $('#privateDocumentList');
+  list.innerHTML = documents.length ? documents.map((item) => `
+    <label class="private-document-item">
+      <input type="checkbox" data-private-document="${escapeHtml(item.path)}" ${state.privateSelected.has(item.path) ? 'checked' : ''}>
+      <span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.path)}</small></span>
+    </label>`).join('') : '<div class="local-note">没有找到可选择的文档，可在下方手动填写路径。</div>';
+  list.querySelectorAll('[data-private-document]').forEach((checkbox) => checkbox.addEventListener('change', () => {
+    if (checkbox.checked) state.privateSelected.add(checkbox.dataset.privateDocument);
+    else state.privateSelected.delete(checkbox.dataset.privateDocument);
+    updatePrivateDocumentCount();
+  }));
+  updatePrivateDocumentCount();
+}
+
+async function openSiyuanPrivacyDialog() {
+  try {
+    const data = await api('/api/siyuan-privacy');
+    state.siyuanDocuments = data.documents || [];
+    const known = new Set(state.siyuanDocuments.map((item) => item.path));
+    state.privateSelected = new Set((data.rules?.excludedDocuments || []).filter((item) => known.has(item)));
+    $('#manualPrivateDocuments').value = (data.rules?.excludedDocuments || []).filter((item) => !known.has(item)).join('\n');
+    $('#privateValues').value = (data.rules?.privateValues || []).join('\n');
+    $('#privateDocumentSearch').value = '';
+    renderPrivateDocumentList();
+    $('#siyuanPrivacyDialog').showModal();
+  } catch (error) { toast(`无法读取思源隐私规则：${error.message}`, true); }
+}
+
+async function saveSiyuanPrivacy(event) {
+  event.preventDefault();
+  try {
+    const excludedDocuments = [...new Set([...state.privateSelected, ...linesFrom($('#manualPrivateDocuments').value)])];
+    const privateValues = linesFrom($('#privateValues').value);
+    const data = await api('/api/siyuan-privacy', {
+      method: 'POST', body: JSON.stringify({ excludedDocuments, privateValues }),
+    });
+    $('#siyuanPrivacyDialog').close();
+    toast(`隐私规则已保存：排除 ${data.rules.excludedDocuments.length} 篇文档，遮盖 ${data.rules.privateValues.length} 个值`);
+  } catch (error) { toast(error.message, true); }
+}
+
+async function saveSettings(event) {
+  event.preventDefault();
+  try {
+    const data = await api('/api/settings', {
+      method: 'POST',
+      body: JSON.stringify({ autoSaveMinutes: Number($('#autoSaveMinutes').value) }),
+    });
+    state.autoSaveMinutes = data.settings.autoSaveMinutes;
+    clearAutoSaveTimer();
+    if (state.dirty) scheduleAutoSave();
+    setDirty(state.dirty);
+    $('#settingsDialog').close();
+    toast(`自动保存间隔已设置为 ${state.autoSaveMinutes} 分钟`);
+  } catch (error) { toast(error.message, true); }
 }
 
 editor.addEventListener('beforeinput', (event) => {
@@ -612,12 +776,10 @@ document.querySelectorAll('.format-bar button').forEach((button) => {
     if (button.dataset.wrap) replaceSelection(button.dataset.wrap);
     else if (button.dataset.prefix) prefixLines(button.dataset.prefix);
     else if (button.dataset.action === 'link') replaceSelection('[', '](https://)', '链接文字');
+    else if (button.dataset.action === 'divider') insertDivider();
   });
 });
-document.querySelectorAll('.view-tab').forEach((button) => button.addEventListener('click', () => {
-  document.querySelectorAll('.view-tab').forEach((item) => item.classList.toggle('active', item === button));
-  $('#splitPane').className = `split-pane ${button.dataset.view === 'write' ? 'write-only' : button.dataset.view === 'preview' ? 'preview-only' : ''}`;
-}));
+document.querySelectorAll('.view-tab').forEach((button) => button.addEventListener('click', () => switchEditorMode(button.dataset.view)));
 $('#imageInput').addEventListener('change', (event) => { insertImages(event.target.files); event.target.value = ''; });
 $('#searchInput').addEventListener('input', renderList);
 $('#newButton').addEventListener('click', openNewDialog);
@@ -639,8 +801,27 @@ $('#renameForm').addEventListener('submit', renameArticle);
 $('#cancelRename').addEventListener('click', () => $('#renameDialog').close());
 $('#publishForm').addEventListener('submit', publishArticle);
 $('#cancelPublish').addEventListener('click', () => $('#publishDialog').close());
+$('#settingsButton').addEventListener('click', openSettingsDialog);
+$('#settingsForm').addEventListener('submit', saveSettings);
+$('#cancelSettings').addEventListener('click', () => $('#settingsDialog').close());
+document.querySelectorAll('[data-autosave-minutes]').forEach((button) => button.addEventListener('click', () => {
+  $('#autoSaveMinutes').value = button.dataset.autosaveMinutes;
+}));
+$('#siyuanPrivacyButton').addEventListener('click', openSiyuanPrivacyDialog);
+$('#siyuanPrivacyForm').addEventListener('submit', saveSiyuanPrivacy);
+$('#closeSiyuanPrivacy').addEventListener('click', () => $('#siyuanPrivacyDialog').close());
+$('#cancelSiyuanPrivacy').addEventListener('click', () => $('#siyuanPrivacyDialog').close());
+$('#privateDocumentSearch').addEventListener('input', renderPrivateDocumentList);
+$('#manualPrivateDocuments').addEventListener('input', updatePrivateDocumentCount);
+$('#markdownHelpButton').addEventListener('click', () => $('#markdownHelpDialog').showModal());
+$('#closeMarkdownHelp').addEventListener('click', () => $('#markdownHelpDialog').close());
 $('#mobileMenuButton').addEventListener('click', () => document.body.classList.contains('article-panel-open') ? closeArticlePanel() : openArticlePanel());
 $('#panelBackdrop').addEventListener('click', closeArticlePanel);
 $('#closePanelButton').addEventListener('click', closeArticlePanel);
 window.addEventListener('beforeunload', (event) => { if (state.dirty) { event.preventDefault(); event.returnValue = ''; } });
-init();
+try {
+  initializeRichEditor();
+  init();
+} catch (error) {
+  toast(error.message, true);
+}

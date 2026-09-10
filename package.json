@@ -11,6 +11,7 @@
     "article:studio": "node ./tools/article-studio/server.mjs",
     "article:studio:no-open": "node ./tools/article-studio/server.mjs --no-open",
     "article:studio:mobile": "node ./tools/article-studio/server.mjs --network --no-open",
+    "article:studio:bundle": "esbuild ./tools/article-studio/vendor-entry.js --bundle --format=iife --platform=browser --target=es2020 --outfile=./tools/article-studio/public/vendor/toastui-editor.bundle.js",
     "article:studio:test": "node --test ./tools/article-studio/server.test.mjs",
     "test": "node --test ./tools/tests/publisher.test.mjs ./tools/article-studio/server.test.mjs ./tools/article-studio/metadata.test.mjs",
     "siyuan:check": "node ./tools/run-siyuan.mjs check",
@@ -28,6 +29,7 @@
     "version": "8.1.2"
   },
   "dependencies": {
+    "@toast-ui/editor": "^3.2.2",
     "hexo": "^8.0.0",
     "hexo-generator-archive": "^2.0.0",
     "hexo-generator-category": "^2.0.0",
@@ -40,5 +42,8 @@
     "hexo-theme-landscape": "^1.0.0",
     "hexo-theme-next": "^8.29.0",
     "yauzl": "3.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }
