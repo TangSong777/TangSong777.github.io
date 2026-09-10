@@ -16,7 +16,7 @@ avatar:
 menu:
   home: / || fa fa-home
   学习笔记: /siyuan/ || fa fa-book-open
-  archives: /archives/ || fa fa-archive
+  博客: /archives/ || fa fa-archive
 
 sidebar:
   position: right
