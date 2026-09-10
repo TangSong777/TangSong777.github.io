@@ -1,7 +1,7 @@
 ---
 title: 'daily note'
 date: '2026-08-04T00:17:25+08:00'
-updated: '2026-08-30T12:39:19+08:00'
+updated: '2026-09-10T09:04:24+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,8 +15,10 @@ categories:
 
 - 📑 [2026](/siyuan/daily-note/2026/)
 
+  - 📄 [09](/siyuan/daily-note/2026/09/)
   - 📑 [08](/siyuan/daily-note/2026/08/)
 
+    - 📄 [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
     - 📄 [2026-08-27](/siyuan/daily-note/2026/08/2026-08-27/)
     - 📄 [2026-08-26](/siyuan/daily-note/2026/08/2026-08-26/)
     - 📄 [2026-08-25](/siyuan/daily-note/2026/08/2026-08-25/)
@@ -36,6 +38,7 @@ categories:
 
 ### 本文引用
 - [08](/siyuan/daily-note/2026/08/)
+- [09](/siyuan/daily-note/2026/09/)
 - [2026](/siyuan/daily-note/2026/)
 - [2026-08-03](/siyuan/daily-note/2026/08/2026-08-03/)
 - [2026-08-04](/siyuan/daily-note/2026/08/2026-08-04/)
@@ -49,6 +52,7 @@ categories:
 - [2026-08-25](/siyuan/daily-note/2026/08/2026-08-25/)
 - [2026-08-26](/siyuan/daily-note/2026/08/2026-08-26/)
 - [2026-08-27](/siyuan/daily-note/2026/08/2026-08-27/)
+- [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
 
 ### 反向引用
 - [学习笔记](/siyuan/)

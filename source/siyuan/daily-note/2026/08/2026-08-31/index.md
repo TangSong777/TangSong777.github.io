@@ -29,5 +29,6 @@ categories:
 
 ### 反向引用
 - [学习笔记](/siyuan/)
+- [daily note](/siyuan/daily-note/)
 
 </section>
