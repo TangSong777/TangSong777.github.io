@@ -13,6 +13,7 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 const editor = $('#markdownEditor');
 const preview = $('#markdownPreview');
+const articleMetadata = globalThis.ArticleMetadata;
 
 async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) };
@@ -256,6 +257,52 @@ function openRenameDialog() {
   $('#renameDialog').showModal();
   $('#renameFileName').focus();
   $('#renameFileName').select();
+}
+
+function openMetadataDialog() {
+  if (!state.currentPath) return;
+  const metadata = articleMetadata.read(editor.value);
+  $('#metadataTitle').value = metadata.title || titleFromContent(editor.value, state.currentPath);
+  $('#metadataDate').value = metadata.date || articleMetadata.currentLocalDateTime();
+  $('#metadataUpdated').value = metadata.updated;
+  $('#metadataCategories').value = metadata.categories.join(', ');
+  $('#metadataTags').value = metadata.tags.join(', ');
+  $('#metadataDescription').value = metadata.description;
+  $('#metadataDialog').showModal();
+  $('#metadataTitle').focus();
+  $('#metadataTitle').select();
+}
+
+function updateArticleMetadata(event) {
+  event.preventDefault();
+  if (!state.currentPath) return;
+  try {
+    const before = editorSnapshot();
+    const oldBodyStart = articleMetadata.splitDocument(before.value).bodyStart;
+    const value = articleMetadata.update(before.value, {
+      title: $('#metadataTitle').value,
+      date: $('#metadataDate').value,
+      updated: $('#metadataUpdated').value,
+      categories: $('#metadataCategories').value,
+      tags: $('#metadataTags').value,
+      description: $('#metadataDescription').value,
+    });
+    const newBodyStart = articleMetadata.splitDocument(value).bodyStart;
+    const movePosition = (position) => position >= oldBodyStart ? newBodyStart + position - oldBodyStart : Math.min(position, newBodyStart);
+
+    state.applyingEdit = true;
+    editor.value = value;
+    editor.setSelectionRange(movePosition(before.start), movePosition(before.end));
+    state.applyingEdit = false;
+    const after = editorSnapshot();
+    recordEdit(before, after, 'metadata');
+    refreshEditorState();
+    $('#metadataDialog').close();
+    editor.focus({ preventScroll: true });
+    toast(before.value === value ? '文章信息没有变化。' : '文章信息已更新；按 Ctrl+S 保存。');
+  } catch (error) {
+    toast(error.message, true);
+  }
 }
 
 async function renameArticle(event) {
@@ -581,6 +628,12 @@ $('#newForm').addEventListener('submit', createArticle);
 $('#cancelCreate').addEventListener('click', () => $('#newDialog').close());
 $('#saveButton').addEventListener('click', () => saveArticle().catch((error) => toast(error.message, true)));
 $('#publishButton').addEventListener('click', openPublishDialog);
+$('#metadataButton').addEventListener('click', openMetadataDialog);
+$('#metadataForm').addEventListener('submit', updateArticleMetadata);
+$('#cancelMetadata').addEventListener('click', () => $('#metadataDialog').close());
+document.querySelectorAll('[data-now-target]').forEach((button) => button.addEventListener('click', () => {
+  $(`#${button.dataset.nowTarget}`).value = articleMetadata.currentLocalDateTime();
+}));
 $('#renameButton').addEventListener('click', openRenameDialog);
 $('#renameForm').addEventListener('submit', renameArticle);
 $('#cancelRename').addEventListener('click', () => $('#renameDialog').close());

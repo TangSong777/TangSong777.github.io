@@ -45,6 +45,7 @@
         <div class="document-bar">
           <div><span id="documentPath" class="document-path"></span><h2 id="documentTitle">未命名文章</h2></div>
           <div class="document-actions">
+            <button id="metadataButton" class="rename-button metadata-button" title="编辑标题、发布时间、分类等文章信息">信息</button>
             <button id="renameButton" class="rename-button" title="修改 Markdown 文件名">重命名</button>
             <div class="view-tabs" role="tablist">
               <button class="view-tab active" data-view="split">分栏</button>
@@ -108,7 +109,24 @@
     </form>
   </dialog>
 
+  <dialog id="metadataDialog" class="metadata-dialog">
+    <form id="metadataForm" method="dialog">
+      <span class="eyebrow">ARTICLE INFORMATION</span><h2>文章信息</h2>
+      <p>这些字段会写入 Markdown 顶部的 YAML。未显示的其他 YAML 字段和正文会保持不变。</p>
+      <div class="metadata-grid">
+        <label class="full-field">文章标题<input id="metadataTitle" required></label>
+        <label>发布时间<input id="metadataDate" type="datetime-local" step="1" required><button type="button" class="field-action" data-now-target="metadataDate">设为现在</button></label>
+        <label>更新时间<input id="metadataUpdated" type="datetime-local" step="1"><button type="button" class="field-action" data-now-target="metadataUpdated">设为现在</button></label>
+        <label class="full-field">分类<input id="metadataCategories" placeholder="例如：技术, Hexo"><small>多个分类使用逗号分隔。</small></label>
+        <label class="full-field">标签<input id="metadataTags" placeholder="例如：Markdown, 写作"><small>多个标签使用逗号分隔。</small></label>
+        <label class="full-field">文章摘要<textarea id="metadataDescription" rows="3" placeholder="用于列表页摘要和搜索结果描述"></textarea></label>
+      </div>
+      <div class="dialog-actions"><button id="cancelMetadata" type="button" class="button secondary">取消</button><button type="submit" class="button primary">应用到 Markdown</button></div>
+    </form>
+  </dialog>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/metadata.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

@@ -89,9 +89,14 @@ dialog form { padding: 27px; }
 dialog h2 { margin: 5px 0 10px; }
 dialog p { color: var(--muted); line-height: 1.6; }
 dialog label:not(.confirm-row) { display: block; margin-top: 17px; font-size: 13px; font-weight: 700; }
-dialog input[type="text"], dialog input:not([type]) { width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; outline: 0; }
-dialog input:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+dialog input[type="text"], dialog input[type="datetime-local"], dialog input:not([type]), dialog textarea { width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; outline: 0; color: var(--ink); background: #fff; }
+dialog input:focus, dialog textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
 dialog label small { display: block; margin-top: 5px; color: var(--muted); font-weight: 400; }
+.metadata-dialog { width: min(680px, calc(100vw - 30px)); }
+.metadata-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.metadata-grid .full-field { grid-column: 1 / -1; }
+.metadata-grid textarea { resize: vertical; min-height: 82px; line-height: 1.55; }
+.field-action { float: right; margin-top: 5px; padding: 3px 0; border: 0; color: var(--green); background: transparent; font-size: 11px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
 .warning-box { margin-top: 15px; padding: 12px; border: 1px solid #edc989; border-radius: 9px; color: #6c430e; background: var(--amber-soft); font-size: 12px; line-height: 1.6; }
 .warning-box.blocked { border-color: #d99994; color: #7c2923; background: #fff0ef; }
@@ -131,6 +136,7 @@ dialog label small { display: block; margin-top: 5px; color: var(--muted); font-
   .document-path { display: block; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .document-bar h2 { max-width: 38vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
   .rename-button { padding: 0 8px; font-size: 12px; }
+  .metadata-button { padding-inline: 9px; }
   .view-tabs { padding: 2px; }
   .view-tab { padding: 6px 8px; font-size: 12px; }
   .format-bar { height: 46px; overflow-x: auto; overflow-y: hidden; padding: 0 8px; scrollbar-width: none; }
@@ -140,5 +146,7 @@ dialog label small { display: block; margin-top: 5px; color: var(--muted); font-
   #markdownEditor { padding: 17px 15px; font-size: 16px; line-height: 1.65; }
   .previewDocument { padding: 18px; }
   dialog form { padding: 22px 18px; }
+  .metadata-grid { grid-template-columns: 1fr; }
+  .metadata-grid .full-field { grid-column: auto; }
   .toast { right: 12px; bottom: 12px; left: 12px; max-width: none; }
 }

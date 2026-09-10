@@ -12,7 +12,7 @@
     "article:studio:no-open": "node ./tools/article-studio/server.mjs --no-open",
     "article:studio:mobile": "node ./tools/article-studio/server.mjs --network --no-open",
     "article:studio:test": "node --test ./tools/article-studio/server.test.mjs",
-    "test": "node --test ./tools/tests/publisher.test.mjs ./tools/article-studio/server.test.mjs",
+    "test": "node --test ./tools/tests/publisher.test.mjs ./tools/article-studio/server.test.mjs ./tools/article-studio/metadata.test.mjs",
     "siyuan:check": "node ./tools/run-siyuan.mjs check",
     "siyuan:dry-run": "node ./tools/run-siyuan.mjs dry-run",
     "siyuan:refresh": "node ./tools/run-siyuan.mjs refresh",
