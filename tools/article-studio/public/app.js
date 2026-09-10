@@ -52,6 +52,8 @@ function titleFromContent(content, fallback) {
 
 let previewTimer;
 let previewRevision = 0;
+let renderedPreviewHtml = '';
+const PREVIEW_DEBOUNCE_MS = 500;
 
 function previewDocument(html) {
   return `<!doctype html>
@@ -75,7 +77,7 @@ function previewDocument(html) {
     <div class="main-inner post posts-expand">
       <div class="post-block">
         <article class="post-content" lang="zh-CN">
-          <div class="post-body">${html}</div>
+          <div class="post-body" id="previewBody">${html}</div>
         </article>
       </div>
     </div>
@@ -84,7 +86,40 @@ function previewDocument(html) {
 </html>`;
 }
 
-function renderPreview() {
+function applyPreviewHtml(html, { resetScroll = false } = {}) {
+  const document = preview.contentDocument;
+  const body = document?.getElementById('previewBody');
+  const status = $('#previewStatus');
+
+  if (!body) {
+    preview.addEventListener('load', () => {
+      renderedPreviewHtml = html;
+      status.classList.add('hidden');
+    }, { once: true });
+    preview.srcdoc = previewDocument(html);
+    return;
+  }
+
+  if (html === renderedPreviewHtml) {
+    status.classList.add('hidden');
+    return;
+  }
+
+  const scroller = document.scrollingElement || document.documentElement;
+  const previousScrollTop = scroller?.scrollTop || 0;
+  body.innerHTML = html;
+  renderedPreviewHtml = html;
+
+  requestAnimationFrame(() => {
+    if (scroller) {
+      const maximumScrollTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+      scroller.scrollTop = resetScroll ? 0 : Math.min(previousScrollTop, maximumScrollTop);
+    }
+    status.classList.add('hidden');
+  });
+}
+
+function renderPreview({ immediate = false, resetScroll = false } = {}) {
   const raw = stripFrontMatter(editor.value);
   $('#wordCount').textContent = `${raw.replace(/\s/g, '').length} 字`;
   $('#documentTitle').textContent = titleFromContent(editor.value, state.currentPath);
@@ -103,14 +138,13 @@ function renderPreview() {
         body: JSON.stringify({ path: state.currentPath, content: editor.value }),
       });
       if (revision !== previewRevision) return;
-      preview.addEventListener('load', () => status.classList.add('hidden'), { once: true });
-      preview.srcdoc = previewDocument(data.html);
+      applyPreviewHtml(data.html, { resetScroll });
     } catch (error) {
       if (revision !== previewRevision) return;
       status.textContent = `预览渲染失败：${error.message}`;
       status.className = 'preview-status error';
     }
-  }, 220);
+  }, immediate ? 0 : PREVIEW_DEBOUNCE_MS);
 }
 
 function updateCursor() {
@@ -197,7 +231,7 @@ async function selectArticle(path) {
   $('#documentPath').textContent = `source/_posts/${data.path}`;
   $('#emptyState').classList.add('hidden');
   $('#editorView').classList.remove('hidden');
-  renderPreview();
+  renderPreview({ immediate: true, resetScroll: true });
   updateCursor();
   setDirty(initialContent !== data.content);
   renderList();
@@ -240,7 +274,7 @@ async function renameArticle(event) {
     state.redoStack = [];
     $('#documentPath').textContent = `source/_posts/${data.path}`;
     $('#renameDialog').close();
-    renderPreview();
+    renderPreview({ immediate: true, resetScroll: true });
     setDirty(false);
     await loadArticles();
     toast(data.message);
