@@ -8,11 +8,13 @@
 </head>
 <body>
   <header class="topbar">
+    <button id="mobileMenuButton" class="mobile-menu" type="button" aria-label="打开文章列表" aria-expanded="false">☰</button>
     <div class="brand">
       <span class="brand-mark">文</span>
       <div><strong>文章工作台</strong><small>Markdown · Hexo · Git</small></div>
     </div>
     <div class="top-actions">
+      <span id="identityState" class="identity-state"></span>
       <span id="saveState" class="save-state">尚未选择文章</span>
       <button id="saveButton" class="button secondary" disabled>保存 <kbd>Ctrl S</kbd></button>
       <button id="publishButton" class="button primary" disabled>上传文章</button>
@@ -20,10 +22,11 @@
   </header>
 
   <main class="workspace">
+    <button id="panelBackdrop" class="panel-backdrop" type="button" aria-label="关闭文章列表"></button>
     <aside class="article-panel">
       <div class="panel-heading">
         <div><span class="eyebrow">CONTENT</span><h1>文章</h1></div>
-        <button id="newButton" class="icon-button" title="新建文章" aria-label="新建文章">＋</button>
+        <div class="panel-actions"><button id="newButton" class="icon-button" title="新建文章" aria-label="新建文章">＋</button><button id="closePanelButton" class="icon-button panel-close" type="button" aria-label="关闭文章列表">×</button></div>
       </div>
       <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索文章"></label>
       <div id="articleList" class="article-list" aria-live="polite"></div>
@@ -58,7 +61,7 @@
           <button data-prefix="- " title="列表">☷</button>
           <button data-wrap="`" title="行内代码">&lt;/&gt;</button>
           <button data-action="link" title="链接">↗</button>
-          <label class="image-button" title="插入图片">▧<input id="imageInput" type="file" accept="image/*" multiple></label>
+          <label class="image-button" title="插入图片">▧<input id="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple></label>
           <span class="format-hint">可粘贴或拖入图片</span>
         </div>
         <div id="splitPane" class="split-pane">
@@ -88,7 +91,7 @@
     <form id="publishForm" method="dialog">
       <span class="eyebrow">PUBLISH</span><h2>构建并上传</h2>
       <p>将保存当前内容、执行 Hexo 构建检查，然后只提交当前文章及其图片并推送到 GitHub。</p>
-      <label>提交说明<input id="commitMessage" placeholder="Publish article: 文章标题"></label>
+      <label>提交说明<input id="commitMessage" placeholder="docs(article): 更新《文章标题》"></label>
       <div id="warningBox" class="warning-box hidden"></div>
       <label id="warningConfirmLabel" class="confirm-row hidden"><input id="warningConfirm" type="checkbox">我已检查并确认这些内容可以公开</label>
       <pre id="publishLog" class="publish-log hidden"></pre>

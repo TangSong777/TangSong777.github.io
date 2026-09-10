@@ -7,6 +7,7 @@ if (mobileKeyFromUrl) {
 const state = {
   token: '', articles: [], currentPath: '', content: '', dirty: false, publishing: false,
   undoStack: [], redoStack: [], pendingEdit: null, applyingEdit: false,
+  identity: null, draftTimer: null,
   accessKey: mobileKeyFromUrl || sessionStorage.getItem('articleStudioKey') || '',
 };
 const $ = (selector) => document.querySelector(selector);
@@ -125,13 +126,47 @@ function setDirty(dirty) {
   $('#publishButton').disabled = !state.currentPath || state.publishing;
 }
 
+function draftKey(path) {
+  return `article-studio:draft:${path}`;
+}
+
+function storeDraftSoon() {
+  clearTimeout(state.draftTimer);
+  if (!state.currentPath) return;
+  state.draftTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(draftKey(state.currentPath), JSON.stringify({
+        content: editor.value, savedAt: new Date().toISOString(),
+      }));
+    } catch { /* 浏览器禁用或空间不足时仍可手动保存到服务端 */ }
+  }, 600);
+}
+
+function removeDraft(path = state.currentPath) {
+  if (!path) return;
+  try { localStorage.removeItem(draftKey(path)); } catch { /* 无可清理内容 */ }
+}
+
+function closeArticlePanel() {
+  document.body.classList.remove('article-panel-open');
+  $('#mobileMenuButton').setAttribute('aria-expanded', 'false');
+}
+
+function openArticlePanel() {
+  document.body.classList.add('article-panel-open');
+  $('#mobileMenuButton').setAttribute('aria-expanded', 'true');
+}
+
 function renderList() {
+  const list = $('#articleList');
+  const oldScroll = list.scrollTop;
   const query = $('#searchInput').value.trim().toLowerCase();
   const articles = state.articles.filter((item) => `${item.title} ${item.path}`.toLowerCase().includes(query));
-  $('#articleList').innerHTML = articles.length ? articles.map((item) => `
+  list.innerHTML = articles.length ? articles.map((item) => `
     <button class="article-item ${item.path === state.currentPath ? 'active' : ''}" data-path="${escapeHtml(item.path)}">
       <strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.path)}</small>
     </button>`).join('') : '<div class="local-note">没有找到文章。</div>';
+  list.scrollTop = oldScroll;
   document.querySelectorAll('.article-item').forEach((button) => button.addEventListener('click', () => selectArticle(button.dataset.path)));
 }
 
@@ -149,20 +184,31 @@ async function selectArticle(path) {
   state.undoStack = [];
   state.redoStack = [];
   state.pendingEdit = null;
-  editor.value = data.content;
+  let initialContent = data.content;
+  try {
+    const draft = JSON.parse(localStorage.getItem(draftKey(data.path)) || 'null');
+    if (draft?.content && draft.content !== data.content) {
+      const stamp = draft.savedAt ? new Date(draft.savedAt).toLocaleString() : '未知时间';
+      if (confirm(`发现 ${stamp} 的浏览器草稿，是否恢复？\n\n选择“取消”将使用 Rock 上已保存的版本。`)) initialContent = draft.content;
+      else removeDraft(data.path);
+    }
+  } catch { removeDraft(data.path); }
+  editor.value = initialContent;
   $('#documentPath').textContent = `source/_posts/${data.path}`;
   $('#emptyState').classList.add('hidden');
   $('#editorView').classList.remove('hidden');
   renderPreview();
   updateCursor();
-  setDirty(false);
+  setDirty(initialContent !== data.content);
   renderList();
+  closeArticlePanel();
 }
 
 async function saveArticle(showToast = true) {
   if (!state.currentPath) return;
   const data = await api('/api/save', { method: 'POST', body: JSON.stringify({ path: state.currentPath, content: editor.value }) });
   state.content = editor.value;
+  removeDraft();
   setDirty(false);
   await loadArticles();
   if (showToast) toast(data.warnings.length ? `已保存；发现 ${data.warnings.length} 项可能的敏感内容` : data.message);
@@ -235,6 +281,7 @@ function refreshEditorState() {
   renderPreview();
   updateCursor();
   setDirty(editor.value !== state.content);
+  if (editor.value !== state.content) storeDraftSoon();
 }
 
 function recordEdit(before, after, inputType = 'toolbar') {
@@ -341,25 +388,31 @@ async function insertImages(files) {
 function showWarnings(warnings) {
   const box = $('#warningBox');
   const confirmLabel = $('#warningConfirmLabel');
+  const blocked = (warnings || []).filter((item) => item.severity === 'block');
   if (!warnings?.length) {
+    box.classList.remove('blocked');
     box.classList.add('hidden');
     confirmLabel.classList.add('hidden');
     $('#warningConfirm').checked = false;
-    return;
+    return false;
   }
-  box.innerHTML = `<strong>检测到可能的敏感内容：</strong><br>${warnings.map((item) => `${escapeHtml(item.label)}（正文第 ${item.line} 行，${escapeHtml(item.sample)}）`).join('<br>')}`;
+  $('#warningConfirm').checked = false;
+  box.classList.toggle('blocked', blocked.length > 0);
+  box.innerHTML = `<strong>${blocked.length ? '检测到禁止公开的敏感内容，请先删除：' : '检测到可能的敏感内容：'}</strong><br>${warnings.map((item) => `${item.severity === 'block' ? '⛔' : '⚠️'} ${escapeHtml(item.label)}（正文第 ${item.line} 行，${escapeHtml(item.sample)}）`).join('<br>')}`;
   box.classList.remove('hidden');
-  confirmLabel.classList.remove('hidden');
+  confirmLabel.classList.toggle('hidden', blocked.length > 0);
+  return blocked.length > 0;
 }
 
 async function openPublishDialog() {
   try {
     const result = await saveArticle(false);
-    showWarnings(result.warnings);
-    $('#commitMessage').value = `Publish article: ${titleFromContent(editor.value, state.currentPath)}`;
+    $('#confirmPublish').disabled = false;
+    const blocked = showWarnings(result.warnings);
+    $('#commitMessage').value = `docs(article): 更新《${titleFromContent(editor.value, state.currentPath)}》`;
     $('#publishLog').classList.add('hidden');
     $('#publishLog').textContent = '';
-    $('#confirmPublish').disabled = false;
+    $('#confirmPublish').disabled = blocked;
     $('#confirmPublish').textContent = '开始上传';
     $('#publishDialog').showModal();
   } catch (error) { toast(error.message, true); }
@@ -392,10 +445,13 @@ async function publishArticle(event) {
     toast(data.message);
     await loadArticles();
   } catch (error) {
-    if (error.code === 'SENSITIVE_WARNING') showWarnings(error.warnings);
+    let sensitiveBlocked = false;
+    if (error.code === 'SENSITIVE_WARNING' || error.code === 'SENSITIVE_BLOCK') {
+      sensitiveBlocked = showWarnings(error.warnings);
+    }
     log.textContent = `${error.message}\n\n${error.details || ''}`.trim();
-    $('#confirmPublish').disabled = false;
-    $('#confirmPublish').textContent = '重试上传';
+    $('#confirmPublish').disabled = sensitiveBlocked;
+    $('#confirmPublish').textContent = sensitiveBlocked ? '请先修改文章' : '重试上传';
     toast(error.message, true);
   } finally {
     state.publishing = false;
@@ -408,6 +464,8 @@ async function init() {
   try {
     const config = await api('/api/config');
     state.token = config.token;
+    state.identity = config.identity;
+    $('#identityState').textContent = config.identity?.email || (config.authMode === 'cloudflare' ? '已安全登录' : '本地模式');
     await loadArticles();
   } catch (error) {
     toast(`无法连接本地后台：${error.message}`, true);
@@ -494,5 +552,8 @@ $('#renameForm').addEventListener('submit', renameArticle);
 $('#cancelRename').addEventListener('click', () => $('#renameDialog').close());
 $('#publishForm').addEventListener('submit', publishArticle);
 $('#cancelPublish').addEventListener('click', () => $('#publishDialog').close());
+$('#mobileMenuButton').addEventListener('click', () => document.body.classList.contains('article-panel-open') ? closeArticlePanel() : openArticlePanel());
+$('#panelBackdrop').addEventListener('click', closeArticlePanel);
+$('#closePanelButton').addEventListener('click', closeArticlePanel);
 window.addEventListener('beforeunload', (event) => { if (state.dirty) { event.preventDefault(); event.returnValue = ''; } });
 init();

@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { extractArchive } from '../export-siyuan-notebook.mjs';
-import { allowedPublicationPath, installVerified, rollback } from '../publish-siyuan-notes.mjs';
+import { allowedArticleDraftPath, allowedPublicationPath, installVerified, rollback } from '../publish-siyuan-notes.mjs';
 
 async function fixture(t) {
   const root=await fs.mkdtemp(path.join(os.tmpdir(),'notes-publisher-test-'));
@@ -39,6 +39,10 @@ test('only notebook outputs can enter automated commits',()=>{
   assert.equal(allowedPublicationPath('source/siyuan/Python笔记/index.md'),true);
   assert.equal(allowedPublicationPath('source/js/siyuan-data.js'),true);
   for(const file of ['origin/学习笔记.md/a.md','source/_posts/article.md','tools/private.txt','.env','source/siyuan/能力体系/index.md','source/siyuan/../_posts/article.md','source/siyuan-other/x.md'])assert.equal(allowedPublicationPath(file),false,file);
+});
+test('note automation tolerates only ordinary article drafts',()=>{
+  for(const file of ['source/_posts/article.md','source/_posts/随笔/文章.md','source/images/posts/article/a.png'])assert.equal(allowedArticleDraftPath(file),true,file);
+  for(const file of ['source/_posts/siyuan/笔记.md','source/siyuan/笔记/index.md','tools/a.mjs','.github/workflows/pages.yml','source/_posts/../secret.md'])assert.equal(allowedArticleDraftPath(file),false,file);
 });
 test('ZIP extraction preserves Chinese filenames and rejects unsafe entries',async t=>{
   const root=await fixture(t);

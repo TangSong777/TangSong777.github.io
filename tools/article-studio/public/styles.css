@@ -14,7 +14,8 @@
   font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
 }
 * { box-sizing: border-box; }
-body { margin: 0; color: var(--ink); background: var(--canvas); overflow: hidden; }
+html, body { width: 100%; height: 100%; }
+body { margin: 0; color: var(--ink); background: var(--canvas); overflow: hidden; overscroll-behavior: none; }
 button, input, textarea { font: inherit; }
 button { cursor: pointer; }
 .topbar { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--line); }
@@ -23,6 +24,8 @@ button { cursor: pointer; }
 .brand strong, .brand small { display: block; }
 .brand small { color: var(--muted); margin-top: 3px; font-size: 11px; letter-spacing: .08em; }
 .top-actions { display: flex; align-items: center; gap: 10px; }
+.identity-state { max-width: 220px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.mobile-menu, .panel-close, .panel-backdrop { display: none; }
 .save-state { color: var(--muted); font-size: 13px; margin-right: 4px; }
 .button { border: 0; border-radius: 10px; padding: 10px 15px; font-weight: 700; color: var(--ink); }
 .button.primary { color: #fff; background: var(--green); box-shadow: 0 7px 18px rgba(47,111,97,.18); }
@@ -32,6 +35,7 @@ kbd { margin-left: 5px; padding: 2px 5px; border: 1px solid rgba(0,0,0,.1); bord
 .workspace { display: grid; grid-template-columns: 282px minmax(0, 1fr); height: calc(100vh - 72px); }
 .article-panel { display: flex; flex-direction: column; min-width: 0; padding: 24px 16px 16px; background: #fbfdfb; border-right: 1px solid var(--line); }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; padding: 0 6px 16px; }
+.panel-actions { display: flex; gap: 7px; }
 .eyebrow { color: var(--green); font-size: 10px; font-weight: 800; letter-spacing: .16em; }
 h1 { margin: 4px 0 0; font-size: 25px; }
 .icon-button { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 11px; color: var(--green); background: #fff; font-size: 24px; }
@@ -90,6 +94,7 @@ dialog input:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--gre
 dialog label small { display: block; margin-top: 5px; color: var(--muted); font-weight: 400; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
 .warning-box { margin-top: 15px; padding: 12px; border: 1px solid #edc989; border-radius: 9px; color: #6c430e; background: var(--amber-soft); font-size: 12px; line-height: 1.6; }
+.warning-box.blocked { border-color: #d99994; color: #7c2923; background: #fff0ef; }
 .confirm-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--amber); font-size: 12px; }
 .publish-log { max-height: 230px; overflow: auto; margin-top: 15px; padding: 12px; border-radius: 9px; color: #dff8ee; background: #15332c; white-space: pre-wrap; font: 11px/1.55 Consolas, monospace; }
 .toast { position: fixed; right: 22px; bottom: 22px; z-index: 10; max-width: 420px; padding: 12px 16px; border-radius: 10px; color: white; background: var(--green-deep); box-shadow: var(--shadow); opacity: 0; transform: translateY(12px); pointer-events: none; transition: .2s ease; }
@@ -100,16 +105,40 @@ dialog label small { display: block; margin-top: 5px; color: var(--muted); font-
   .editor-shell { padding: 10px; }
   .split-pane { grid-template-columns: 1fr; }
   .split-pane:not(.preview-only) .preview-pane { display: none; }
-  .format-hint, .save-state, kbd { display: none; }
+  .format-hint, .save-state, .identity-state, kbd { display: none; }
 }
 @media (max-width: 600px) {
-  body { overflow: auto; }
-  .topbar { position: sticky; top: 0; z-index: 3; padding: 0 10px; }
+  body { overflow: hidden; }
+  .topbar { position: relative; z-index: 8; height: 60px; padding: 0 8px; }
+  .mobile-menu { display: grid; place-items: center; flex: 0 0 40px; height: 40px; border: 0; border-radius: 10px; color: var(--green-deep); background: var(--green-soft); font-size: 20px; }
+  .brand { gap: 8px; }
+  .brand-mark { width: 34px; height: 34px; }
+  .brand strong { font-size: 14px; }
   .brand small { display: none; }
-  .workspace { display: block; height: auto; }
-  .article-panel { height: 240px; border-right: 0; border-bottom: 1px solid var(--line); }
-  .editor-shell { height: calc(100vh - 72px); }
+  .top-actions { gap: 6px; }
+  .button { padding: 9px 11px; font-size: 12px; }
+  .workspace { display: block; height: calc(100dvh - 60px); }
+  .panel-backdrop { position: fixed; inset: 60px 0 0; z-index: 5; width: 100%; border: 0; background: rgba(16, 38, 32, .38); backdrop-filter: blur(2px); }
+  .article-panel { position: fixed; top: 60px; bottom: 0; left: 0; z-index: 6; width: min(86vw, 340px); height: auto; padding-top: 18px; border-right: 1px solid var(--line); transform: translateX(-104%); transition: transform .18s ease; box-shadow: 20px 0 50px rgba(20,55,46,.18); }
+  .article-panel-open .article-panel { transform: translateX(0); }
+  .article-panel-open .panel-backdrop { display: block; }
+  .panel-close { display: grid; }
+  .article-list { touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .editor-shell { height: calc(100dvh - 60px); padding: 7px; }
+  .editor-view { border-radius: 11px; }
+  .document-bar { height: 66px; }
   .document-bar { padding: 0 12px; }
-  .document-bar h2 { max-width: 135px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .document-path { display: block; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .document-bar h2 { max-width: 38vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
   .rename-button { padding: 0 8px; font-size: 12px; }
+  .view-tabs { padding: 2px; }
+  .view-tab { padding: 6px 8px; font-size: 12px; }
+  .format-bar { height: 46px; overflow-x: auto; overflow-y: hidden; padding: 0 8px; scrollbar-width: none; }
+  .format-bar::-webkit-scrollbar { display: none; }
+  .format-bar button, .image-button { flex: 0 0 34px; }
+  .split-pane { height: calc(100% - 112px); }
+  #markdownEditor { padding: 17px 15px; font-size: 16px; line-height: 1.65; }
+  .previewDocument { padding: 18px; }
+  dialog form { padding: 22px 18px; }
+  .toast { right: 12px; bottom: 12px; left: 12px; max-width: none; }
 }

@@ -25,6 +25,15 @@ export function allowedPublicationPath(name) {
     !name.split('/').some(part=>part==='..' || part==='.' || part==='能力体系');
 }
 
+export function allowedArticleDraftPath(name) {
+  const normalized=String(name||'').replaceAll('\\','/').replace(/^\/+/, '');
+  const parts=normalized.split('/');
+  if(parts.some(part=>!part || part==='.' || part==='..' || part.startsWith('.')))return false;
+  if(normalized.startsWith('source/images/posts/'))return true;
+  if(!normalized.startsWith('source/_posts/'))return false;
+  return parts[2]?.toLowerCase()!=='siyuan';
+}
+
 function command(executable,args,{cwd=repo,capture=false,allowFailure=false}={}) {
   return new Promise((resolve,reject)=>{
     const child = spawn(executable,args,{cwd,env:{...process.env,GIT_TERMINAL_PROMPT:'0',GCM_INTERACTIVE:'Never'},stdio:capture?['ignore','pipe','pipe']:'inherit'});
@@ -71,8 +80,12 @@ async function fileManifest(root) {
 function equalManifests(a,b) {return a.size===b.size && [...a].every(([p,h])=>b.get(p)===h);}
 
 async function requireCleanRepo() {
-  const status=await git('status','--porcelain','--untracked-files=all');
-  if(status)throw new Error('仓库有尚未提交的修改；请先完成迁移/人工修改的提交，再启用自动发布');
+  const staged=(await git('diff','--cached','--name-only')).split('\n').filter(Boolean);
+  if(staged.length)throw new Error('Git 暂存区已有内容；为避免混入自动提交，请先人工处理');
+  const changed=`${await git('diff','--name-only')}\n${await git('ls-files','--others','--exclude-standard')}`
+    .split('\n').map(name=>name.trim()).filter(Boolean);
+  const unexpected=changed.filter(name=>!allowedArticleDraftPath(name));
+  if(unexpected.length)throw new Error(`仓库存在普通文章草稿之外的修改：${unexpected.slice(0,5).join('、')}`);
   if(await git('branch','--show-current')!=='main')throw new Error('自动发布只允许 main 分支');
   if(!allowedRemotes.has(await git('remote','get-url','origin')))throw new Error('origin 不是授权的博客仓库');
   const pushUrls=(await git('remote','get-url','--push','--all','origin')).split('\n').filter(Boolean);
