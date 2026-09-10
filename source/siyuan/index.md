@@ -1,7 +1,7 @@
 ---
 title: '学习笔记'
 date: '2026-06-23T16:54:27+08:00'
-updated: '2026-09-10T09:03:31+08:00'
+updated: '2026-09-10T13:09:46+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -84,11 +84,7 @@ categories:
 
     - [09](/siyuan/daily-note/2026/09/)
 
-      - 2026-09-08
-    - [09](/siyuan/daily-note/2026/09/)
-
       - [2026-09-10](/siyuan/daily-note/2026/09/2026-09-10/)
-      - 2026-09-04
     - [08](/siyuan/daily-note/2026/08/)
 
       - [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
@@ -119,7 +115,6 @@ categories:
 - [Skill速查手册](/siyuan/Skill速查手册/)
 - [硬件需求](/siyuan/硬件需求/)
 - [这是一个测试文档](/siyuan/这是一个测试文档/)
-- 我做了一个项目
 
 <section class="siyuan-references" aria-label="文档引用">
 
