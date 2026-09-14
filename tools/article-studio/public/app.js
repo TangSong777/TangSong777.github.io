@@ -195,11 +195,34 @@ function renderList() {
   const query = $('#searchInput').value.trim().toLowerCase();
   const articles = state.articles.filter((item) => `${item.title} ${item.path}`.toLowerCase().includes(query));
   list.innerHTML = articles.length ? articles.map((item) => `
-    <button class="article-item ${item.path === state.currentPath ? 'active' : ''}" data-path="${escapeHtml(item.path)}">
+    <div class="article-row" data-path="${escapeHtml(item.path)}">
+    <button class="article-item ${item.path === state.currentPath ? 'active' : ''}" data-path="${escapeHtml(item.path)}" title="右键编辑文章信息">
       <strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.path)}</small>
-    </button>`).join('') : '<div class="local-note">没有找到文章。</div>';
+    </button><button type="button" class="article-more" aria-label="编辑 ${escapeHtml(item.title)} 的文章信息" title="文章信息">⋯</button></div>`).join('') : '<div class="local-note">没有找到文章。</div>';
   list.scrollTop = oldScroll;
   document.querySelectorAll('.article-item').forEach((button) => button.addEventListener('click', () => selectArticle(button.dataset.path)));
+  list.querySelectorAll('.article-row').forEach((row) => {
+    const open = (event) => {
+      event.preventDefault();
+      openArticleQuickInfo(row.dataset.path).catch((error) => toast(error.message, true));
+    };
+    row.addEventListener('contextmenu', open);
+    row.querySelector('.article-more').addEventListener('click', open);
+    row.addEventListener('keydown', (event) => {
+      if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) open(event);
+    });
+  });
+}
+
+let openingQuickInfo = false;
+async function openArticleQuickInfo(path) {
+  if (openingQuickInfo || state.publishing) return;
+  openingQuickInfo = true;
+  try {
+    // Selecting another article uses the existing unsaved-change/draft protection.
+    if (state.currentPath !== path && !await selectArticle(path)) return;
+    openMetadataDialog();
+  } finally { openingQuickInfo = false; }
 }
 
 async function loadArticles() {
@@ -234,6 +257,8 @@ async function selectArticle(path) {
   setDirty(initialContent !== data.content);
   renderList();
   closeArticlePanel();
+  scheduleArticleOutline();
+  return true;
 }
 
 async function saveArticle(showToast = true) {
@@ -266,6 +291,7 @@ function openRenameDialog() {
 function openMetadataDialog() {
   if (!state.currentPath) return;
   const metadata = articleMetadata.read(editor.value);
+  $('#metadataFileInfo').textContent = `source/_posts/${state.currentPath} · 正文约 ${Array.from(articleMetadata.splitDocument(editor.value).body || splitEditorDocument(editor.value).body).length} 字符${state.dirty ? ' · 有未保存修改' : ' · 已保存'}`;
   $('#metadataTitle').value = metadata.title || titleFromContent(editor.value, state.currentPath);
   $('#metadataDate').value = metadata.date || articleMetadata.currentLocalDateTime();
   $('#metadataUpdated').value = metadata.updated;
@@ -363,10 +389,106 @@ function editorSnapshot() {
 }
 
 function refreshEditorState() {
+  scheduleArticleOutline();
   renderPreview();
   updateCursor();
   setDirty(editor.value !== state.content);
   if (editor.value !== state.content) storeDraftSoon();
+}
+
+let outlineTimer;
+let outlineEntries = [];
+let outlineActiveButton = null;
+let outlineScrollFrame;
+function syncArticleOutline() {
+  const nav = $('#articleOutline');
+  const container = editorMode === 'wysiwyg' ? $('#richEditor .toastui-editor-ww-container .ProseMirror') : sourceEditor;
+  if (!nav || !container || !outlineEntries.length) return;
+  const bounds = container.getBoundingClientRect();
+  const threshold = Math.min(180, container.clientHeight * .24);
+  let current = outlineEntries[0];
+  outlineEntries.forEach((entry) => {
+    const top = entry.node ? entry.node.getBoundingClientRect().top - bounds.top
+      : sourceEditor.value.slice(0, entry.offset).split('\n').length * parseFloat(getComputedStyle(sourceEditor).lineHeight) - container.scrollTop;
+    if (top <= threshold) current = entry;
+  });
+  if (container.scrollHeight > container.clientHeight + 8 && container.scrollTop + container.clientHeight >= container.scrollHeight - 8) current = outlineEntries.at(-1);
+  if (outlineActiveButton === current.button) return;
+  outlineEntries.forEach(({ button }) => {
+    button.classList.toggle('outline-current', button === current.button);
+    if (button === current.button) button.setAttribute('aria-current', 'location');
+    else button.removeAttribute('aria-current');
+  });
+  outlineActiveButton = current.button;
+  const itemBounds = current.button.getBoundingClientRect(), panelBounds = nav.getBoundingClientRect();
+  if (itemBounds.top < panelBounds.top + 16 || itemBounds.bottom > panelBounds.bottom - 16) {
+    nav.scrollTop += itemBounds.top - panelBounds.top - nav.clientHeight / 2;
+  }
+}
+$('#editingSurface').addEventListener('scroll', (event) => {
+  if (event.target !== sourceEditor && !event.target.matches?.('#richEditor .toastui-editor-ww-container .ProseMirror')) return;
+  if (outlineScrollFrame) return;
+  outlineScrollFrame = requestAnimationFrame(() => { outlineScrollFrame = null; syncArticleOutline(); });
+}, true);
+function scheduleArticleOutline() {
+  clearTimeout(outlineTimer);
+  outlineTimer = setTimeout(renderArticleOutline, 120);
+}
+
+function renderArticleOutline() {
+  const nav = $('#articleOutline');
+  if (!nav) return;
+  let headings;
+  if (editorMode === 'wysiwyg') {
+    headings = [...document.querySelectorAll('#richEditor .toastui-editor-ww-container .ProseMirror h1, #richEditor .toastui-editor-ww-container .ProseMirror h2, #richEditor .toastui-editor-ww-container .ProseMirror h3, #richEditor .toastui-editor-ww-container .ProseMirror h4, #richEditor .toastui-editor-ww-container .ProseMirror h5, #richEditor .toastui-editor-ww-container .ProseMirror h6')].map((node) => ({ title: node.textContent, level: Number(node.tagName[1]), node }));
+  } else {
+    headings = [];
+    const parts = splitEditorDocument(sourceEditor.value);
+    let offset = parts.frontMatter.length, fence = null;
+    const lines = parts.body.split('\n');
+    lines.forEach((line, index) => {
+      const marker = line.match(/^ {0,3}(`{3,}|~{3,})/);
+      if (marker) {
+        if (!fence) fence = marker[1];
+        else if (marker[1][0] === fence[0] && marker[1].length >= fence.length && /^\s*$/.test(line.slice(marker[0].length))) fence = null;
+      } else if (!fence) {
+        const atx = line.match(/^ {0,3}(#{1,6})(?:[ \t]+|$)(.*)/);
+        const setext = line.trim() && lines[index + 1]?.match(/^ {0,3}(=+|-+)\s*$/);
+        if (atx) headings.push({ level: atx[1].length, title: atx[2].replace(/[ \t]+#+\s*$/, ''), offset });
+        else if (setext) headings.push({ level: setext[1][0] === '=' ? 1 : 2, title: line.trim(), offset });
+      }
+      offset += line.length + 1;
+    });
+  }
+  const scroll = nav.scrollTop;
+  outlineEntries = [];
+  outlineActiveButton = null;
+  nav.replaceChildren();
+  if (!headings.length) {
+    const empty = document.createElement('p'); empty.className = 'outline-empty'; empty.textContent = '添加标题后显示大纲'; nav.append(empty);
+  }
+  headings.forEach((heading) => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'outline-item';
+    button.style.setProperty('--outline-depth', heading.level - 1);
+    button.textContent = heading.title.trim() || '未命名标题';
+    button.title = `H${heading.level} · ${button.textContent}`;
+    button.addEventListener('click', () => {
+      if (heading.node) {
+        const container = heading.node.closest('.ProseMirror');
+        container.scrollTop += heading.node.getBoundingClientRect().top - container.getBoundingClientRect().top - 20;
+        syncArticleOutline();
+      } else {
+        sourceEditor.focus(); sourceEditor.setSelectionRange(heading.offset, heading.offset);
+        const line = sourceEditor.value.slice(0, heading.offset).split('\n').length - 1;
+        sourceEditor.scrollTop = Math.max(0, line * parseFloat(getComputedStyle(sourceEditor).lineHeight) - 40);
+        updateCursor();
+      }
+    });
+    nav.append(button);
+    outlineEntries.push({ ...heading, button });
+  });
+  nav.scrollTop = scroll;
+  syncArticleOutline();
 }
 
 function recordEdit(before, after, inputType = 'toolbar') {
@@ -570,6 +692,131 @@ function handleRichEditorChange() {
   });
 }
 
+// Toast UI's WYSIWYG mode does not ship Markdown heading input rules.
+// Use its ProseMirror transaction/history API so typing and undo stay coherent.
+function markdownHeadingInputPlugin({ pmRules, pmKeymap, pmState }) {
+  const { InputRule, inputRules, undoInputRule } = pmRules;
+  const inlineRule = (pattern, markName) => new InputRule(pattern, (state, match, start, end) => {
+    if (!state.selection.empty) return null;
+    const prefix = match[1] || '';
+    const text = match[2];
+    const from = start + prefix.length;
+    const mark = state.schema.marks[markName];
+    if (!mark || !text || text.includes('\n')) return null;
+    const tr = state.tr.insertText(text, from, end);
+    tr.addMark(from, from + text.length, mark.create());
+    tr.removeStoredMark(mark);
+    return tr;
+  });
+  const linkRule = (pattern, automatic = false) => new InputRule(pattern, (state, match, start, end) => {
+    if (!state.selection.empty) return null;
+    const prefix = match[1] || '', label = match[2], url = automatic ? label : match[3];
+    if (!/^(?:https?:\/\/|mailto:|\/(?!\/)|#)/i.test(url)) return null;
+    const from = start + prefix.length, mark = state.schema.marks.link;
+    if (!mark) return null;
+    return state.tr.insertText(label, from, end).addMark(from, from + label.length, mark.create({ linkUrl: url })).removeStoredMark(mark);
+  });
+  const listRule = new InputRule(/^(?:([-+*]) |(\d{1,9})\. )$/, (state, match, start, end) => {
+    const { $from, empty } = state.selection;
+    if (!empty || $from.parent.type.name !== 'paragraph') return null;
+    const n = state.schema.nodes;
+    const type = match[2] ? n.orderedList : n.bulletList;
+    const parent = $from.node($from.depth - 1), index = $from.index($from.depth - 1);
+    if (!parent.canReplaceWith(index, index + 1, type)) return null;
+    const paragraph = n.paragraph.create(null, $from.parent.content.cut(end - $from.start()));
+    const list = type.create(match[2] ? { order: Number(match[2]) } : null, n.listItem.create(null, paragraph));
+    const from = $from.before();
+    const tr = state.tr.replaceWith(from, $from.after(), list);
+    return tr.setSelection(pmState.TextSelection.create(tr.doc, from + 3));
+  });
+  const taskRule = new InputRule(/^\[([ xX])\] $/, (state, match, start, end) => {
+    const { $from } = state.selection;
+    if (!state.selection.empty || $from.parent.type.name !== 'paragraph') return null;
+    if ($from.depth < 2 || $from.node($from.depth - 1).type.name !== 'listItem') return null;
+    const item = $from.node($from.depth - 1);
+    return state.tr.delete(start, end).setNodeMarkup($from.before($from.depth - 1), null, { ...item.attrs, task: true, checked: match[1].toLowerCase() === 'x' });
+  });
+  const codeRule = new InputRule(/^(```|~~~)([\w+-]*) $/, (state, match, start, end) => {
+    const { $from } = state.selection;
+    const type = state.schema.nodes.codeBlock;
+    if (!state.selection.empty || $from.parent.type.name !== 'paragraph' || $from.parentOffset !== $from.parent.content.size) return null;
+    if (!$from.node($from.depth - 1).canReplaceWith($from.index($from.depth - 1), $from.index($from.depth - 1) + 1, type)) return null;
+    return state.tr.delete(start, end).setBlockType(start, start, type, { language: match[2] || null });
+  });
+  const blockRule = (pattern, quote) => new InputRule(pattern, (state, match, start, end) => {
+    const { $from, empty } = state.selection;
+    if (!empty || $from.parent.type.name !== 'paragraph') return null;
+    const { paragraph, blockQuote, thematicBreak } = state.schema.nodes;
+    const from = $from.before(), to = $from.after();
+    const rest = $from.parent.content.cut(end - $from.start());
+    const text = paragraph.create(null, rest);
+    const nodes = quote ? [blockQuote.create(null, text)] : [thematicBreak.create(), text];
+    const parent = $from.node($from.depth - 1), index = $from.index($from.depth - 1);
+    if (!parent.canReplaceWith(index, index + 1, nodes[0].type)) return null;
+    const tr = state.tr.replaceWith(from, to, nodes);
+    return tr.setSelection(pmState.TextSelection.create(tr.doc, from + (quote ? 2 : nodes[0].nodeSize + 1)));
+  });
+  return {
+    wysiwygPlugins: [
+      () => inputRules({ rules: [new InputRule(/^(#{1,6}) $/, (state, match, start, end) => {
+        const { $from, empty } = state.selection;
+        const heading = state.schema.nodes.heading;
+        if (!empty || $from.parent.type.name !== 'paragraph' || !heading) return null;
+        const parent = $from.node($from.depth - 1);
+        const index = $from.index($from.depth - 1);
+        if (!parent.canReplaceWith(index, index + 1, heading)) return null;
+        return state.tr.delete(start, end).setBlockType(start, start, heading, {
+          level: match[1].length,
+        });
+      }), blockRule(/^> $/, true), blockRule(/^(?:\*\*\*|---|___) $/, false), listRule, taskRule, codeRule,
+      inlineRule(/(^|[^\\*])\*\*([^*]+)\*\*$/, 'strong'),
+      inlineRule(/(^|[^\\_\w])__([^_]+)__$/, 'strong'),
+      inlineRule(/(^|[^\\*])\*([^*]+)\*$/, 'emph'),
+      inlineRule(/(^|[^\\_\w])_([^_]+)_$/, 'emph'),
+      inlineRule(/(^|[^\\~])~~([^~]+)~~$/, 'strike'),
+      inlineRule(/(^|[^\\`])`([^`]+)`$/, 'code'),
+      linkRule(/(^|[^\\!])\[([^\]\n]+)\]\(([^\s()]+)\)$/),
+      linkRule(/(^|[^\\])<(https?:\/\/[^<>\s]+)>$/, true)
+      ] }),
+      () => new pmState.Plugin({ props: { handleKeyDown(view, event) {
+        if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || view.composing) return false;
+        const { $from, empty } = view.state.selection;
+        if (!empty || $from.parent.type.name !== 'paragraph' || !/^(?:```|~~~)[\w+-]*$/.test($from.parent.textContent)) return false;
+        return view.someProp('handleTextInput', handler => handler(view, $from.pos, $from.pos, ' ')) || false;
+      } } }),
+      () => pmKeymap.keymap({ Backspace: undoInputRule }),
+    ],
+  };
+}
+
+function bottomWritingSpacePlugin({ pmState }) {
+  return { wysiwygPlugins: [() => new pmState.Plugin({
+    props: { handleDOMEvents: { click(view, event) {
+      if (event.button !== 0 || event.target !== view.dom || view.composing || !view.editable) return false;
+      const lastElement = view.dom.lastElementChild;
+      if (!lastElement || event.clientY <= lastElement.getBoundingClientRect().bottom) return false;
+      const { doc, schema } = view.state;
+      const last = doc.lastChild;
+      if (!last) return false;
+      const tr = view.state.tr;
+      let position;
+      if (last.type === schema.nodes.paragraph && last.content.size === 0) {
+        position = doc.content.size - last.nodeSize + 1;
+      } else {
+        const paragraph = schema.nodes.paragraph.createAndFill();
+        if (!paragraph || !doc.canReplaceWith(doc.childCount, doc.childCount, paragraph.type)) return false;
+        position = doc.content.size + 1;
+        tr.insert(doc.content.size, paragraph);
+      }
+      tr.setSelection(pmState.TextSelection.create(tr.doc, position));
+      view.dispatch(tr.scrollIntoView());
+      view.focus();
+      event.preventDefault();
+      return true;
+    } } },
+  })] };
+}
+
 function initializeRichEditor() {
   if (!globalThis.toastui?.Editor) throw new Error('所见即所得编辑器加载失败。');
   richEditor = new globalThis.toastui.Editor({
@@ -581,6 +828,7 @@ function initializeRichEditor() {
     hideModeSwitch: true,
     autofocus: false,
     usageStatistics: false,
+    plugins: [markdownHeadingInputPlugin, bottomWritingSpacePlugin],
     language: 'zh-CN',
     toolbarItems: [
       ['heading', 'bold', 'italic', 'strike'],
@@ -605,6 +853,17 @@ function initializeRichEditor() {
       },
     },
   });
+}
+
+// Observe rendered headings as well as editor change callbacks: toolbar changes,
+// undo/redo and document replacement all update the same live outline.
+let outlineObserver;
+function watchArticleHeadings() {
+  const root = $('#richEditor .toastui-editor-ww-container .ProseMirror');
+  if (!root) return;
+  outlineObserver?.disconnect();
+  outlineObserver = new MutationObserver(scheduleArticleOutline);
+  outlineObserver.observe(root, { childList: true, subtree: true, characterData: true });
 }
 
 function switchEditorMode(mode) {
@@ -793,6 +1052,25 @@ $('#publishButton').addEventListener('click', openPublishDialog);
 $('#metadataButton').addEventListener('click', openMetadataDialog);
 $('#metadataForm').addEventListener('submit', updateArticleMetadata);
 $('#cancelMetadata').addEventListener('click', () => $('#metadataDialog').close());
+// Close only when a primary-button gesture starts and ends on the backdrop.
+// Dragging a selection out of an input must not dismiss the form.
+{
+  const dialog = $('#metadataDialog');
+  let backdropPointer = null;
+  const outside = (event) => {
+    const rect = dialog.getBoundingClientRect();
+    return event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom);
+  };
+  dialog.addEventListener('pointerdown', (event) => {
+    backdropPointer = event.button === 0 && outside(event) ? event.pointerId : null;
+  });
+  dialog.addEventListener('pointerup', (event) => {
+    if (event.button === 0 && event.pointerId === backdropPointer && outside(event)) dialog.close();
+    backdropPointer = null;
+  });
+  dialog.addEventListener('pointercancel', () => { backdropPointer = null; });
+  dialog.addEventListener('close', () => { backdropPointer = null; });
+}
 document.querySelectorAll('[data-now-target]').forEach((button) => button.addEventListener('click', () => {
   $(`#${button.dataset.nowTarget}`).value = articleMetadata.currentLocalDateTime();
 }));
@@ -821,6 +1099,7 @@ $('#closePanelButton').addEventListener('click', closeArticlePanel);
 window.addEventListener('beforeunload', (event) => { if (state.dirty) { event.preventDefault(); event.returnValue = ''; } });
 try {
   initializeRichEditor();
+  watchArticleHeadings();
   init();
 } catch (error) {
   toast(error.message, true);

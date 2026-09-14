@@ -60,6 +60,10 @@
           </div>
         </div>
         <div id="editingSurface" class="editing-surface wysiwyg-mode">
+          <aside class="article-outline" aria-label="当前文章大纲">
+            <div class="outline-heading">文章大纲</div>
+            <nav id="articleOutline" aria-label="标题导航"><p class="outline-empty">添加标题后显示大纲</p></nav>
+          </aside>
           <div id="richEditor" class="rich-editor" aria-label="所见即所得编辑器"></div>
           <div class="source-pane">
             <div class="format-bar" aria-label="Markdown 工具栏">
@@ -152,7 +156,8 @@
   <dialog id="metadataDialog" class="metadata-dialog">
     <form id="metadataForm" method="dialog">
       <span class="eyebrow">ARTICLE INFORMATION</span><h2>文章信息</h2>
-      <p>这些字段会写入 Markdown 顶部的 YAML。未显示的其他 YAML 字段和正文会保持不变。</p>
+      <p id="metadataFileInfo" class="metadata-file-info"></p>
+      <p>修改文章信息后点击应用，再按 Ctrl+S 保存，或等待自动保存。应用不会发布文章。</p>
       <div class="metadata-grid">
         <label class="full-field">文章标题<input id="metadataTitle" required></label>
         <label>发布时间<input id="metadataDate" type="datetime-local" step="1" required><button type="button" class="field-action" data-now-target="metadataDate">设为现在</button></label>
@@ -161,7 +166,7 @@
         <label class="full-field">标签<input id="metadataTags" placeholder="例如：Markdown, 写作"><small>多个标签使用逗号分隔。</small></label>
         <label class="full-field">文章摘要<textarea id="metadataDescription" rows="3" placeholder="用于列表页摘要和搜索结果描述"></textarea></label>
       </div>
-      <div class="dialog-actions"><button id="cancelMetadata" type="button" class="button secondary">取消</button><button type="submit" class="button primary">应用到 Markdown</button></div>
+      <div class="dialog-actions"><button id="cancelMetadata" type="button" class="button secondary">取消</button><button type="submit" class="button primary">应用修改</button></div>
     </form>
   </dialog>
 
@@ -171,6 +176,7 @@
       <button id="closeMarkdownHelp" class="dialog-close" type="button" aria-label="关闭 Markdown 语法说明">×</button>
     </div>
     <div class="markdown-help-content">
+      <section><h3>所见即所得：输入即转换</h3><p>在新段落开头输入前缀并按半角空格：<code>#</code> 到 <code>######</code>、<code>&gt;</code>、<code>-</code> / <code>+</code> / <code>*</code>、<code>1.</code>、<code>***</code> / <code>---</code> / <code>___</code>。待办先输入 <code>- </code>，再输入 <code>[ ] </code> 或 <code>[x] </code>。</p><p>粗体、斜体、删除线、行内代码、链接在输入闭合符号后转换；代码块输入 <code>```js</code> 或 <code>~~~js</code> 后按回车或空格。支持 Ctrl+Z；代码块内不触发这些规则。</p><p>列表嵌套使用工具栏缩进按钮；图片使用图片按钮、粘贴或拖入；表格使用表格按钮。完整 Markdown 表格、HTML、摘要分界、复杂链接及转义内容可在源码模式编辑；下方语法示例不代表所有内容都会实时转换。需要软换行时，在所见即所得模式按 Shift+Enter。</p></section>
       <section><h3>文字与段落</h3><table><tbody>
         <tr><th>标题</th><td><code>## 二级标题</code></td></tr>
         <tr><th>粗体</th><td><code>**粗体文字**</code></td></tr>
