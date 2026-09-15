@@ -1,7 +1,7 @@
 ---
 title: '个人路由配置记录'
 date: '2026-08-19T15:09:25+08:00'
-updated: '2026-09-03T16:42:14+08:00'
+updated: '2026-09-14T10:00:05+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -80,6 +80,8 @@ route -p add [已隐藏 IP 地址] mask [已隐藏 IP 地址] [已隐藏 IP 地�
 route print | findstr 192.168.6
 # 验证
 ```
+
+‍
 
 <section class="siyuan-references" aria-label="文档引用">
 

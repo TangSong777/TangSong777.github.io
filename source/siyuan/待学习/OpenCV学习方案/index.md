@@ -1,7 +1,7 @@
 ---
 title: 'OpenCV学习方案'
 date: '2026-08-27T16:45:57+08:00'
-updated: '2026-08-27T16:47:47+08:00'
+updated: '2026-08-27T16:46:20+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'

@@ -15,7 +15,7 @@ categories:
 
 - 📑 [2026](/siyuan/daily-note/2026/)
 
-  - 📄 [09](/siyuan/daily-note/2026/09/)
+  - 📄 09
   - 📑 [08](/siyuan/daily-note/2026/08/)
 
     - 📄 [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
@@ -38,7 +38,6 @@ categories:
 
 ### 本文引用
 - [08](/siyuan/daily-note/2026/08/)
-- [09](/siyuan/daily-note/2026/09/)
 - [2026](/siyuan/daily-note/2026/)
 - [2026-08-03](/siyuan/daily-note/2026/08/2026-08-03/)
 - [2026-08-04](/siyuan/daily-note/2026/08/2026-08-04/)

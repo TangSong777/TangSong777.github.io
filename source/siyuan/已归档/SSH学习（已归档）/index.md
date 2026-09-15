@@ -410,7 +410,7 @@ ssh -o ConnectTimeout=10 user@host
 
 以下两个报错常见于路由器/板卡等局域网设备被重置、重刷固件或重新生成密钥之后。
 
-Unable to negotiate with [已隐藏] port 22: no matching host key type found. Their offer: ssh-rsa
+Unable to negotiate with ████ port 22: no matching host key type found. Their offer: ssh-rsa
 
 这个错误表明你尝试使用 ssh 连接到远程服务器时，客户端和服务器之间没有匹配的 host key 类型。
 
@@ -420,9 +420,9 @@ Unable to negotiate with [已隐藏] port 22: no matching host key type found. T
 
   如果还是连不上：`WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED! `
 
-  这个提示说明你之前连接过 `[已隐藏]`，但这次它的主机密钥变了。在局域网环境里，常见原因就是路由器/设备被重置、重刷固件、或者重新生成了 SSH 密钥。
+  这个提示说明你之前连接过 `████`，但这次它的主机密钥变了。在局域网环境里，常见原因就是路由器/设备被重置、重刷固件、或者重新生成了 SSH 密钥。
 
-  那就`ssh-keygen -R [已隐藏]`直接删除对应条目
+  那就`ssh-keygen -R ████`直接删除对应条目
 
 <section class="siyuan-references" aria-label="文档引用">
 

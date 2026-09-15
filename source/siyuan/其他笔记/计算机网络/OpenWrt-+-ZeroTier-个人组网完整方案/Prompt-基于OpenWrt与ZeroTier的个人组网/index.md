@@ -21,14 +21,14 @@ categories:
 
 家庭 LAN：
 
-- OpenWrt LAN IP：[已隐藏]
-- 家庭设备网段：[已隐藏]
-- 示例设备：[已隐藏]
+- OpenWrt LAN IP：████
+- 家庭设备网段：████
+- 示例设备：████
 
 ZeroTier 网络：
 
-- OpenWrt ZeroTier IP：[已隐藏]
-- 笔记本 ZeroTier IP：[已隐藏]
+- OpenWrt ZeroTier IP：████
+- 笔记本 ZeroTier IP：████
 
 需求：
 
@@ -46,12 +46,12 @@ ZeroTier 网络：
 笔记本在外地，通过互联网连接 ZeroTier。  
 此时：
 
-- 笔记本只有 ZeroTier IP：[已隐藏]
+- 笔记本只有 ZeroTier IP：████
 - 希望访问家庭 LAN：
 
-  - [已隐藏]
-  - [已隐藏]
-  - 整个 [已隐藏] 网段
+  - ████
+  - ████
+  - 整个 ████ 网段
 - 不使用 ZeroTier Managed Route
 - 不购买 ZeroTier 付费功能
 
@@ -82,7 +82,7 @@ ZeroTier 网络：
 
   - 有线LAN
   - ZeroTier  
-    时，访问[已隐藏]应该走哪个接口？
+    时，访问████应该走哪个接口？
 - Windows/Linux系统如何选择路由？
 - 如何避免ZeroTier路径覆盖本地LAN路径？
 
@@ -108,7 +108,7 @@ ZeroTier 网络：
 
 无论笔记本在家还是外地，都可以透明访问：
 
-[已隐藏]
+████
 
 并且自动选择最佳路径。
 

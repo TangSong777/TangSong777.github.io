@@ -1,7 +1,7 @@
 ---
 title: '计算机网络'
 date: '2026-08-19T15:09:07+08:00'
-updated: '2026-08-26T17:48:44+08:00'
+updated: '2026-09-14T09:26:20+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -13,7 +13,8 @@ categories:
   - '其他笔记'
 ---
 
-- 📄 [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
+- 🛜 [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
+- 📄 工作台端口转发
 - 📑 [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 
   - 📄 [基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/基于OpenWrt与ZeroTier的个人组网/)

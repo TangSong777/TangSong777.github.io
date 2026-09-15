@@ -1,7 +1,7 @@
 ---
 title: '学习笔记'
 date: '2026-06-23T16:54:27+08:00'
-updated: '2026-09-10T13:09:46+08:00'
+updated: '2026-09-11T18:40:18+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -41,6 +41,7 @@ categories:
   - [计算机网络](/siyuan/其他笔记/计算机网络/)
 
     - [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
+    - 工作台端口转发
     - [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 
       - [基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/基于OpenWrt与ZeroTier的个人组网/)
@@ -82,9 +83,9 @@ categories:
 
   - [2026](/siyuan/daily-note/2026/)
 
-    - [09](/siyuan/daily-note/2026/09/)
+    - 09
 
-      - [2026-09-10](/siyuan/daily-note/2026/09/2026-09-10/)
+      - 2026-09-11
     - [08](/siyuan/daily-note/2026/08/)
 
       - [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
@@ -123,7 +124,6 @@ categories:
 ### 本文引用
 - [4 小时彻底掌握 C 指针](/siyuan/4-小时彻底掌握-C-指针/)
 - [08](/siyuan/daily-note/2026/08/)
-- [09](/siyuan/daily-note/2026/09/)
 - [2026](/siyuan/daily-note/2026/)
 - [2026-08-03](/siyuan/daily-note/2026/08/2026-08-03/)
 - [2026-08-04](/siyuan/daily-note/2026/08/2026-08-04/)
@@ -138,7 +138,6 @@ categories:
 - [2026-08-26](/siyuan/daily-note/2026/08/2026-08-26/)
 - [2026-08-27](/siyuan/daily-note/2026/08/2026-08-27/)
 - [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
-- [2026-09-10](/siyuan/daily-note/2026/09/2026-09-10/)
 - [串流方案](/siyuan/其他笔记/Rock5B+/串流方案/)
 - [从公网、局域网到 ZeroTier：构建属于自己的虚拟局域网（已归档）](/siyuan/已归档/从公网、局域网到-ZeroTier：构建属于自己的虚拟局域网（已归档）/)
 - [待学习](/siyuan/待学习/)

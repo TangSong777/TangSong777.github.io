@@ -14,7 +14,7 @@ categories:
   - '计算机网络'
 ---
 
-> 本文档整合《Prompt-基于OpenWrt与ZeroTier的个人组网》的需求分析与《基于OpenWrt与ZeroTier的个人组网》的方案设计，形成一份可直接照做的完整实施方案。最终目标：笔记本无论在家还是外地，都能透明访问家庭 [已隐藏] 网段，并自动选择最佳路径。
+> 本文档整合《Prompt-基于OpenWrt与ZeroTier的个人组网》的需求分析与《基于OpenWrt与ZeroTier的个人组网》的方案设计，形成一份可直接照做的完整实施方案。最终目标：笔记本无论在家还是外地，都能透明访问家庭 ████ 网段，并自动选择最佳路径。
 
 # 0. 速通
 
@@ -29,13 +29,13 @@ Set-NetIPInterface -InterfaceAlias "ZeroTier One [[已隐藏 Network ID]]" `
 route delete 192.168.6.0
 
 # 3. 重新添加持久路由
-route -p add 192.168.6.0 mask 255.255.255.0 [已隐藏] metric 5000
+route -p add 192.168.6.0 mask 255.255.255.0 ████ metric 5000
 
 # 4. 测试 ZeroTier 到 OpenWrt
-ping [已隐藏]
+ping ████
 
 # 5. 测试家庭 LAN
-ping [已隐藏]
+ping ████
 ```
 
 ## 1. 需求与目标
@@ -49,8 +49,8 @@ ping [已隐藏]
 
 ### 1.2 访问目标
 
-- 目标网段：`[已隐藏]`（整个网段透明访问）
-- 目标设备：`[已隐藏]`​（OpenWrt LAN）、`[已隐藏]`（家庭设备示例）等所有网内设备
+- 目标网段：`████`（整个网段透明访问）
+- 目标设备：`████`​（OpenWrt LAN）、`████`（家庭设备示例）等所有网内设备
 
 ### 1.3 硬性约束
 
@@ -65,11 +65,11 @@ ping [已隐藏]
 
 |节点|接口|IP 地址|
 | ----------| ---------------| ----------------------|
-|OpenWrt|LAN|[已隐藏]|
-|OpenWrt|ZeroTier|[已隐藏]|
-|笔记本|ZeroTier|[已隐藏]|
+|OpenWrt|LAN|████|
+|OpenWrt|ZeroTier|████|
+|笔记本|ZeroTier|████|
 |笔记本|LAN（在家时）|192.168.6.x（如 .2）|
-|家庭设备|LAN|[已隐藏]（示例）|
+|家庭设备|LAN|████（示例）|
 
 ### 2.2 在家场景拓扑
 
@@ -78,10 +78,10 @@ ping [已隐藏]
    |
    | Ethernet / WiFi
    v
-OpenWrt LAN [已隐藏]
+OpenWrt LAN ████
    |
    v
-家庭设备 [已隐藏]
+家庭设备 ████
 ```
 
 访问路径：`笔记本 → 本地网卡 → OpenWrt LAN → 家庭设备`，不经过 ZeroTier。
@@ -89,17 +89,17 @@ OpenWrt LAN [已隐藏]
 ### 2.3 外地场景拓扑
 
 ```
-笔记本 (ZeroTier [已隐藏])
+笔记本 (ZeroTier ████)
    |
    | ZeroTier Overlay
    v
-OpenWrt ZeroTier [已隐藏]
+OpenWrt ZeroTier ████
    |
    v
-OpenWrt LAN [已隐藏]
+OpenWrt LAN ████
    |
    v
-家庭设备 [已隐藏]
+家庭设备 ████
 ```
 
 访问路径：`笔记本 → ZeroTier → OpenWrt → 家庭 LAN`。
@@ -114,30 +114,30 @@ OpenWrt LAN [已隐藏]
 |主路由修改|不需要|需要下发静态路由|
 |配置复杂度|低|高|
 |稳定性|最高|依赖回程路由正确|
-|设备可见来源 IP|全部显示为 [已隐藏]|可见真实 192.168.195.x|
+|设备可见来源 IP|全部显示为 ████|可见真实 192.168.195.x|
 
 **原因**：OpenWrt 的 ZeroTier 插件内置"自动允许客户端 NAT"功能，开启后自动解决回程路由问题，家庭环境无需改动任何设备。
 
 ### 3.2 NAT 数据流
 
 ```
-笔记本 [已隐藏]
+笔记本 ████
    ↓
 OpenWrt NAT
    ↓
-[已隐藏]
+████
    ↓
-家庭设备 [已隐藏]
+家庭设备 ████
 ```
 
-家庭设备看到的来源地址是 `[已隐藏]`​，而不是 `[已隐藏]`。
+家庭设备看到的来源地址是 `████`​，而不是 `████`。
 
 ### 3.3 纯路由方案的回程问题（不推荐的原理）
 
-如果关闭 NAT，家庭设备回复 `[已隐藏]` 时若无回程路由则无法返回。需要家庭 LAN 显式配置：
+如果关闭 NAT，家庭设备回复 `████` 时若无回程路由则无法返回。需要家庭 LAN 显式配置：
 
 ```
-[已隐藏] via [已隐藏]
+████ via ████
 ```
 
 家庭环境通常不推荐这么做。
@@ -168,8 +168,8 @@ zerotier → lan
 
 开启"自动允许客户端 NAT"后：
 
-- 远程 ZeroTier 客户端访问 `[已隐藏]` 时
-- 源地址被转换为 `[已隐藏]`
+- 远程 ZeroTier 客户端访问 `████` 时
+- 源地址被转换为 `████`
 - 解决家庭设备回程路由无法到达 ZeroTier 网段的问题
 
 ## 5. Windows 客户端配置
@@ -197,10 +197,10 @@ ZeroTier IPv4 Metric：5000
 不使用 Managed Route，因此需手动添加持久路由：
 
 ```
-route -p add 192.168.6.0 mask 255.255.255.0 [已隐藏] metric 5000
+route -p add 192.168.6.0 mask 255.255.255.0 ████ metric 5000
 ```
 
-含义：访问家庭 LAN `[已隐藏]`​ 时，下一跳为 OpenWrt 的 ZeroTier 地址 `[已隐藏]`。
+含义：访问家庭 LAN `████`​ 时，下一跳为 OpenWrt 的 ZeroTier 地址 `████`。
 
 ### 5.3 Windows 路由选择逻辑
 
@@ -212,15 +212,15 @@ Windows 依据以下规则选择路径：
 **在家时**：
 
 ```
-[已隐藏]  On-link（本地直连）  Metric 低   ← 被选中
-[已隐藏]  via [已隐藏]    Metric 5000
+████  On-link（本地直连）  Metric 低   ← 被选中
+████  via ████    Metric 5000
 ```
 
 **在外地时**：
 
 ```
-[已隐藏]  On-link  不存在
-[已隐藏]  via [已隐藏]   ← 唯一选择
+████  On-link  不存在
+████  via ████   ← 唯一选择
 ```
 
 ## 6. 双场景行为验证
@@ -228,15 +228,15 @@ Windows 依据以下规则选择路径：
 ### 6.1 在家（预期走本地 LAN）
 
 ```powershell
-ping [已隐藏]
-tracert [已隐藏]   # 第一跳应为本地网关，不出现 ZeroTier
+ping ████
+tracert ████   # 第一跳应为本地网关，不出现 ZeroTier
 ```
 
 ### 6.2 在外地（预期走 ZeroTier）
 
 ```powershell
-ping [已隐藏]
-tracert [已隐藏]   # 经过 [已隐藏] 进入家庭 LAN
+ping ████
+tracert ████   # 经过 ████ 进入家庭 LAN
 ```
 
 ### 6.3 确认路由表
@@ -250,7 +250,7 @@ Get-NetIPInterface -AddressFamily IPv4
 
 ### 7.1 不要使用 ZeroTier Managed Route
 
-- 不要在 ZeroTier Central 添加 `[已隐藏] via [已隐藏]`
+- 不要在 ZeroTier Central 添加 `████ via ████`
 - 客户端路由由 Windows 本地静态路由控制（更可控、更简单）
 
 ### 7.2 不让 ZeroTier 接管默认网络
@@ -261,7 +261,7 @@ Get-NetIPInterface -AddressFamily IPv4
 0.0.0.0/0 via ZeroTier
 ```
 
-如果存在必须删除。ZeroTier 只负责 `[已隐藏]`，不负责互联网出口。
+如果存在必须删除。ZeroTier 只负责 `████`，不负责互联网出口。
 
 ### 7.3 Metric 建议优化
 
@@ -279,7 +279,7 @@ Get-NetIPInterface -AddressFamily IPv4
 ## 9. 安全建议
 
 - ZeroTier 网络 ID 与成员授权保持私密，网络内只授权自己的设备
-- 防火墙规则可进一步收紧：只允许笔记本的 ZeroTier IP（[已隐藏]）访问 LAN
+- 防火墙规则可进一步收紧：只允许笔记本的 ZeroTier IP（████）访问 LAN
 - 定期检查 ZeroTier Central 中的授权设备列表，移除陌生设备
 
 ## 10. 最终配置清单
@@ -297,14 +297,14 @@ Managed Route：关闭（不使用）
 
 ```
 ZeroTier IPv4 Metric：5000
-家庭 LAN 静态路由：[已隐藏] via [已隐藏]（持久）
+家庭 LAN 静态路由：████ via ████（持久）
 Ethernet / WiFi：低 Metric
 ```
 
 **最终效果**：
 
 ```
-同一个 [已隐藏] 访问目标
+同一个 ████ 访问目标
 在家：自动走本地 LAN
 外地：自动走 ZeroTier
 ```
