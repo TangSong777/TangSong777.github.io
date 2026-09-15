@@ -479,8 +479,10 @@ function run(command, args, options = {}) {
     });
     let stdout = '';
     let stderr = '';
-    child.stdout?.on('data', (data) => { stdout += data.toString(); });
-    child.stderr?.on('data', (data) => { stderr += data.toString(); });
+    child.stdout?.setEncoding('utf8');
+    child.stderr?.setEncoding('utf8');
+    child.stdout?.on('data', (data) => { stdout += data; });
+    child.stderr?.on('data', (data) => { stderr += data; });
     child.on('error', reject);
     child.on('close', (code) => resolvePromise({ code, stdout, stderr }));
   });
@@ -498,6 +500,15 @@ async function runChecked(command, args, label) {
 
 async function git(...args) {
   return (await runChecked('git', args, `Git ${args[0]}`)).stdout.trim();
+}
+
+export function parseGitPaths(output) {
+  return output.split('\0').filter((name) => name.length > 0);
+}
+
+async function gitPaths(...args) {
+  // NUL-delimited output disables Git path quoting and preserves whitespace.
+  return parseGitPaths((await runChecked('git', args, `Git ${args[0]}`)).stdout);
 }
 
 async function writeJsonAtomic(target, value) {
@@ -635,13 +646,13 @@ function ordinaryArticleDraftPath(name) {
 
 async function workingTreePaths() {
   const [tracked, untracked, staged] = await Promise.all([
-    git('diff', '--name-only'),
-    git('ls-files', '--others', '--exclude-standard'),
-    git('diff', '--cached', '--name-only'),
+    gitPaths('diff', '--name-only', '-z'),
+    gitPaths('ls-files', '--others', '--exclude-standard', '-z'),
+    gitPaths('diff', '--cached', '--name-only', '-z'),
   ]);
   return {
-    dirty: [...new Set(`${tracked}\n${untracked}`.split('\n').map((item) => item.trim()).filter(Boolean))],
-    staged: staged.split('\n').map((item) => item.trim()).filter(Boolean),
+    dirty: [...new Set([...tracked, ...untracked])],
+    staged,
   };
 }
 
@@ -672,7 +683,7 @@ async function pushPendingArticle() {
   }
   const commits = (await git('rev-list', 'origin/main..HEAD')).split('\n').filter(Boolean);
   if (commits.length !== 1 || commits[0] !== pending.commit) throw new Error('文章待推送记录之外还有本地提交。');
-  const names = (await git('diff-tree', '--root', '--no-commit-id', '--name-only', '-r', pending.commit)).split('\n').filter(Boolean);
+  const names = await gitPaths('diff-tree', '--root', '--no-commit-id', '--name-only', '-z', '-r', pending.commit);
   if (!names.length || names.some((name) => !pathAllowed(name, pending.allowedPaths || []))) throw new Error('待推送文章提交包含白名单之外的文件。');
   if (!/^(?:feat|fix|docs)\(article\):/.test(await git('log', '-1', '--format=%s'))) throw new Error('待推送提交说明不是文章提交格式。');
   await git('push', 'origin', 'HEAD:main');
@@ -704,7 +715,7 @@ async function publishCurrentArticle(data, warnings) {
     }
 
     await runChecked('git', ['add', '-A', '--', ...pathspecs], '暂存当前文章');
-    const stagedNames = (await git('diff', '--cached', '--name-only')).split('\n').filter(Boolean);
+    const stagedNames = await gitPaths('diff', '--cached', '--name-only', '-z');
     if (stagedNames.some((name) => !pathAllowed(name, allowedPaths))) {
       await run('git', ['restore', '--staged', '--', ...pathspecs]);
       throw new Error('暂存区包含当前文章白名单之外的文件。');
