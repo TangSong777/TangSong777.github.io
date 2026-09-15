@@ -506,6 +506,11 @@ export function parseGitPaths(output) {
   return output.split('\0').filter((name) => name.length > 0);
 }
 
+export function articleDiffCheckArgs(paths) {
+  return ['-c', 'core.whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,-indent-with-non-tab,-tab-in-indent,-cr-at-eol',
+    'diff', '--cached', '--check', '--', ...paths];
+}
+
 async function gitPaths(...args) {
   // NUL-delimited output disables Git path quoting and preserves whitespace.
   return parseGitPaths((await runChecked('git', args, `Git ${args[0]}`)).stdout);
@@ -714,6 +719,8 @@ async function publishCurrentArticle(data, warnings) {
       }
     }
 
+    let commit;
+    try {
     await runChecked('git', ['add', '-A', '--', ...pathspecs], '暂存当前文章');
     const stagedNames = await gitPaths('diff', '--cached', '--name-only', '-z');
     if (stagedNames.some((name) => !pathAllowed(name, allowedPaths))) {
@@ -728,7 +735,9 @@ async function publishCurrentArticle(data, warnings) {
       };
     }
     if (diff.code !== 1) throw new Error('无法检查文章 Git 改动。');
-    await git('diff', '--cached', '--check');
+    // Markdown trailing spaces can mean a hard line break. Only conflict
+    // markers, not code-style whitespace rules, should block publication.
+    await git(...articleDiffCheckArgs(pathspecs));
     const title = frontMatterValue(data.content, 'title') || articleSlug;
     const tracked = (await run('git', ['cat-file', '-e', `HEAD:${articleRepoPath}`])).code === 0;
     const fallback = tracked ? `docs(article): 更新《${title}》` : `feat(article): 发布《${title}》`;
@@ -737,8 +746,6 @@ async function publishCurrentArticle(data, warnings) {
       await run('git', ['restore', '--staged', '--', ...pathspecs]);
       throw new Error('提交说明必须以 feat(article):、fix(article): 或 docs(article): 开头。');
     }
-    let commit;
-    try {
       commit = await runChecked('git', [
         'commit', '--only', '-m', message,
         '-m', '更新普通文章 Markdown 与关联图片；已通过敏感信息检查和 Hexo 构建。',
