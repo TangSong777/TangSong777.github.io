@@ -1,7 +1,7 @@
 ---
 title: '硬件需求'
 date: '2026-08-21T16:05:47+08:00'
-updated: '2026-08-24T11:23:30+08:00'
+updated: '2026-08-24T11:23:36+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -14,8 +14,6 @@ categories:
 ---
 
 Get一个大容量移动硬盘
-
-Get一个域名
 
 Get一个打印机
 

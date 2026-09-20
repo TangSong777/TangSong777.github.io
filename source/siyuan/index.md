@@ -1,7 +1,7 @@
 ---
 title: '学习笔记'
 date: '2026-06-23T16:54:27+08:00'
-updated: '2026-09-17T09:29:15+08:00'
+updated: '2026-09-19T13:34:47+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -12,14 +12,14 @@ categories:
   - '学习笔记'
 ---
 
-- [待学习](/siyuan/待学习/)
+- 待学习
 
-  - [OpenCV学习方案](/siyuan/待学习/OpenCV学习方案/)
-  - [PPG与rPPG学习方案](/siyuan/待学习/PPG与rPPG学习方案/)
-  - [PyTorch与CNN基础学习方案](/siyuan/待学习/PyTorch与CNN基础学习方案/)
-  - [数据结构学习方案（CC++ 嵌入式）](/siyuan/待学习/数据结构学习方案（CC++-嵌入式）/)
-  - [嵌入式控制算法PID专项](/siyuan/待学习/嵌入式控制算法PID专项/)
-  - [Docker学习方案](/siyuan/待学习/Docker学习方案/)
+  - OpenCV学习方案
+  - PPG与rPPG学习方案
+  - PyTorch与CNN基础学习方案
+  - 数据结构学习方案（CC++ 嵌入式）
+  - 嵌入式控制算法PID专项
+  - Docker学习方案
 - 能力体系
 
   - 能力评估
@@ -79,34 +79,25 @@ categories:
   - [规范](/siyuan/力扣刷题/规范/)
   - [力扣刷题日记模版](/siyuan/力扣刷题/力扣刷题日记模版/)
   - [刷题规划-2026-08-07~2026-08-26](/siyuan/力扣刷题/刷题规划-2026-08-07~2026-08-26/)
-- [daily note](/siyuan/daily-note/)
+- daily note
 
-  - [2026](/siyuan/daily-note/2026/)
+  - 2026
 
-    - 09
+    - 08
 
-      - 2026-09-17
-      - 2026-09-16
-      - 2026-09-15
-      - 2026-09-14
-      - 2026-09-13
-      - 2026-09-12
-      - 2026-09-11
-    - [08](/siyuan/daily-note/2026/08/)
-
-      - [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
-      - [2026-08-27](/siyuan/daily-note/2026/08/2026-08-27/)
-      - [2026-08-26](/siyuan/daily-note/2026/08/2026-08-26/)
-      - [2026-08-25](/siyuan/daily-note/2026/08/2026-08-25/)
-      - [2026-08-24](/siyuan/daily-note/2026/08/2026-08-24/)
-      - [2026-08-18](/siyuan/daily-note/2026/08/2026-08-18/)
-      - [2026-08-17](/siyuan/daily-note/2026/08/2026-08-17/)
-      - [2026-08-14](/siyuan/daily-note/2026/08/2026-08-14/)
-      - [2026-08-07](/siyuan/daily-note/2026/08/2026-08-07/)
-      - [2026-08-06](/siyuan/daily-note/2026/08/2026-08-06/)
-      - [2026-08-05](/siyuan/daily-note/2026/08/2026-08-05/)
-      - [2026-08-04](/siyuan/daily-note/2026/08/2026-08-04/)
-      - [2026-08-03](/siyuan/daily-note/2026/08/2026-08-03/)
+      - 2026-08-31
+      - 2026-08-27
+      - 2026-08-26
+      - 2026-08-25
+      - 2026-08-24
+      - 2026-08-18
+      - 2026-08-17
+      - 2026-08-14
+      - 2026-08-07
+      - 2026-08-06
+      - 2026-08-05
+      - 2026-08-04
+      - 2026-08-03
 - [已归档](/siyuan/已归档/)
 
   - [从公网、局域网到 ZeroTier：构建属于自己的虚拟局域网（已归档）](/siyuan/已归档/从公网、局域网到-ZeroTier：构建属于自己的虚拟局域网（已归档）/)
@@ -121,7 +112,7 @@ categories:
 - [会话状态恢复手册](/siyuan/会话状态恢复手册/)
 - [Skill速查手册](/siyuan/Skill速查手册/)
 - [硬件需求](/siyuan/硬件需求/)
-- [这是一个测试文档](/siyuan/这是一个测试文档/)
+- 这是一个测试文档
 
 <section class="siyuan-references" aria-label="文档引用">
 
@@ -129,24 +120,8 @@ categories:
 
 ### 本文引用
 - [4 小时彻底掌握 C 指针](/siyuan/4-小时彻底掌握-C-指针/)
-- [08](/siyuan/daily-note/2026/08/)
-- [2026](/siyuan/daily-note/2026/)
-- [2026-08-03](/siyuan/daily-note/2026/08/2026-08-03/)
-- [2026-08-04](/siyuan/daily-note/2026/08/2026-08-04/)
-- [2026-08-05](/siyuan/daily-note/2026/08/2026-08-05/)
-- [2026-08-06](/siyuan/daily-note/2026/08/2026-08-06/)
-- [2026-08-07](/siyuan/daily-note/2026/08/2026-08-07/)
-- [2026-08-14](/siyuan/daily-note/2026/08/2026-08-14/)
-- [2026-08-17](/siyuan/daily-note/2026/08/2026-08-17/)
-- [2026-08-18](/siyuan/daily-note/2026/08/2026-08-18/)
-- [2026-08-24](/siyuan/daily-note/2026/08/2026-08-24/)
-- [2026-08-25](/siyuan/daily-note/2026/08/2026-08-25/)
-- [2026-08-26](/siyuan/daily-note/2026/08/2026-08-26/)
-- [2026-08-27](/siyuan/daily-note/2026/08/2026-08-27/)
-- [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)
 - [串流方案](/siyuan/其他笔记/Rock5B+/串流方案/)
 - [从公网、局域网到 ZeroTier：构建属于自己的虚拟局域网（已归档）](/siyuan/已归档/从公网、局域网到-ZeroTier：构建属于自己的虚拟局域网（已归档）/)
-- [待学习](/siyuan/待学习/)
 - [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
 - [规范](/siyuan/力扣刷题/规范/)
 - [会话状态恢复手册](/siyuan/会话状态恢复手册/)
@@ -162,9 +137,7 @@ categories:
 - [命令行](/siyuan/其他笔记/命令行/)
 - [其他笔记](/siyuan/其他笔记/)
 - [嵌入式](/siyuan/其他笔记/嵌入式/)
-- [嵌入式控制算法PID专项](/siyuan/待学习/嵌入式控制算法PID专项/)
 - [时间线索引](/siyuan/力扣刷题/时间线索引/)
-- [数据结构学习方案（CC++ 嵌入式）](/siyuan/待学习/数据结构学习方案（CC++-嵌入式）/)
 - [数据结构专项](/siyuan/Python笔记/数据结构专项/)
 - [刷题规划-2026-08-07~2026-08-26](/siyuan/力扣刷题/刷题规划-2026-08-07~2026-08-26/)
 - [算法专项](/siyuan/Python笔记/算法专项/)
@@ -174,29 +147,23 @@ categories:
 - [学习文档](/siyuan/其他笔记/计算机网络/学习文档/)
 - [已归档](/siyuan/已归档/)
 - [硬件需求](/siyuan/硬件需求/)
-- [这是一个测试文档](/siyuan/这是一个测试文档/)
 - [知识点大纲](/siyuan/其他笔记/嵌入式/ESP32/知识点大纲/)
 - [知识点大纲](/siyuan/其他笔记/嵌入式/STM32/知识点大纲/)
 - [CMD专项](/siyuan/其他笔记/命令行/CMD专项/)
-- [daily note](/siyuan/daily-note/)
-- [Docker学习方案](/siyuan/待学习/Docker学习方案/)
 - [ESP32](/siyuan/其他笔记/嵌入式/ESP32/)
 - [Linux命令行学习（已归档）](/siyuan/已归档/Linux命令行学习（已归档）/)
 - [Linux专项](/siyuan/其他笔记/命令行/Linux专项/)
 - [Moonlight专项](/siyuan/其他笔记/Rock5B+/Moonlight专项/)
 - [NumPy基础练习（已归档）](/siyuan/已归档/NumPy基础练习（已归档）/)
 - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
-- [OpenCV学习方案](/siyuan/待学习/OpenCV学习方案/)
 - [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 - [PathLib专项](/siyuan/Python笔记/PathLib专项/)
 - [PowerShell专项](/siyuan/其他笔记/命令行/PowerShell专项/)
-- [PPG与rPPG学习方案](/siyuan/待学习/PPG与rPPG学习方案/)
 - [Prompt-基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/Prompt-基于OpenWrt与ZeroTier的个人组网/)
 - [Python 调用系统命令学习方案（已归档）](/siyuan/已归档/Python-调用系统命令学习方案（已归档）/)
 - [Python笔记](/siyuan/Python笔记/)
 - [Python容器学习（已归档）](/siyuan/已归档/Python容器学习（已归档）/)
 - [Python文件操作学习（已归档）](/siyuan/已归档/Python文件操作学习（已归档）/)
-- [PyTorch与CNN基础学习方案](/siyuan/待学习/PyTorch与CNN基础学习方案/)
 - [Rock5B+](/siyuan/其他笔记/Rock5B+/)
 - [Skill速查手册](/siyuan/Skill速查手册/)
 - [SSH学习（已归档）](/siyuan/已归档/SSH学习（已归档）/)
