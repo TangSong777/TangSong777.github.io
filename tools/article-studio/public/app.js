@@ -9,6 +9,7 @@ const state = {
   undoStack: [], redoStack: [], pendingEdit: null, applyingEdit: false,
   identity: null, draftTimer: null, autoSaveTimer: null, autoSaving: false,
   autoSaveMinutes: 3, dirtySince: null,
+  authMode: 'local', authenticated: false,
   siyuanDocuments: [], privateSelected: new Set(),
   accessKey: mobileKeyFromUrl || sessionStorage.getItem('articleStudioKey') || '',
 };
@@ -64,11 +65,42 @@ async function api(path, options = {}) {
   const response = await fetch(path, { ...options, headers });
   const data = await response.json();
   if (!response.ok) {
+    if (response.status === 401 && state.authMode === 'password' && path !== '/api/login') showLoginDialog();
     const error = new Error(data.message || '操作失败');
     Object.assign(error, data);
     throw error;
   }
   return data;
+}
+
+function showLoginDialog() {
+  const dialog = $('#loginDialog');
+  if (!dialog || dialog.open) return;
+  $('#loginPassword').value = '';
+  $('#loginError').textContent = '';
+  dialog.showModal();
+  $('#loginPassword').focus();
+}
+
+async function login(event) {
+  event.preventDefault();
+  const button = $('#loginSubmit');
+  const password = $('#loginPassword').value;
+  if (!password) return;
+  button.disabled = true;
+  $('#loginError').textContent = '';
+  try {
+    const result = await api('/api/login', { method: 'POST', body: JSON.stringify({ password }) });
+    state.token = result.token || '';
+    state.authenticated = true;
+    $('#loginDialog').close();
+    $('#identityState').textContent = '已登录';
+    await loadArticles();
+  } catch (error) {
+    $('#loginError').textContent = error.message || '登录失败';
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function toast(message, isError = false) {
@@ -890,9 +922,16 @@ function switchEditorMode(mode) {
 async function init() {
   try {
     const config = await api('/api/config');
-    state.token = config.token;
+    state.authMode = config.authMode || 'local';
+    state.token = config.token || '';
+    state.authenticated = config.authenticated !== false;
     state.identity = config.identity;
     state.autoSaveMinutes = config.settings?.autoSaveMinutes || 3;
+    if (state.authMode === 'password' && !state.authenticated) {
+      $('#identityState').textContent = '需要登录';
+      showLoginDialog();
+      return;
+    }
     $('#identityState').textContent = config.identity?.email || (config.authMode === 'cloudflare' ? '已安全登录' : '本地模式');
     await loadArticles();
   } catch (error) {
@@ -1082,6 +1121,7 @@ $('#cancelPublish').addEventListener('click', () => $('#publishDialog').close())
 $('#settingsButton').addEventListener('click', openSettingsDialog);
 $('#settingsForm').addEventListener('submit', saveSettings);
 $('#cancelSettings').addEventListener('click', () => $('#settingsDialog').close());
+$('#loginForm').addEventListener('submit', login);
 document.querySelectorAll('[data-autosave-minutes]').forEach((button) => button.addEventListener('click', () => {
   $('#autoSaveMinutes').value = button.dataset.autosaveMinutes;
 }));

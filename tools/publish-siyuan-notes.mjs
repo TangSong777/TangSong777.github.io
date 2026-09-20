@@ -163,8 +163,12 @@ export async function rollback(moves) {
 
 async function main() {
   const args=process.argv.slice(2);
-  if(args.length!==1 || !['--preview','--publish'].includes(args[0]))throw new Error('用法：node tools/publish-siyuan-notes.mjs --preview|--publish');
-  const publish=args[0]==='--publish';
+  const mode=args.find((arg)=>['--preview','--publish'].includes(arg));
+  const allowPrivacyReduction=args.includes('--allow-privacy-reduction');
+  if((mode !== '--preview' && mode !== '--publish') || args.some((arg)=>!['--preview','--publish','--allow-privacy-reduction'].includes(arg)) || (allowPrivacyReduction && mode !== '--publish')) {
+    throw new Error('用法：node tools/publish-siyuan-notes.mjs --preview|--publish [--allow-privacy-reduction]');
+  }
+  const publish=mode==='--publish';
   await withRepositoryLock(async()=>{
     process.umask(0o077);
     if(publish)await prepareGit();
@@ -189,7 +193,7 @@ async function main() {
       await command(process.execPath,[path.join(repo,'tools/import-siyuan-notes.mjs'),'--blog',stage,'--source',exported.raw,'--notebook-title','学习笔记']);
       const next=await loadData(stage);
       report.documents=next.documents.length;
-      if(next.documents.length<1 || (previous.documents.length>0 && next.documents.length<previous.documents.length*0.8))throw new Error('公开文档数量下降超过 20%，需要人工确认，停止发布');
+      if(next.documents.length<1 || (previous.documents.length>0 && next.documents.length<previous.documents.length*0.8 && !allowPrivacyReduction))throw new Error('公开文档数量下降超过 20%，需要人工确认，停止发布；若确认是隐私规则变更，请显式使用 --allow-privacy-reduction');
       await command(process.execPath,[path.join(repo,'tools/check-siyuan-knowledge-base.mjs'),'--blog',stage,'--source-only','--strict']);
       report.stage='build';
       await command('npm',['run','build'],{cwd:stage});

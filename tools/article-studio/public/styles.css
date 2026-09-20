@@ -151,11 +151,13 @@ dialog form { padding: 27px; }
 dialog h2 { margin: 5px 0 10px; }
 dialog p { color: var(--muted); line-height: 1.6; }
 dialog label:not(.confirm-row) { display: block; margin-top: 17px; font-size: 13px; font-weight: 700; }
-dialog input[type="text"], dialog input[type="datetime-local"], dialog input:not([type]), dialog textarea { width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; outline: 0; color: var(--ink); background: #fff; }
+dialog input[type="text"], dialog input[type="password"], dialog input[type="datetime-local"], dialog input:not([type]), dialog textarea { width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; outline: 0; color: var(--ink); background: #fff; }
 dialog input:focus, dialog textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
 dialog label small { display: block; margin-top: 5px; color: var(--muted); font-weight: 400; }
 .metadata-dialog { width: min(680px, calc(100vw - 30px)); }
 .settings-dialog { width: min(500px, calc(100vw - 30px)); }
+.login-dialog { width: min(430px, calc(100vw - 30px)); }
+.login-error { min-height: 1.4em; margin: 10px 0 0; color: #b33b3b !important; font-size: 13px; }
 .privacy-dialog { width: min(760px, calc(100vw - 30px)); max-height: min(880px, calc(100dvh - 30px)); }
 .privacy-dialog form { max-height: calc(100dvh - 32px); overflow-y: auto; }
 .privacy-dialog-header { display: flex; align-items: center; justify-content: space-between; }

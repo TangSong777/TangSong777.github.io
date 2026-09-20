@@ -143,7 +143,13 @@ function parseFrontMatter(text) {
 function isPrivateRelative(relative, configuredDocuments = []) {
   const normalized = relative.replaceAll('\\', '/').replace(/^\/+/, '');
   const normalizedKey = key(normalized);
-  return configuredDocuments.some((item) => key(item) === normalizedKey) || PRIVATE_DOCUMENT_ROOTS.some((root) => {
+  const configuredRoot = configuredDocuments.some((item) => {
+    const rootKey = key(String(item).replace(/\/$/u, ''));
+    return normalizedKey === rootKey
+      || normalizedKey === `${rootKey}.md`
+      || normalizedKey.startsWith(`${rootKey}/`);
+  });
+  return configuredRoot || PRIVATE_DOCUMENT_ROOTS.some((root) => {
     const rootKey = key(root);
     return normalizedKey === `${rootKey}.md` || normalizedKey.startsWith(`${rootKey}/`);
   });

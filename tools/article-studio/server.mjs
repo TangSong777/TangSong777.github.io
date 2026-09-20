@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, readdir, stat, rename, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
-import { createPublicKey, randomBytes, verify as verifySignature } from 'node:crypto';
+import { createHmac, createPublicKey, randomBytes, scryptSync, timingSafeEqual, verify as verifySignature } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { networkInterfaces } from 'node:os';
@@ -17,11 +17,17 @@ const publicDir = join(studioDir, 'public');
 const toastEditorDist = join(toolRepoDir, 'node_modules', '@toast-ui', 'editor', 'dist');
 const networkMode = process.argv.includes('--network');
 const authMode = String(process.env.ARTICLE_STUDIO_AUTH_MODE || (networkMode ? 'key' : 'local')).toLowerCase();
-if (!['local', 'key', 'cloudflare'].includes(authMode)) throw new Error('ARTICLE_STUDIO_AUTH_MODE 只允许 local、key 或 cloudflare');
+if (!['local', 'key', 'password', 'cloudflare'].includes(authMode)) throw new Error('ARTICLE_STUDIO_AUTH_MODE 只允许 local、key、password 或 cloudflare');
 const host = authMode === 'key' ? '0.0.0.0' : '127.0.0.1';
 const requestedPort = Number(process.env.ARTICLE_STUDIO_PORT || 4173);
 const csrfToken = randomBytes(24).toString('hex');
 const accessKey = authMode === 'key' ? randomBytes(24).toString('base64url') : '';
+const passwordHash = String(process.env.ARTICLE_STUDIO_PASSWORD_HASH || '').trim();
+const sessionSecret = String(process.env.ARTICLE_STUDIO_SESSION_SECRET || '').trim();
+const sessionMaxAgeSeconds = 12 * 60 * 60;
+if (authMode === 'password' && (!passwordHash || !sessionSecret)) {
+  throw new Error('密码模式必须设置 ARTICLE_STUDIO_PASSWORD_HASH 和 ARTICLE_STUDIO_SESSION_SECRET');
+}
 const maxBodyBytes = 25 * 1024 * 1024;
 const renameStateFile = join(repoDir, '.article-studio-renames.json');
 const privateValuesFile = join(repoDir, 'tools', 'siyuan-private-values.txt');
@@ -54,7 +60,7 @@ let cloudflareKeysCache;
 let localPublishing = false;
 let publishRequestActive = false;
 
-function send(res, status, body, contentType = 'application/json; charset=utf-8') {
+function send(res, status, body, contentType = 'application/json; charset=utf-8', extraHeaders = {}) {
   res.writeHead(status, {
     'Content-Type': contentType,
     'Cache-Control': 'no-store',
@@ -64,6 +70,7 @@ function send(res, status, body, contentType = 'application/json; charset=utf-8'
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Content-Security-Policy': "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src 'self'; connect-src 'self'",
+    ...extraHeaders,
   });
   res.end(contentType.startsWith('application/json') ? JSON.stringify(body) : body);
   return true;
@@ -71,6 +78,75 @@ function send(res, status, body, contentType = 'application/json; charset=utf-8'
 
 function fail(res, status, message, details = '') {
   send(res, status, { ok: false, message, details });
+}
+
+function parseCookies(req) {
+  return Object.fromEntries(String(req.headers.cookie || '').split(';').map((part) => {
+    const index = part.indexOf('=');
+    if (index < 0) return ['', ''];
+    return [part.slice(0, index).trim(), decodeURIComponent(part.slice(index + 1).trim())];
+  }).filter(([key]) => key));
+}
+
+function encodeBase64Url(value) {
+  return Buffer.from(value).toString('base64url');
+}
+
+function createSessionToken() {
+  const payload = encodeBase64Url(JSON.stringify({
+    exp: Math.floor(Date.now() / 1000) + sessionMaxAgeSeconds,
+    nonce: randomBytes(24).toString('base64url'),
+  }));
+  const signature = createHmac('sha256', sessionSecret).update(payload).digest('base64url');
+  return `${payload}.${signature}`;
+}
+
+function verifySessionToken(token) {
+  const [payload, signature] = String(token || '').split('.');
+  if (!payload || !signature) return null;
+  const expected = createHmac('sha256', sessionSecret).update(payload).digest();
+  const supplied = Buffer.from(signature, 'base64url');
+  if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return null;
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return Number.isFinite(data.exp) && data.exp >= Math.floor(Date.now() / 1000) ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function verifyPassword(value) {
+  const parts = passwordHash.split('$');
+  if (parts.length !== 3 || parts[0] !== 'scrypt') return false;
+  const [, salt, expectedHex] = parts;
+  if (!salt || !/^[a-f0-9]{128}$/i.test(expectedHex)) return false;
+  const actual = scryptSync(String(value || ''), Buffer.from(salt, 'hex'), 64);
+  const expected = Buffer.from(expectedHex, 'hex');
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
+
+function isSecureRequest(req) {
+  if (String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https') return true;
+  try { return JSON.parse(String(req.headers['cf-visitor'] || '{}')).scheme === 'https'; } catch { return false; }
+}
+
+function sessionCookie(token, maxAge = sessionMaxAgeSeconds, secure = false) {
+  return `article_studio_session=${encodeURIComponent(token)}; Max-Age=${maxAge}; Path=/; HttpOnly;${secure ? ' Secure;' : ''} SameSite=Lax`;
+}
+
+const failedLogins = new Map();
+function loginAllowed(address) {
+  const now = Date.now();
+  const item = failedLogins.get(address);
+  if (!item || item.resetAt <= now) return true;
+  return item.count < 8;
+}
+
+function recordFailedLogin(address) {
+  const now = Date.now();
+  const item = failedLogins.get(address);
+  if (!item || item.resetAt <= now) failedLogins.set(address, { count: 1, resetAt: now + 15 * 60 * 1000 });
+  else item.count += 1;
 }
 
 async function readJson(req) {
@@ -174,6 +250,16 @@ async function authenticateRequest(req) {
   if (authMode === 'key') {
     if (req.url?.startsWith('/api/') && req.headers['x-article-studio-key'] !== accessKey) throw new Error('临时访问密钥无效');
     return { mode: 'key', email: '' };
+  }
+  if (authMode === 'password') {
+    const pathname = new URL(req.url || '/', 'http://127.0.0.1').pathname;
+    const cookies = parseCookies(req);
+    const session = verifySessionToken(cookies.article_studio_session);
+    if (pathname === '/api/login' || pathname === '/api/config' || !pathname.startsWith('/api/')) {
+      return { mode: 'password', email: '', authenticated: Boolean(session) };
+    }
+    if (!session) throw new Error('工作台需要登录。');
+    return { mode: 'password', email: '', authenticated: true };
   }
   const identity = await verifyCloudflareAccessJwt(req.headers['cf-access-jwt-assertion']);
   return { mode: 'cloudflare', ...identity };
@@ -787,9 +873,33 @@ async function saveArticle(articlePath, content) {
 }
 
 async function routeApi(req, res, url, identity) {
+  if (req.method === 'POST' && url.pathname === '/api/login') {
+    if (authMode !== 'password') return fail(res, 404, '当前工作台未启用密码登录。');
+    const address = String(req.socket.remoteAddress || 'unknown');
+    if (!loginAllowed(address)) return fail(res, 429, '登录尝试过多，请 15 分钟后重试。');
+    const body = await readJson(req);
+    if (!verifyPassword(body.password)) {
+      recordFailedLogin(address);
+      return fail(res, 401, '密码错误。');
+    }
+    failedLogins.delete(address);
+    const token = createSessionToken();
+    return send(res, 200, { ok: true, token, authMode, authenticated: true }, 'application/json; charset=utf-8', {
+      'Set-Cookie': sessionCookie(token, sessionMaxAgeSeconds, isSecureRequest(req)),
+    });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/logout') {
+    if (authMode !== 'password') return fail(res, 404, '当前工作台未启用密码登录。');
+    return send(res, 200, { ok: true }, 'application/json; charset=utf-8', {
+      'Set-Cookie': sessionCookie('', 0, isSecureRequest(req)),
+    });
+  }
+
   if (req.method === 'GET' && url.pathname === '/api/config') {
     return send(res, 200, {
-      ok: true, token: csrfToken, authMode,
+      ok: true, ...(authMode === 'password' && !identity.authenticated ? {} : { token: csrfToken }), authMode,
+      authenticated: authMode === 'password' ? Boolean(identity.authenticated) : true,
       identity: identity.email ? { email: identity.email } : null,
       settings: await loadStudioSettings(),
     });

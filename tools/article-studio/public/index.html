@@ -82,6 +82,17 @@
     </section>
   </main>
 
+  <dialog id="loginDialog" class="login-dialog">
+    <form id="loginForm" method="dialog">
+      <span class="eyebrow">ARTICLE STUDIO</span>
+      <h2>登录工作台</h2>
+      <p>请输入工作台访问密码。密码只用于本次登录，不会显示在地址栏。</p>
+      <label>访问密码<input id="loginPassword" type="password" autocomplete="current-password" required autofocus></label>
+      <p id="loginError" class="login-error" role="alert"></p>
+      <div class="dialog-actions"><button id="loginSubmit" type="submit" class="button primary">登录</button></div>
+    </form>
+  </dialog>
+
   <dialog id="newDialog">
     <form id="newForm" method="dialog">
       <span class="eyebrow">NEW ARTICLE</span><h2>创建文章</h2>
