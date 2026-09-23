@@ -390,6 +390,44 @@ async function renameArticle(event) {
   } catch (error) { toast(error.message, true); }
 }
 
+async function deleteArticle() {
+  if (!state.currentPath || state.publishing) return;
+  const path = state.currentPath;
+  const title = titleFromContent(editor.value, path);
+  if (state.dirty && !confirm('当前文章有未保存修改，删除后这些修改也会丢失。确定继续吗？')) return;
+  if (!confirm(`确定删除《${title}》吗？这会删除本地文章和关联图片，并提交推送以同步删除网站版本。`)) return;
+  state.publishing = true;
+  setDirty(state.dirty);
+  try {
+    const data = await api('/api/delete', {
+      method: 'POST',
+      body: JSON.stringify({ path }),
+    });
+    removeDraft(path);
+    clearAutoSaveTimer();
+    state.currentPath = '';
+    state.content = '';
+    state.dirty = false;
+    state.dirtySince = null;
+    state.undoStack = [];
+    state.redoStack = [];
+    state.pendingEdit = null;
+    editor.value = '';
+    $('#metadataDialog').close();
+    $('#editorView').classList.add('hidden');
+    $('#emptyState').classList.remove('hidden');
+    $('#documentPath').textContent = '';
+    $('#documentTitle').textContent = '未命名文章';
+    setDirty(false);
+    await loadArticles();
+    toast(data.message);
+  } catch (error) { toast(error.message, true); }
+  finally {
+    state.publishing = false;
+    setDirty(state.dirty);
+  }
+}
+
 function openNewDialog() {
   $('#newTitle').value = '';
   $('#newSlug').value = '';
@@ -1091,6 +1129,7 @@ $('#publishButton').addEventListener('click', openPublishDialog);
 $('#metadataButton').addEventListener('click', openMetadataDialog);
 $('#metadataForm').addEventListener('submit', updateArticleMetadata);
 $('#cancelMetadata').addEventListener('click', () => $('#metadataDialog').close());
+$('#deleteArticleButton').addEventListener('click', deleteArticle);
 // Close only when a primary-button gesture starts and ends on the backdrop.
 // Dragging a selection out of an input must not dismiss the form.
 {

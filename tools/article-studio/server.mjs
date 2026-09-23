@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { readFile, writeFile, mkdir, readdir, stat, rename, unlink } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, stat, rename, unlink, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { createHmac, createPublicKey, randomBytes, scryptSync, timingSafeEqual, verify as verifySignature } from 'node:crypto';
@@ -872,6 +872,101 @@ async function saveArticle(articlePath, content) {
   return target;
 }
 
+async function deleteArticle(articlePath) {
+  const normalizedPath = normalizeArticlePath(articlePath);
+  const target = resolveInside(postsDir, normalizedPath, '.md');
+  if (!existsSync(target)) throw new Error('文章不存在，可能已经被删除。');
+
+  const articleSlug = safeSlug(normalizedPath.replace(/\.md$/i, '').replaceAll('/', '-'));
+  const imageDirectory = resolveInside(imagesDir, articleSlug);
+  await unlink(target);
+  await rm(imageDirectory, { recursive: true, force: true });
+
+  const renameState = await readRenameState();
+  if (renameState[normalizedPath]) {
+    delete renameState[normalizedPath];
+    await writeJsonAtomic(renameStateFile, renameState);
+  }
+}
+
+async function deleteAndPublishArticle(articlePath) {
+  const normalizedPath = normalizeArticlePath(articlePath);
+  const target = resolveInside(postsDir, normalizedPath, '.md');
+  if (!existsSync(target)) throw new Error('文章不存在，可能已经被删除。');
+
+  const content = await readFile(target, 'utf8');
+  const title = frontMatterValue(content, 'title') || normalizedPath.replace(/\.md$/i, '');
+  const renameState = await readRenameState();
+  const renameInfo = renameState[normalizedPath];
+  const allowedPaths = articleGitPaths(normalizedPath, renameInfo?.originalPath);
+
+  // Reuse the same repository safety checks as normal article publishing.
+  const pendingPushed = await pushPendingArticle();
+  await verifyRepositoryForArticle(allowedPaths);
+
+  await deleteArticle(normalizedPath);
+  await runChecked(npmCommand, ['run', 'clean'], '清理 Hexo 缓存');
+  const build = await runChecked(npmCommand, ['run', 'build'], 'Hexo 构建检查');
+
+  let commit;
+  try {
+    // -A is intentional: the article and its image directory may now be
+    // absent, so Git must record deletions as well as any rename cleanup.
+    const pathspecs = [];
+    for (const name of allowedPaths) {
+      const tracked = await run('git', ['ls-files', '--error-unmatch', '--', name]);
+      if (existsSync(join(repoDir, name)) || tracked.code === 0) pathspecs.push(name);
+    }
+    if (!pathspecs.length) {
+      return {
+        committed: false, pendingPushed, title,
+        logs: [build.stdout, pendingPushed ? '已补推送上次经过验证的文章提交。' : '', '删除内容没有对应的 Git 记录，因此没有生成新提交。']
+          .filter(Boolean).join('\n').trim(),
+      };
+    }
+    await runChecked('git', ['add', '-A', '--', ...pathspecs], '暂存文章删除');
+    const stagedNames = await gitPaths('diff', '--cached', '--name-only', '-z');
+    if (stagedNames.some((name) => !pathAllowed(name, allowedPaths))) {
+      await run('git', ['restore', '--staged', '--', ...pathspecs]);
+      throw new Error('暂存区包含当前文章白名单之外的文件。');
+    }
+    const diff = await run('git', ['diff', '--cached', '--quiet', '--', ...pathspecs]);
+    if (diff.code === 0) {
+      return {
+        committed: false, pendingPushed, title,
+        logs: [build.stdout, pendingPushed ? '已补推送上次经过验证的文章提交。' : '', '删除内容没有对应的 Git 记录，因此没有生成新提交。']
+          .filter(Boolean).join('\n').trim(),
+      };
+    }
+    if (diff.code !== 1) throw new Error('无法检查文章删除的 Git 改动。');
+    await git(...articleDiffCheckArgs(pathspecs));
+    commit = await runChecked('git', [
+      'commit', '--only', '-m', `docs(article): 删除《${title}》`,
+      '-m', '删除文章 Markdown 与关联图片；已通过 Hexo 构建检查。',
+      '--', ...pathspecs,
+    ], 'Git 提交文章删除');
+  } catch (error) {
+    await run('git', ['restore', '--staged', '--', ...allowedPaths]);
+    throw error;
+  }
+
+  const commitHash = await git('rev-parse', 'HEAD');
+  await writeJsonAtomic(articlePendingFile, {
+    commit: commitHash, allowedPaths, articlePath: normalizedPath, createdAt: new Date().toISOString(),
+  });
+  try {
+    const push = await runChecked('git', ['push', 'origin', 'HEAD:main'], 'Git 推送文章删除');
+    await unlink(articlePendingFile);
+    return {
+      committed: true, pendingPushed, title, commitHash,
+      logs: [build.stdout, commit.stdout, push.stdout, push.stderr].filter(Boolean).join('\n').trim(),
+    };
+  } catch (error) {
+    error.message = `${error.message} 本地删除提交 ${commitHash.slice(0, 8)} 已保留；再次上传或删除文章时会先安全重试推送。`;
+    throw error;
+  }
+}
+
 async function routeApi(req, res, url, identity) {
   if (req.method === 'POST' && url.pathname === '/api/login') {
     if (authMode !== 'password') return fail(res, 404, '当前工作台未启用密码登录。');
@@ -958,6 +1053,28 @@ async function routeApi(req, res, url, identity) {
     const data = await readJson(req);
     await saveArticle(data.path, data.content);
     return send(res, 200, { ok: true, message: '文章已保存到本地。', warnings: await scanSensitive(data.content) });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/delete') {
+    const data = await readJson(req);
+    const articlePath = normalizeArticlePath(data.path);
+    if (publishRequestActive) return fail(res, 423, '已有文章发布任务正在运行，请稍后再试。');
+    publishRequestActive = true;
+    try {
+      const result = await withPublishLock(() => deleteAndPublishArticle(articlePath));
+      return send(res, 200, {
+        ok: true,
+        path: articlePath,
+        committed: result.committed,
+        commitHash: result.commitHash || '',
+        message: result.committed
+          ? '文章及其图片已删除、构建并推送；GitHub Actions 将同步删除网站文章。'
+          : '文章及其图片已删除；没有对应的 Git 文件改动，因此未生成新提交。',
+        logs: result.logs,
+      });
+    } finally {
+      publishRequestActive = false;
+    }
   }
 
   if (req.method === 'POST' && url.pathname === '/api/preview') {
