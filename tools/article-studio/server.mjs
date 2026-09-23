@@ -872,21 +872,57 @@ async function saveArticle(articlePath, content) {
   return target;
 }
 
-async function deleteArticle(articlePath) {
+async function beginArticleDeletion(articlePath, renameState) {
   const normalizedPath = normalizeArticlePath(articlePath);
   const target = resolveInside(postsDir, normalizedPath, '.md');
   if (!existsSync(target)) throw new Error('文章不存在，可能已经被删除。');
-
   const articleSlug = safeSlug(normalizedPath.replace(/\.md$/i, '').replaceAll('/', '-'));
   const imageDirectory = resolveInside(imagesDir, articleSlug);
-  await unlink(target);
-  await rm(imageDirectory, { recursive: true, force: true });
-
-  const renameState = await readRenameState();
-  if (renameState[normalizedPath]) {
-    delete renameState[normalizedPath];
-    await writeJsonAtomic(renameStateFile, renameState);
+  const backupRoot = join(dirname(articlePendingFile), 'article-delete-backups', `${Date.now()}-${randomBytes(5).toString('hex')}`);
+  const backupArticle = join(backupRoot, 'article.md');
+  const backupImages = join(backupRoot, 'images');
+  const renameStateRaw = existsSync(renameStateFile) ? await readFile(renameStateFile, 'utf8') : null;
+  const backup = {
+    normalizedPath, target, imageDirectory, backupRoot, backupArticle, backupImages, renameStateRaw,
+    imageExisted: existsSync(imageDirectory), articleMoved: false, imageMoved: false,
+  };
+  await mkdir(backupRoot, { recursive: true, mode: 0o700 });
+  try {
+    await rename(target, backupArticle);
+    backup.articleMoved = true;
+    if (backup.imageExisted) {
+      await rename(imageDirectory, backupImages);
+      backup.imageMoved = true;
+    }
+    if (renameState[normalizedPath]) {
+      delete renameState[normalizedPath];
+      await writeJsonAtomic(renameStateFile, renameState);
+    }
+    return backup;
+  } catch (error) {
+    await restoreArticleDeletion(backup).catch(() => {});
+    throw error;
   }
+}
+
+async function restoreArticleDeletion(backup) {
+  if (backup.articleMoved) {
+    await rm(backup.target, { force: true }).catch(() => {});
+    await mkdir(dirname(backup.target), { recursive: true });
+    if (existsSync(backup.backupArticle)) await rename(backup.backupArticle, backup.target);
+  }
+  if (backup.imageMoved && existsSync(backup.backupImages)) {
+    await rm(backup.imageDirectory, { recursive: true, force: true });
+    await mkdir(dirname(backup.imageDirectory), { recursive: true });
+    await rename(backup.backupImages, backup.imageDirectory);
+  }
+  if (backup.renameStateRaw === null) await unlink(renameStateFile).catch(() => {});
+  else await writeAtomic(renameStateFile, backup.renameStateRaw);
+  await rm(backup.backupRoot, { recursive: true, force: true });
+}
+
+async function finishArticleDeletion(backup) {
+  await rm(backup.backupRoot, { recursive: true, force: true });
 }
 
 async function deleteAndPublishArticle(articlePath) {
@@ -904,12 +940,13 @@ async function deleteAndPublishArticle(articlePath) {
   const pendingPushed = await pushPendingArticle();
   await verifyRepositoryForArticle(allowedPaths);
 
-  await deleteArticle(normalizedPath);
-  await runChecked(npmCommand, ['run', 'clean'], '清理 Hexo 缓存');
-  const build = await runChecked(npmCommand, ['run', 'build'], 'Hexo 构建检查');
-
+  const deletion = await beginArticleDeletion(normalizedPath, renameState);
+  let build;
   let commit;
+  let commitHash = '';
   try {
+    await runChecked(npmCommand, ['run', 'clean'], '清理 Hexo 缓存');
+    build = await runChecked(npmCommand, ['run', 'build'], 'Hexo 构建检查');
     // -A is intentional: the article and its image directory may now be
     // absent, so Git must record deletions as well as any rename cleanup.
     const pathspecs = [];
@@ -918,6 +955,7 @@ async function deleteAndPublishArticle(articlePath) {
       if (existsSync(join(repoDir, name)) || tracked.code === 0) pathspecs.push(name);
     }
     if (!pathspecs.length) {
+      await finishArticleDeletion(deletion);
       return {
         committed: false, pendingPushed, title,
         logs: [build.stdout, pendingPushed ? '已补推送上次经过验证的文章提交。' : '', '删除内容没有对应的 Git 记录，因此没有生成新提交。']
@@ -932,6 +970,7 @@ async function deleteAndPublishArticle(articlePath) {
     }
     const diff = await run('git', ['diff', '--cached', '--quiet', '--', ...pathspecs]);
     if (diff.code === 0) {
+      await finishArticleDeletion(deletion);
       return {
         committed: false, pendingPushed, title,
         logs: [build.stdout, pendingPushed ? '已补推送上次经过验证的文章提交。' : '', '删除内容没有对应的 Git 记录，因此没有生成新提交。']
@@ -947,16 +986,23 @@ async function deleteAndPublishArticle(articlePath) {
     ], 'Git 提交文章删除');
   } catch (error) {
     await run('git', ['restore', '--staged', '--', ...allowedPaths]);
+    if (!commitHash) {
+      await restoreArticleDeletion(deletion).catch((restoreError) => {
+        error.message = `${error.message}；并且无法自动恢复本地文章：${restoreError.message}`;
+      });
+      error.message = `${error.message} 本地删除未提交，已恢复文章文件。`;
+    }
     throw error;
   }
 
-  const commitHash = await git('rev-parse', 'HEAD');
+  commitHash = await git('rev-parse', 'HEAD');
   await writeJsonAtomic(articlePendingFile, {
     commit: commitHash, allowedPaths, articlePath: normalizedPath, createdAt: new Date().toISOString(),
   });
   try {
     const push = await runChecked('git', ['push', 'origin', 'HEAD:main'], 'Git 推送文章删除');
     await unlink(articlePendingFile);
+    await finishArticleDeletion(deletion);
     return {
       committed: true, pendingPushed, title, commitHash,
       logs: [build.stdout, commit.stdout, push.stdout, push.stderr].filter(Boolean).join('\n').trim(),
