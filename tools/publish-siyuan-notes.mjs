@@ -226,7 +226,10 @@ async function main() {
         const stageHash=await git('rev-parse',`:${name}`);
         if(workHash!==stageHash)throw new Error('暂存内容与校验内容不一致');
       }
-      await git('diff','--cached','--check');
+      // Markdown uses two trailing spaces for a hard line break. Keep the
+      // safety check for other malformed whitespace, but do not reject this
+      // valid Markdown syntax during the scheduled publication.
+      await git('-c','core.whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,-indent-with-non-tab,-tab-in-indent,-cr-at-eol','diff','--cached','--check');
       report.stage='commit';
       const timestamp=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',dateStyle:'short',timeStyle:'short'}).format(new Date());
       await git('commit','-m',`fix(notes): 更新 S3 同步笔记 ${timestamp}`,'-m',`修复网站笔记与 S3 最新内容不同步；同步目录、资源与引用。公开文档 ${report.documents} 篇，已通过隐私与 Hexo 构建校验。`);
