@@ -1,0 +1,19 @@
+[Unit]
+Description=Rock 5B+ 温控风扇（迟滞启停 + 分级调速）
+Documentation=file:/srv/blog/repo/tools/fan-control/README.md
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /usr/local/sbin/rock5b-fan-control.mjs --config /etc/rock5b-fan-control.conf
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
