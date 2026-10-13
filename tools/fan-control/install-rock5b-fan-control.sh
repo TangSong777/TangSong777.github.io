@@ -27,7 +27,9 @@ chown radxa:radxa /etc/rock5b-fan-control.conf
 
 install -o root -g root -m 0644 "$src/rock5b-fan-control.service" /etc/systemd/system/rock5b-fan-control.service
 systemctl daemon-reload
-systemctl enable --now rock5b-fan-control.service
+systemctl enable rock5b-fan-control.service
+# `enable --now` 对已经在运行的服务是空操作，不会加载新脚本，所以这里必须显式重启。
+systemctl restart rock5b-fan-control.service
 sleep 3
 
 echo
