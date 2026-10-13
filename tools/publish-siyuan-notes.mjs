@@ -34,6 +34,21 @@ export function allowedArticleDraftPath(name) {
   return parts[2]?.toLowerCase()!=='siyuan';
 }
 
+// `git commit --only` 要求每个 pathspec 都能匹配到文件，因此提交范围只保留仍然
+// 存在或仍被 Git 跟踪的生成路径；两者都不满足的路径既不暂存也不提交。
+export function selectPublicationPaths(generated,tracked,present) {
+  return generated.filter(name=>present.includes(name) || tracked.includes(name));
+}
+
+// 自动提交必须始终限定在生成路径上：`--only` 保证索引里其他已暂存内容不会被
+// 提交，也不会被推送。
+export function publicationCommitArgs(pathspecs,documents,timestamp) {
+  return ['commit','--only',
+    '-m',`fix(notes): 更新 S3 同步笔记 ${timestamp}`,
+    '-m',`修复网站笔记与 S3 最新内容不同步；同步目录、资源与引用。公开文档 ${documents} 篇，已通过隐私与 Hexo 构建校验。`,
+    '--',...pathspecs];
+}
+
 function command(executable,args,{cwd=repo,capture=false,allowFailure=false}={}) {
   return new Promise((resolve,reject)=>{
     const child = spawn(executable,args,{cwd,env:{...process.env,GIT_TERMINAL_PROMPT:'0',GCM_INTERACTIVE:'Never'},stdio:capture?['ignore','pipe','pipe']:'inherit'});
@@ -79,19 +94,25 @@ async function fileManifest(root) {
 }
 function equalManifests(a,b) {return a.size===b.size && [...a].every(([p,h])=>b.get(p)===h);}
 
-async function requireCleanRepo() {
-  const staged=(await git('diff','--cached','--name-only')).split('\n').filter(Boolean);
-  if(staged.length)throw new Error('Git 暂存区已有内容；为避免混入自动提交，请先人工处理');
-  const changed=`${await git('diff','--name-only')}\n${await git('ls-files','--others','--exclude-standard')}`
-    .split('\n').map(name=>name.trim()).filter(Boolean);
-  const unexpected=changed.filter(name=>!allowedArticleDraftPath(name));
-  if(unexpected.length)throw new Error(`仓库存在普通文章草稿之外的修改：${unexpected.slice(0,5).join('、')}`);
-  if(await git('branch','--show-current')!=='main')throw new Error('自动发布只允许 main 分支');
-  if(!allowedRemotes.has(await git('remote','get-url','origin')))throw new Error('origin 不是授权的博客仓库');
+// 自动发布只检查会影响发布正确性的仓库状态。工作区里与生成物无关的改动不再
+// 阻断自动发布：提交始终由 `git commit --only` 限定在生成路径上，索引里其他
+// 内容既不会被提交，也不会被推送。
+export function repositoryGuardBlockers({branch,origin,pushUrls,trackedPrivate}) {
+  if(branch!=='main')return '自动发布只允许 main 分支';
+  if(!allowedRemotes.has(origin))return 'origin 不是授权的博客仓库';
+  if(pushUrls.length!==1 || !allowedRemotes.has(pushUrls[0]))return '推送目标不是唯一的授权博客仓库';
+  if(trackedPrivate)return '原稿或隐私列表已被 Git 跟踪';
+  return '';
+}
+
+async function requireAuthorizedRepository() {
+  const branch=await git('branch','--show-current');
+  const origin=await git('remote','get-url','origin');
   const pushUrls=(await git('remote','get-url','--push','--all','origin')).split('\n').filter(Boolean);
-  if(pushUrls.length!==1 || !allowedRemotes.has(pushUrls[0]))throw new Error('推送目标不是唯一的授权博客仓库');
   await git('check-ignore','origin/学习笔记.md/学习笔记.md','tools/siyuan-private-values.txt');
-  if(await git('ls-files','origin','tools/siyuan-private-values.txt'))throw new Error('原稿或隐私列表已被 Git 跟踪');
+  const trackedPrivate=Boolean((await git('ls-files','origin','tools/siyuan-private-values.txt')).trim());
+  const blocker=repositoryGuardBlockers({branch,origin,pushUrls,trackedPrivate});
+  if(blocker)throw new Error(blocker);
 }
 
 async function pushPending() {
@@ -111,7 +132,7 @@ async function pushPending() {
 
 async function prepareGit() {
   if(await exists(transactionFile))throw new Error('上次安装过程曾中断，请按 install-in-progress.json 检查备份与工作区后恢复；禁止自动覆盖');
-  await requireCleanRepo();
+  await requireAuthorizedRepository();
   await git('fetch','--prune','origin','main');
   if(await pushPending())return;
   const [behind,ahead]=(await git('rev-list','--left-right','--count','origin/main...HEAD')).split(/\s+/).map(Number);
@@ -181,7 +202,7 @@ async function main() {
     await fs.mkdir(path.join(baseDir,'staging'),{recursive:true,mode:0o700});
     const runDir=await fs.mkdtemp(path.join(baseDir,'staging/notes-publish-'));
     const reportPath=path.join(runDir,'report.json');
-    let moves=[],committed=false;
+    let moves=[],committed=false,pathspecs=[];
     try {
       report.sync=await syncFromS3();
       report.stage='export';
@@ -213,8 +234,15 @@ async function main() {
       await atomicJson(transactionFile,{head,backup,stage,raw:exported.raw,targets:[...generated,'public','origin/学习笔记.md'],startedAt});
       moves=await installVerified(stage,exported.raw,backup);
       if(!equalManifests(expectedManifest,await fileManifest(repo)))throw new Error('安装后文件内容与通过校验的版本不一致');
-      await git('add','-A','--',...generated);
-      const names=(await command('git',['diff','--cached','--name-only','-z'],{capture:true})).stdout.split('\0').filter(Boolean);
+      const trackedNames=[],presentNames=[];
+      for(const name of generated) {
+        if(await exists(path.join(repo,name))) presentNames.push(name);
+        if((await command('git',['ls-files','--error-unmatch','--',name],{capture:true,allowFailure:true})).code===0) trackedNames.push(name);
+      }
+      pathspecs=selectPublicationPaths(generated,trackedNames,presentNames);
+      if(!pathspecs.length) throw new Error('没有可提交的生成路径');
+      await git('add','-A','--',...pathspecs);
+      const names=(await command('git',['diff','--cached','--name-only','-z','--',...pathspecs],{capture:true})).stdout.split('\0').filter(Boolean);
       if(!names.length || names.some(name=>!allowedPublicationPath(name)))throw new Error('暂存区包含非授权路径');
       // Prove staged bytes match the exact files which passed the privacy/build gates.
       for(const name of names) {
@@ -229,10 +257,10 @@ async function main() {
       // Markdown uses two trailing spaces for a hard line break. Keep the
       // safety check for other malformed whitespace, but do not reject this
       // valid Markdown syntax during the scheduled publication.
-      await git('-c','core.whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,-indent-with-non-tab,-tab-in-indent,-cr-at-eol','diff','--cached','--check');
+      await git('-c','core.whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,-indent-with-non-tab,-tab-in-indent,-cr-at-eol','diff','--cached','--check','--',...pathspecs);
       report.stage='commit';
       const timestamp=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',dateStyle:'short',timeStyle:'short'}).format(new Date());
-      await git('commit','-m',`fix(notes): 更新 S3 同步笔记 ${timestamp}`,'-m',`修复网站笔记与 S3 最新内容不同步；同步目录、资源与引用。公开文档 ${report.documents} 篇，已通过隐私与 Hexo 构建校验。`);
+      await git(...publicationCommitArgs(pathspecs,report.documents,timestamp));
       committed=true;report.commit=await git('rev-parse','HEAD');
       await atomicJson(pendingFile,{commit:report.commit,createdAt:new Date().toISOString()});
       await fs.unlink(transactionFile);
@@ -243,8 +271,8 @@ async function main() {
     } catch(e) {
       report.status=committed?'push-pending':'failed';report.error=e.message;
       if(moves.length && !committed) {
-        // Only unstage this run's generated paths. Initial index was required clean.
-        await command('git',['restore','--staged','--',...generated],{capture:true,allowFailure:true});
+        // Only unstage this run's generated paths; other index content is left untouched.
+        if(pathspecs.length) await command('git',['restore','--staged','--',...pathspecs],{capture:true,allowFailure:true});
         await rollback(moves);report.rolledBack=true;
         await fs.unlink(transactionFile);
       }

@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { extractArchive } from '../export-siyuan-notebook.mjs';
-import { allowedArticleDraftPath, allowedPublicationPath, installVerified, rollback } from '../publish-siyuan-notes.mjs';
+import { allowedArticleDraftPath, allowedPublicationPath, installVerified, publicationCommitArgs, repositoryGuardBlockers, rollback, selectPublicationPaths } from '../publish-siyuan-notes.mjs';
 
 async function fixture(t) {
   const root=await fs.mkdtemp(path.join(os.tmpdir(),'notes-publisher-test-'));
@@ -43,6 +44,56 @@ test('only notebook outputs can enter automated commits',()=>{
 test('note automation tolerates only ordinary article drafts',()=>{
   for(const file of ['source/_posts/article.md','source/_posts/随笔/文章.md','source/images/posts/article/a.png'])assert.equal(allowedArticleDraftPath(file),true,file);
   for(const file of ['source/_posts/siyuan/笔记.md','source/siyuan/笔记/index.md','tools/a.mjs','.github/workflows/pages.yml','source/_posts/../secret.md'])assert.equal(allowedArticleDraftPath(file),false,file);
+});
+test('note automation blocks unauthorized repository states only',()=>{
+  const base={branch:'main',origin:'git@github.com:TangSong777/TangSong777.github.io.git',pushUrls:['git@github.com:TangSong777/TangSong777.github.io.git'],trackedPrivate:false};
+  // 工作区脏状态不再参与判定，这里只保留会影响发布正确性的条件。
+  assert.equal(repositoryGuardBlockers(base),'');
+  assert.match(repositoryGuardBlockers({...base,branch:'dev'}),/main 分支/);
+  assert.match(repositoryGuardBlockers({...base,origin:'git@github.com:someone/other.git'}),/授权/);
+  assert.match(repositoryGuardBlockers({...base,pushUrls:[]}),/唯一的授权/);
+  assert.match(repositoryGuardBlockers({...base,trackedPrivate:true}),/已被 Git 跟踪/);
+});
+test('generated outputs are committed alone while unrelated changes stay untouched',async t=>{
+  const root=await fixture(t);
+  const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
+  const listed=(...args)=>git(...args).split('\0').filter(Boolean);
+  git('init','--quiet','-b','main');
+  git('config','user.name','Test');
+  git('config','user.email','test@example.invalid');
+  await put(root,'source/js/siyuan-data.js','old');
+  await put(root,'tools/server.mjs','old');
+  await put(root,'source/_posts/draft.md','draft');
+  git('add','--','.');git('commit','--quiet','-m','init');
+
+  // 工作台之外：代码改动并已暂存、文章草稿被改、以及一个未跟踪文件。
+  await put(root,'source/js/siyuan-data.js','generated');
+  await put(root,'tools/server.mjs','changed');
+  await put(root,'source/_posts/draft.md','edited');
+  await put(root,'notes.txt','untracked');
+  git('add','--','tools/server.mjs');
+
+  // 未创建 source/siyuan 与 source/images/siyuan，因此它们不会进入提交范围。
+  const generated=['source/siyuan','source/images/siyuan','source/js/siyuan-data.js'];
+  const pathspecs=selectPublicationPaths(generated,['source/js/siyuan-data.js'],['source/js/siyuan-data.js']);
+  assert.deepEqual(pathspecs,['source/js/siyuan-data.js']);
+  git('add','-A','--',...pathspecs);
+  assert.deepEqual(listed('diff','--cached','--name-only','-z','--',...pathspecs),['source/js/siyuan-data.js']);
+  const commitArgs=publicationCommitArgs(pathspecs,61,'2026-10-13 18:00');
+  assert.ok(commitArgs.includes('--only'),'自动提交必须使用 --only 限定路径');
+  assert.deepEqual(commitArgs.slice(-2),['--','source/js/siyuan-data.js']);
+  git(...commitArgs);
+  assert.deepEqual(listed('diff-tree','--root','--no-commit-id','--name-only','-z','-r','HEAD'),['source/js/siyuan-data.js']);
+  const status=git('status','--short');
+  assert.match(status,/tools\/server\.mjs/);
+  assert.match(status,/source\/_posts\/draft\.md/);
+  assert.match(status,/notes\.txt/);
+});
+test('missing generated paths leave the commit scope empty',()=>{
+  const generated=['source/siyuan','source/images/siyuan','source/js/siyuan-data.js'];
+  // 仍被跟踪但已从工作区删除的路径要保留，以便记录删除。
+  assert.deepEqual(selectPublicationPaths(generated,['source/images/siyuan'],['source/js/siyuan-data.js']),['source/images/siyuan','source/js/siyuan-data.js']);
+  assert.deepEqual(selectPublicationPaths(generated,[],[]),[]);
 });
 test('ZIP extraction preserves Chinese filenames and rejects unsafe entries',async t=>{
   const root=await fixture(t);
