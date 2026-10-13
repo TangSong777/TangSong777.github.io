@@ -22,6 +22,8 @@ else
   install -o root -g root -m 0644 "$src/rock5b-fan-control.conf.example" /etc/rock5b-fan-control.conf
   echo "已写入默认配置 /etc/rock5b-fan-control.conf"
 fi
+# 配置交给服务运行用户持有，便于日常调阈值；脚本本身仍为 root 只读。
+chown radxa:radxa /etc/rock5b-fan-control.conf
 
 install -o root -g root -m 0644 "$src/rock5b-fan-control.service" /etc/systemd/system/rock5b-fan-control.service
 systemctl daemon-reload

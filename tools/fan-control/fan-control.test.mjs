@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { DEFAULT_CONFIG, decidePwm, findPwmFan, levelPwm, parseConfig, parseLevels, readMaxTempC } from './fan-control.mjs';
+import { DEFAULT_CONFIG, configChanged, decidePwm, findPwmFan, levelPwm, parseConfig, parseLevels, planActions, readMaxTempC } from './fan-control.mjs';
 
 test('低于启动阈值时风扇保持停止', () => {
   assert.deepEqual(decidePwm({ tempC: 33, running: false, config: DEFAULT_CONFIG }), { pwm: 0, running: false });
@@ -46,6 +46,41 @@ test('配置可覆盖阈值与档位，并拒绝非法值', () => {
   assert.throws(() => parseLevels(''), /不能为空/);
 });
 
+test('启动时先给全速脉冲再落到目标档位', () => {
+  const config = { ...DEFAULT_CONFIG, startPulseMs: 1500 };
+  assert.deepEqual(planActions({ started: true, decision: { pwm: 128, running: true }, config }),
+    [{ pwm: 255, delayMs: 1500 }, { pwm: 128, delayMs: 0 }]);
+  // 运行中调速不需要脉冲
+  assert.deepEqual(planActions({ started: false, decision: { pwm: 192, running: true }, config }),
+    [{ pwm: 192, delayMs: 0 }]);
+  // 停止不需要脉冲
+  assert.deepEqual(planActions({ started: true, decision: { pwm: 0, running: false }, config }),
+    [{ pwm: 0, delayMs: 0 }]);
+  // 目标就是全速时也不需要脉冲
+  assert.deepEqual(planActions({ started: true, decision: { pwm: 255, running: true }, config }),
+    [{ pwm: 255, delayMs: 0 }]);
+  // 关闭脉冲
+  assert.deepEqual(planActions({ started: true, decision: { pwm: 128, running: true }, config: { ...config, startPulseMs: 0 } }),
+    [{ pwm: 128, delayMs: 0 }]);
+});
+
+test('配置文件变化会被识别，用于无需重启的热加载', () => {
+  const base = { mtimeMs: 1000, size: 200 };
+  assert.equal(configChanged(base, { mtimeMs: 1000, size: 200 }), false);
+  assert.equal(configChanged(base, { mtimeMs: 2000, size: 200 }), true);
+  assert.equal(configChanged(base, { mtimeMs: 1000, size: 300 }), true);
+  assert.equal(configChanged(null, base), false);
+  assert.equal(configChanged(base, null), false);
+});
+
+test('START_PULSE_MS 可配置且限制范围', () => {
+  assert.equal(DEFAULT_CONFIG.startPulseMs, 1500);
+  assert.equal(parseConfig('START_PULSE_MS=0\n').startPulseMs, 0);
+  assert.equal(parseConfig('START_PULSE_MS=2500\n').startPulseMs, 2500);
+  assert.throws(() => parseConfig('START_PULSE_MS=-1\n'), /START_PULSE_MS/);
+  assert.throws(() => parseConfig('START_PULSE_MS=20000\n'), /START_PULSE_MS/);
+});
+
 test('hwmon 探测只认 pwmfan 设备', async () => {
   const root = await mkdtemp(join(tmpdir(), 'fan-control-hwmon-'));
   try {
@@ -75,4 +110,9 @@ test('温度取所有热区的最大值并忽略其他节点', async () => {
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test('sysfs 目录不存在时返回空值而不是崩溃', () => {
+  assert.equal(findPwmFan('/nonexistent-hwmon-root'), null);
+  assert.equal(readMaxTempC('/nonexistent-thermal-root'), null);
 });

@@ -16,7 +16,7 @@
 //   node fan-control.mjs --once                # 只决策一次并应用，然后退出
 //   node fan-control.mjs --dry-run             # 只打印决策，不写硬件
 //   node fan-control.mjs --config /etc/rock5b-fan-control.conf
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const THERMAL_ROOT = process.env.FAN_THERMAL_ROOT || '/sys/class/thermal';
@@ -26,6 +26,7 @@ export const DEFAULT_CONFIG = {
   onTempC: 55,
   offTempC: 45,
   pollSeconds: 5,
+  startPulseMs: 1500,
   levels: [
     { belowC: 60, pwm: 64 },
     { belowC: 66, pwm: 128 },
@@ -69,10 +70,12 @@ export function parseConfig(text, base = DEFAULT_CONFIG) {
     if (key === 'ON_TEMP_C') config.onTempC = readNumber(value, 'ON_TEMP_C');
     else if (key === 'OFF_TEMP_C') config.offTempC = readNumber(value, 'OFF_TEMP_C');
     else if (key === 'POLL_SECONDS') config.pollSeconds = readNumber(value, 'POLL_SECONDS');
+    else if (key === 'START_PULSE_MS') config.startPulseMs = readNumber(value, 'START_PULSE_MS');
     else if (key === 'PWM_LEVELS') config.levels = parseLevels(value);
   }
   if (!(config.offTempC < config.onTempC)) throw new Error('OFF_TEMP_C 必须小于 ON_TEMP_C，否则迟滞区间不成立');
   if (!(config.pollSeconds >= 1)) throw new Error('POLL_SECONDS 至少为 1 秒');
+  if (!(config.startPulseMs >= 0 && config.startPulseMs <= 10000)) throw new Error('START_PULSE_MS 必须在 0-10000 毫秒之间');
   return config;
 }
 
@@ -93,9 +96,33 @@ export function decidePwm({ tempC, running, config }) {
   return { pwm: 0, running: false };
 }
 
+// 需要散热时，若目标档位低于全速，先给一个全速脉冲把扇叶带起来，再落到目标档位。
+// 低占空比常常无法让静止的风扇启动（实测这块板子的风扇 25% 就带不动），脉冲能显著
+// 降低可用的最低维持档位，从而更安静。
+export function planActions({ started, decision, config }) {
+  const actions = [];
+  if (started && decision.pwm > 0 && decision.pwm < 255 && config.startPulseMs > 0) {
+    actions.push({ pwm: 255, delayMs: config.startPulseMs });
+  }
+  actions.push({ pwm: decision.pwm, delayMs: 0 });
+  return actions;
+}
+
+// 配置文件被改写后无需重启服务：比较修改时间与大小即可判断是否需要重新加载。
+export function configChanged(previous, current) {
+  if (previous === null || current === null) return false;
+  return previous.mtimeMs !== current.mtimeMs || previous.size !== current.size;
+}
+
 export function readMaxTempC(root = THERMAL_ROOT) {
+  let names;
+  try {
+    names = readdirSync(root);
+  } catch {
+    return null;
+  }
   let max = null;
-  for (const name of readdirSync(root)) {
+  for (const name of names) {
     if (!/^thermal_zone\d+$/.test(name)) continue;
     try {
       const value = Number(readFileSync(`${root}/${name}/temp`, 'utf8').trim());
@@ -108,7 +135,13 @@ export function readMaxTempC(root = THERMAL_ROOT) {
 }
 
 export function findPwmFan(root = HWMON_ROOT) {
-  for (const name of readdirSync(root)) {
+  let names;
+  try {
+    names = readdirSync(root);
+  } catch {
+    return null;
+  }
+  for (const name of names) {
     const dir = `${root}/${name}`;
     try {
       if (readFileSync(`${dir}/name`, 'utf8').trim() !== 'pwmfan') continue;
@@ -119,6 +152,23 @@ export function findPwmFan(root = HWMON_ROOT) {
     return dir;
   }
   return null;
+}
+
+function statOf(file) {
+  try {
+    const item = statSync(file);
+    return { mtimeMs: item.mtimeMs, size: item.size };
+  } catch {
+    return null;
+  }
+}
+
+export function describeLevels(config) {
+  return config.levels.map((level) => `${level.belowC === Infinity ? '更高' : level.belowC}→${level.pwm}`).join(' ');
+}
+
+function sleepMs(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
 function parseArgs(list) {
@@ -158,7 +208,8 @@ export function main(argv = process.argv.slice(2)) {
     printUsage();
     return 0;
   }
-  const config = loadConfig(args.config);
+  let config = loadConfig(args.config);
+  let configStat = statOf(args.config);
   const pwmDir = findPwmFan();
   if (!pwmDir) {
     console.error('[风扇] 未找到 pwmfan 的 hwmon 设备，风扇不可控；请确认 pwm_fan 模块已加载。');
@@ -193,7 +244,20 @@ export function main(argv = process.argv.slice(2)) {
     }
   };
 
+  const reloadIfChanged = () => {
+    const current = statOf(args.config);
+    if (!configChanged(configStat, current)) return;
+    try {
+      config = loadConfig(args.config);
+      console.log(`[风扇] 配置已热加载：启动 ${config.onTempC}°C，停止 ${config.offTempC}°C，轮询 ${config.pollSeconds}s，档位 ${describeLevels(config)}，启动脉冲 ${config.startPulseMs}ms`);
+    } catch (error) {
+      console.error(`[风扇] 配置热加载失败，继续沿用上一份有效配置：${error.message}`);
+    }
+    configStat = current;
+  };
+
   const tick = () => {
+    reloadIfChanged();
     const tempC = readMaxTempC();
     if (tempC === null) {
       console.error('[风扇] 读不到任何 thermal zone 温度，保持当前转速');
@@ -202,18 +266,33 @@ export function main(argv = process.argv.slice(2)) {
     const wasRunning = running;
     const decision = decidePwm({ tempC, running, config });
     running = decision.running;
-    const reason = wasRunning === decision.running ? '' : (decision.running ? '(启动)' : '(停止)');
-    if (decision.pwm !== lastPwm) apply(decision.pwm, tempC, reason);
+    const started = decision.running && !wasRunning;
+    const reason = started ? '(启动)' : (wasRunning && !decision.running ? '(停止)' : '');
+    if (decision.pwm === lastPwm && !started) return;
+    for (const action of planActions({ started, decision, config })) {
+      if (action.delayMs > 0) sleepMs(action.delayMs);
+      apply(action.pwm, tempC, reason);
+    }
   };
 
-  console.log(`[风扇] 启动：启动阈值 ${config.onTempC}°C，停止阈值 ${config.offTempC}°C，轮询 ${config.pollSeconds}s，档位 ${config.levels.map((level) => `${level.belowC === Infinity ? '更高' : level.belowC}→${level.pwm}`).join(' ')}`);
+  console.log(`[风扇] 启动：启动阈值 ${config.onTempC}°C，停止阈值 ${config.offTempC}°C，轮询 ${config.pollSeconds}s，档位 ${describeLevels(config)}，启动脉冲 ${config.startPulseMs}ms`);
+  let timer = null;
+  let stopped = false;
+  const schedule = () => {
+    if (stopped) return;
+    timer = setTimeout(() => {
+      tick();
+      schedule();
+    }, config.pollSeconds * 1000);
+  };
   tick();
   if (args.once) return 0;
+  schedule();
 
-  const timer = setInterval(tick, config.pollSeconds * 1000);
   for (const signal of ['SIGTERM', 'SIGINT']) {
     process.on(signal, () => {
-      clearInterval(timer);
+      stopped = true;
+      if (timer) clearTimeout(timer);
       console.log(`[风扇] 收到 ${signal}，退出（保持当前转速 PWM=${lastPwm}）`);
       process.exit(0);
     });
