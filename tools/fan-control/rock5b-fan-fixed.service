@@ -1,0 +1,18 @@
+[Unit]
+Description=Rock 5B+ 风扇固定占空比（63%，无常驻进程）
+Documentation=file:/srv/blog/repo/tools/fan-control/README.md
+# 内核 pwm-fan 上电默认满档（255/100%），所以尽量早启动以缩短全速窗口。
+DefaultDependencies=no
+After=sysinit.target
+Before=multi-user.target shutdown.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/rock5b-fan-fixed 160 1.5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

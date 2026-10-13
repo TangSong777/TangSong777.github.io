@@ -113,6 +113,32 @@ PWM_LEVELS=999:160
 115 °C 的 critical 强制关机保护不受影响，依然生效。想恢复温控，把这三行改回
 `ON_TEMP_C=55` / `OFF_TEMP_C=45` / `PWM_LEVELS=66:128,73:192,999:255` 即可，同样无需重启。
 
+## 极简固定模式（oneshot，长期固定转速推荐）
+
+如果确定长期只用一个固定转速、不想保留常驻进程，用这一套：开机时写一次 PWM 就退出。
+
+```bash
+cd /srv/blog/repo && sudo git pull --ff-only && sudo chown -R radxa:radxa .git
+sudo bash tools/fan-control/install-rock5b-fan-fixed.sh
+```
+
+安装脚本会：装 `/usr/local/sbin/rock5b-fan-fixed`（约 40 行 shell，探测 `name=pwmfan` 的
+hwmon 目录后写入）与 `rock5b-fan-fixed.service`（`Type=oneshot` + `RemainAfterExit=yes`，
+`After=sysinit.target` 以尽早接管、缩短内核默认满档的窗口），停用旧的常驻服务
+`rock5b-fan-control.service`（unit 文件保留，可随时 `enable` 恢复温控），并立即执行一次。
+
+特点：**无常驻进程、不周期性唤醒 CPU**；默认写入 160（63%），写入前先给 1.5 秒全速脉冲
+确保 2-Pin 风扇可靠起转。改档位只需编辑 unit 里的
+`ExecStart=/usr/local/sbin/rock5b-fan-fixed 160 1.5`（第二个参数是脉冲秒数，0 表示不用脉冲），
+再 `sudo systemctl daemon-reload && sudo systemctl restart rock5b-fan-fixed.service`。
+
+恢复自动温控：
+
+```bash
+sudo systemctl disable --now rock5b-fan-fixed.service
+sudo systemctl enable --now rock5b-fan-control.service
+```
+
 ## 原理与安全边界
 
 - 温度取 `/sys/class/thermal/thermal_zone*/temp` 的**最大值**（soc、大小核、GPU、NPU 等各域）。
