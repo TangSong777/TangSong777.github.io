@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { generateKeyPairSync, sign } from 'node:crypto';
-import { normalizeArticlePath, normalizeAutoSaveMinutes, normalizeSiyuanPrivacyRules, resolveInside, safeSlug, scanSensitive, validateAndSanitizeImage, verifyAccessJwtWithKeys } from './server.mjs';
+import { normalizeArticlePath, normalizeAutoSaveMinutes, normalizeSiyuanPrivacyRules, parseGitPaths, repositoryLocalBlockers, repositorySnapshotBlockers, resolveInside, safeSlug, scanSensitive, validateAndSanitizeImage, verifyAccessJwtWithKeys } from './server.mjs';
 
 test('自动保存间隔只接受合理的整数分钟', () => {
   assert.equal(normalizeAutoSaveMinutes(3), 3);
@@ -84,4 +85,87 @@ test('Cloudflare Access JWT 同时校验签名、AUD 和邮箱', () => {
   assert.equal(verifyAccessJwtWithKeys(token, keys, config).email, 'owner@example.com');
   assert.throws(() => verifyAccessJwtWithKeys(token, keys, { ...config, audience: 'wrong' }));
   assert.throws(() => verifyAccessJwtWithKeys(token, keys, { ...config, emails: new Set(['other@example.com']) }));
+});
+
+const articleRepository = {
+  branch: 'main',
+  origin: 'git@github.com:TangSong777/TangSong777.github.io.git',
+  pushUrls: ['git@github.com:TangSong777/TangSong777.github.io.git'],
+  hasIdentity: true,
+  behind: 0,
+  ahead: 0,
+};
+
+test('仓库中与本次文章无关的改动不再阻断上传', () => {
+  assert.equal(repositorySnapshotBlockers(articleRepository), '');
+  // 同步状态尚未计算时只做本地检查。
+  assert.equal(repositorySnapshotBlockers({ ...articleRepository, behind: null, ahead: null }), '');
+});
+
+test('工作区存在无关改动（含已暂存内容）时本地检查不再阻断上传', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'article-studio-local-'));
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+  try {
+    git('init', '--quiet', '-b', 'main');
+    git('config', 'user.name', 'Test');
+    git('config', 'user.email', 'test@example.invalid');
+    git('remote', 'add', 'origin', 'git@github.com:TangSong777/TangSong777.github.io.git');
+    await writeFile(join(root, 'article.md'), '# 初稿\n');
+    git('add', '--', '.');
+    git('commit', '--quiet', '-m', 'init');
+
+    // 工作台之外：已跟踪文件被改动并已暂存，另外还有一个未跟踪文件。
+    await writeFile(join(root, 'article.md'), '# 更新\n');
+    await writeFile(join(root, 'notes.txt'), 'untracked\n');
+    git('add', '--', 'article.md');
+
+    const { local, blocker } = await repositoryLocalBlockers(root);
+    assert.equal(local.branch, 'main');
+    assert.equal(local.origin, 'git@github.com:TangSong777/TangSong777.github.io.git');
+    assert.equal(blocker, '');
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('发布前仍会阻断错误分支、未授权远端、缺失身份与同步异常', () => {
+  assert.match(repositorySnapshotBlockers({ ...articleRepository, branch: 'dev' }), /main 分支/);
+  assert.match(repositorySnapshotBlockers({ ...articleRepository, origin: 'git@github.com:someone/other.git' }), /授权/);
+  assert.match(repositorySnapshotBlockers({ ...articleRepository, pushUrls: [] }), /授权/);
+  assert.match(repositorySnapshotBlockers({ ...articleRepository, hasIdentity: false }), /提交身份/);
+  assert.match(repositorySnapshotBlockers({ ...articleRepository, behind: 2 }), /较新的提交/);
+  assert.match(repositorySnapshotBlockers({ ...articleRepository, ahead: 1 }), /未推送提交/);
+});
+
+test('上传文章只提交文章路径，仓库其他改动与已暂存内容保持原样', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'article-studio-publish-'));
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+  try {
+    git('init', '--quiet');
+    git('config', 'user.name', 'Test');
+    git('config', 'user.email', 'test@example.invalid');
+    await mkdir(join(root, 'source/_posts'), { recursive: true });
+    await mkdir(join(root, 'tools'), { recursive: true });
+    const article = 'source/_posts/示例.md';
+    await writeFile(join(root, article), '# 初稿\n');
+    await writeFile(join(root, 'tools/server.mjs'), 'old\n');
+    git('add', '--', '.');
+    git('commit', '--quiet', '-m', 'init');
+
+    // 工作台之外：无关代码改动、已暂存的代码改动和一个未跟踪文件。
+    await writeFile(join(root, article), '# 更新\n');
+    await writeFile(join(root, 'tools/server.mjs'), 'changed\n');
+    await writeFile(join(root, 'notes.txt'), 'untracked\n');
+    git('add', '--', 'tools/server.mjs');
+
+    const pathspecs = [article];
+    git('add', '-A', '--', ...pathspecs);
+    // 只校验文章路径范围内的暂存内容，索引里的其他文件不算越界。
+    assert.deepEqual(parseGitPaths(git('diff', '--cached', '--name-only', '-z', '--', ...pathspecs)), pathspecs);
+    assert.ok(parseGitPaths(git('diff', '--cached', '--name-only', '-z')).includes('tools/server.mjs'));
+
+    git('commit', '--only', '-m', 'docs(article): 更新《示例》', '--', ...pathspecs);
+    assert.deepEqual(parseGitPaths(git('diff-tree', '--root', '--no-commit-id', '--name-only', '-z', '-r', 'HEAD')), pathspecs);
+    const status = git('status', '--short');
+    assert.match(status, /tools\/server\.mjs/);
+    assert.match(status, /notes\.txt/);
+  } finally { await rm(root, { recursive: true, force: true }); }
 });

@@ -727,40 +727,40 @@ function pathAllowed(name, roots) {
   return roots.some((root) => normalized === root || normalized.startsWith(`${root}/`));
 }
 
-function ordinaryArticleDraftPath(name) {
-  const normalized = normalizeRelativePath(name);
-  const parts = normalized.split('/');
-  if (parts.some((part) => !part || part === '.' || part === '..' || part.startsWith('.'))) return false;
-  if (normalized.startsWith('source/images/posts/')) return true;
-  return normalized.startsWith('source/_posts/') && parts[2]?.toLowerCase() !== 'siyuan';
+// 上传文章只关心会影响发布正确性的仓库状态。工作区里与本次文章无关的改动
+// 不再阻断上传：提交始终由 `git commit --only` 限定在文章路径上，索引里其他
+// 已暂存内容既不会被提交，也不会被推送。
+export function repositorySnapshotBlockers({ branch, origin, pushUrls, hasIdentity, behind = null, ahead = null }) {
+  if (branch !== 'main') return '文章发布只允许在 main 分支运行。';
+  if (!allowedRemotes.has(origin) || pushUrls.length !== 1 || !allowedRemotes.has(pushUrls[0])) return 'Git origin 不是唯一授权的博客仓库。';
+  if (!hasIdentity) return 'Git 提交身份尚未配置。';
+  if (behind === null || ahead === null) return '';
+  if (behind) return 'GitHub 有较新的提交，请先更新 Rock 仓库再发布文章。';
+  if (ahead) return 'Rock 存在未推送提交，且没有可验证的文章待推送记录。';
+  return '';
 }
 
-async function workingTreePaths() {
-  const [tracked, untracked, staged] = await Promise.all([
-    gitPaths('diff', '--name-only', '-z'),
-    gitPaths('ls-files', '--others', '--exclude-standard', '-z'),
-    gitPaths('diff', '--cached', '--name-only', '-z'),
-  ]);
-  return {
-    dirty: [...new Set([...tracked, ...untracked])],
-    staged,
+async function gitAt(root, ...args) {
+  return (await runChecked('git', ['-C', root, ...args], `Git ${args[0]}`)).stdout.trim();
+}
+
+export async function repositoryLocalBlockers(root = repoDir) {
+  const local = {
+    branch: await gitAt(root, 'branch', '--show-current'),
+    origin: await gitAt(root, 'remote', 'get-url', 'origin'),
+    pushUrls: (await gitAt(root, 'remote', 'get-url', '--push', '--all', 'origin')).split('\n').filter(Boolean),
+    hasIdentity: Boolean(await gitAt(root, 'config', 'user.name') && await gitAt(root, 'config', 'user.email')),
   };
+  return { local, blocker: repositorySnapshotBlockers(local) };
 }
 
-async function verifyRepositoryForArticle(allowedPaths) {
-  if (await git('branch', '--show-current') !== 'main') throw new Error('文章发布只允许在 main 分支运行。');
-  const origin = await git('remote', 'get-url', 'origin');
-  const pushUrls = (await git('remote', 'get-url', '--push', '--all', 'origin')).split('\n').filter(Boolean);
-  if (!allowedRemotes.has(origin) || pushUrls.length !== 1 || !allowedRemotes.has(pushUrls[0])) throw new Error('Git origin 不是唯一授权的博客仓库。');
-  if (!await git('config', 'user.name') || !await git('config', 'user.email')) throw new Error('Git 提交身份尚未配置。');
+async function verifyRepositoryForArticle() {
+  const { local, blocker: localBlocker } = await repositoryLocalBlockers();
+  if (localBlocker) throw new Error(localBlocker);
   await git('fetch', '--prune', 'origin', 'main');
   const [behind, ahead] = (await git('rev-list', '--left-right', '--count', 'origin/main...HEAD')).split(/\s+/).map(Number);
-  if (behind) throw new Error('GitHub 有较新的提交，请先更新 Rock 仓库再发布文章。');
-  if (ahead) throw new Error('Rock 存在未推送提交，且没有可验证的文章待推送记录。');
-  const status = await workingTreePaths();
-  if (status.staged.length) throw new Error('Git 暂存区已有内容，请人工检查后再发布。');
-  const unexpected = status.dirty.filter((name) => !ordinaryArticleDraftPath(name));
-  if (unexpected.length) throw new Error(`仓库存在普通文章草稿之外的修改：${unexpected.slice(0, 5).join('、')}`);
+  const blocker = repositorySnapshotBlockers({ ...local, behind, ahead });
+  if (blocker) throw new Error(blocker);
 }
 
 async function pushPendingArticle() {
@@ -789,7 +789,7 @@ async function publishCurrentArticle(data, warnings) {
     const renameState = await readRenameState();
     const renameInfo = renameState[articlePath];
     const allowedPaths = articleGitPaths(articlePath, renameInfo?.originalPath);
-    await verifyRepositoryForArticle(allowedPaths);
+    await verifyRepositoryForArticle();
 
     await runChecked(npmCommand, ['run', 'clean'], '清理 Hexo 缓存');
     const build = await runChecked(npmCommand, ['run', 'build'], 'Hexo 构建检查');
@@ -808,7 +808,7 @@ async function publishCurrentArticle(data, warnings) {
     let commit;
     try {
     await runChecked('git', ['add', '-A', '--', ...pathspecs], '暂存当前文章');
-    const stagedNames = await gitPaths('diff', '--cached', '--name-only', '-z');
+    const stagedNames = await gitPaths('diff', '--cached', '--name-only', '-z', '--', ...pathspecs);
     if (stagedNames.some((name) => !pathAllowed(name, allowedPaths))) {
       await run('git', ['restore', '--staged', '--', ...pathspecs]);
       throw new Error('暂存区包含当前文章白名单之外的文件。');
@@ -938,7 +938,7 @@ async function deleteAndPublishArticle(articlePath) {
 
   // Reuse the same repository safety checks as normal article publishing.
   const pendingPushed = await pushPendingArticle();
-  await verifyRepositoryForArticle(allowedPaths);
+  await verifyRepositoryForArticle();
 
   const deletion = await beginArticleDeletion(normalizedPath, renameState);
   let build;
@@ -963,7 +963,7 @@ async function deleteAndPublishArticle(articlePath) {
       };
     }
     await runChecked('git', ['add', '-A', '--', ...pathspecs], '暂存文章删除');
-    const stagedNames = await gitPaths('diff', '--cached', '--name-only', '-z');
+    const stagedNames = await gitPaths('diff', '--cached', '--name-only', '-z', '--', ...pathspecs);
     if (stagedNames.some((name) => !pathAllowed(name, allowedPaths))) {
       await run('git', ['restore', '--staged', '--', ...pathspecs]);
       throw new Error('暂存区包含当前文章白名单之外的文件。');
