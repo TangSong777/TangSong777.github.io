@@ -1,7 +1,7 @@
 ---
 title: 'Skill速查手册'
 date: '2026-08-24T09:53:37+08:00'
-updated: '2026-09-22T16:34:36+08:00'
+updated: '2026-10-14T18:17:29+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,7 +15,7 @@ categories:
 
 # 我的 Skill 体系速查手册
 
->> 本手册用于快速查阅我创建的 11 个 Skill 及其功能、触发时机与彼此关系。**所有 Skill 按名称首字母 a-z 排序。最后更新：2026-09-22（新增 software-list-updater；修订：分类表加序号列 + 顶部统计总表「其中 ❌️ 不常用」列 + 文末「备注：❌️ 标记的含义」与「开机必装清单」；** ❌️ 口径＝不常用/有一定接触，非已弃用 **）。**   手册仅记录当前状态。
+>> 本手册用于快速查阅我创建的 11 个 Skill 及其功能、触发时机与彼此关系。**所有 Skill 按名称首字母 a-z 排序。最后更新：2026-10-14（把 chronicle-maintainer / icon-updater / index-auditor / person-relation-sync 4 个「岁月史书相关」Skill 的说明迁至「岁月史书 / 00-总览 / 《岁月史书相关 Skill 说明》」，本手册只保留通用 Skill，数量 15 → 11）。**  手册仅记录当前状态。
 >>
 
 ## 一、场景 → 用哪个 Skill（速查）
@@ -26,7 +26,7 @@ categories:
 - ④ knowledge-coach —— 模式A：文档内二次笔记迭代补齐 / 模式B：跨文档定位补充新知识点
 - ⑤ learning-plan-generator —— 生成学习方案（能力同步+答案伴随）
 - ⑥ leetcode-organizer —— 力扣每日整理
-- ⑦ link-checker —— 引用校验（旁路）
+- ⑦ link-checker —— 引用校验（旁路，管"已链是否规范/断链"）
 - ⑧ note-organize —— 整理笔记（提炼而不精简）
 - ⑨ session-state-sync —— 会话状态手册同步（旁路）
 - ⑩ skill-manual-updater —— Skill 手册同步 + 重复校验（旁路）
@@ -47,6 +47,8 @@ categories:
 |session-state-sync|知识库重要变更后自动同步《会话状态恢复手册》，确保新会话无缝续接|文档/Skill/能力/方案变更后（默认旁路）|
 |skill-manual-updater|Skill 变更后同步更新手册 + 校验重叠 + 按首字母 a-z 维护排序|每次创建/修改/删除/重命名 Skill 后（默认旁路）|
 |software-list-updater|维护《电脑软件清单》：三列表格（序号+工具名+功能）补条目、去重、调类，刷新顶部统计总表（数量+完整软件名+❌️不常用数+引用链接+总数）与文末 ❌️ 含义备注|要求添加/整理软件清单条目、为工具归类、更新 ❌️ 标记或刷新统计目录时|
+
+> 岁月史书相关 Skill（chronicle-maintainer、icon-updater、index-auditor、person-relation-sync）的说明已迁至「岁月史书 / 00-总览 / [岁月史书相关 Skill 说明]()」，本手册不再收录，避免跨笔记本混放。
 
 ## 三、各 Skill 详细介绍
 
@@ -119,7 +121,7 @@ categories:
 ```
 遇到未知知识点
    ↓
-① learning-plan-generator → 生成教学讲义学习方案
+⑤ learning-plan-generator → 生成教学讲义学习方案
    ↓
 按方案学习（边学边留证据、写心得）
    ↓ 有二次笔记/提问/要补充知识点？
@@ -134,13 +136,16 @@ categories:
 形成新能力，进入下一轮学习
 
 全程旁路：
-- ⑦ link-checker：每次文档增删改后校验引用规范
+- ⑦ link-checker：每次文档增删改后校验引用规范（已链是否合规/断链）
 - ⑩ skill-manual-updater：Skill 变更后同步 Skill 手册（a-z）
 - ⑨ session-state-sync：重要变更后同步会话恢复手册
 - ⑥ leetcode-organizer：力扣每日整理
 
 按需维护：
 - ⑪ software-list-updater：向《电脑软件清单》添加/整理软件条目时
+
+（岁月史书相关：② chronicle-maintainer｜icon-updater｜index-auditor｜person-relation-sync
+  说明见「岁月史书 / 00-总览 / 岁月史书相关 Skill 说明」）
 ```
 
 <section class="siyuan-references" aria-label="文档引用">
