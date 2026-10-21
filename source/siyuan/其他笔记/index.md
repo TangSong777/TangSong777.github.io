@@ -20,7 +20,7 @@ categories:
   - 📄 [CMD专项](/siyuan/其他笔记/命令行/CMD专项/)
 - 📁 [计算机网络](/siyuan/其他笔记/计算机网络/)
 
-  - 📄 [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
+  - 📄 个人路由配置记录
   - 📑 [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 
     - 📄 [基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/基于OpenWrt与ZeroTier的个人组网/)
@@ -51,7 +51,6 @@ categories:
 ## 文档关系
 
 ### 本文引用
-- [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
 - [基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/基于OpenWrt与ZeroTier的个人组网/)
 - [计算机网络](/siyuan/其他笔记/计算机网络/)
 - [计算机网络专项](/siyuan/其他笔记/计算机网络/学习文档/计算机网络专项/)

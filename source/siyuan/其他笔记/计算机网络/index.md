@@ -13,7 +13,7 @@ categories:
   - '其他笔记'
 ---
 
-- 🛜 [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
+- 🛜 个人路由配置记录
 - 📄 工作台端口转发
 - 📑 [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 
@@ -29,7 +29,6 @@ categories:
 ## 文档关系
 
 ### 本文引用
-- [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
 - [基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/基于OpenWrt与ZeroTier的个人组网/)
 - [计算机网络专项](/siyuan/其他笔记/计算机网络/学习文档/计算机网络专项/)
 - [学习文档](/siyuan/其他笔记/计算机网络/学习文档/)

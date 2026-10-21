@@ -325,7 +325,6 @@ Ethernet / WiFi：低 Metric
 - [Prompt-基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/Prompt-基于OpenWrt与ZeroTier的个人组网/)
 
 ### 反向引用
-- [个人路由配置记录](/siyuan/其他笔记/计算机网络/个人路由配置记录/)
 - [计算机网络](/siyuan/其他笔记/计算机网络/)
 - [其他笔记](/siyuan/其他笔记/)
 - [学习笔记](/siyuan/)
