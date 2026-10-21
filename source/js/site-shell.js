@@ -2,7 +2,9 @@
   'use strict';
 
   var path = location.pathname.replace(/index\.html$/, '').replace(/\/+$/, '') || '/';
-  if (/\/archives(?:\/|$)/.test(path)) document.body.classList.add('archive-mode');
+  if (/\/(?:archives|tags|categories)(?:\/|$)/.test(path)) {
+    document.body.classList.add('archive-mode');
+  }
   if (document.querySelector('.main-inner.post') && path.indexOf('/siyuan') < 0) {
     document.body.classList.add('blog-post-mode');
   }
