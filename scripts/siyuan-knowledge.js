@@ -2,7 +2,7 @@
 const siteRoot = hexo.config.root || '/';
 const style = `<link rel="stylesheet" href="${siteRoot}css/siyuan-knowledge.css">`;
 const shell = `<script src="${siteRoot}js/site-shell.js" defer></script>`;
-const knowledge = `<script src="${siteRoot}js/siyuan-data.js" defer></script><script src="${siteRoot}js/siyuan-knowledge.js" defer></script>`;
+const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=20261021" defer></script><script src="${siteRoot}js/siyuan-knowledge.js?v=20261021" defer></script>`;
 
 ['home', 'post', 'page', 'archive'].forEach(type => {
   hexo.extend.injector.register('head_end', style, type);

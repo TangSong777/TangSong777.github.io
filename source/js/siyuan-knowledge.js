@@ -84,7 +84,7 @@
     feed.className = 'blog-home-feed';
     feed.innerHTML = '<header class="blog-home-section-title"><div><span>RECENT POSTS</span><h2>最近文章</h2></div><a href="/archives/">查看全部 →</a></header>';
     postBlocks.forEach(function (block) {
-      var staticMore = block.querySelector('.post-more-link');
+      var staticMore = block.querySelector('.post-button') || block.querySelector('.post-more-link');
       if (staticMore) staticMore.remove();
       feed.appendChild(block);
       var postLink = block.querySelector('.post-title-link');
