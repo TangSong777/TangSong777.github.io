@@ -1014,7 +1014,6 @@ body.blog-home-mode .headerlink { display: none !important; }
 
 
 /* 标签页 / 分类页与归档页保持一致 */
-body.archive-mode .collection-year .collection-header::after { content: " 年"; }
 body.archive-mode .collection-title small {
   background: rgba(255, 255, 255, .18);
   border-radius: 999px;
