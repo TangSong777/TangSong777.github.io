@@ -10,7 +10,7 @@ const state = {
   identity: null, draftTimer: null, autoSaveTimer: null, autoSaving: false,
   autoSaveMinutes: 3, dirtySince: null,
   authMode: 'local', authenticated: false,
-  siyuanDocuments: [], privateSelected: new Set(),
+  siyuanDocuments: [], privateIncluded: new Set(), collapsed: new Set(), documentTree: null,
   accessKey: mobileKeyFromUrl || sessionStorage.getItem('articleStudioKey') || '',
 };
 const $ = (selector) => document.querySelector(selector);
@@ -989,36 +989,145 @@ function linesFrom(value) {
 }
 
 function updatePrivateDocumentCount() {
-  const manual = linesFrom($('#manualPrivateDocuments').value);
-  $('#privateDocumentCount').textContent = `${new Set([...state.privateSelected, ...manual]).size} 篇`;
+  $('#privateDocumentCount').textContent = `${state.privateIncluded.size} / ${state.siyuanDocuments.length} 篇展示`;
+}
+
+function buildDocumentTree(documents) {
+  const root = { name: '', path: '', children: new Map(), doc: null };
+  for (const doc of documents) {
+    const parts = doc.path.replace(/\.md$/i, '').split('/').filter(Boolean);
+    let node = root;
+    let acc = '';
+    for (const part of parts) {
+      acc = acc ? `${acc}/${part}` : part;
+      if (!node.children.has(part)) {
+        node.children.set(part, { name: part, path: acc, children: new Map(), doc: null });
+      }
+      node = node.children.get(part);
+    }
+    node.doc = doc;
+  }
+  return root;
+}
+
+function collectDocPaths(node) {
+  const paths = node.doc ? [node.doc.path] : [];
+  for (const child of node.children.values()) paths.push(...collectDocPaths(child));
+  return paths;
+}
+
+function findTreeNode(node, path) {
+  if (!node) return null;
+  if (node.path === path) return node;
+  for (const child of node.children.values()) {
+    const found = findTreeNode(child, path);
+    if (found) return found;
+  }
+  return null;
+}
+
+function renderTreeNode(node, depth, container) {
+  const children = [...node.children.values()].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+  for (const child of children) {
+    const docPaths = collectDocPaths(child);
+    const included = docPaths.filter((item) => state.privateIncluded.has(item)).length;
+    const hasChildren = child.children.size > 0;
+
+    const row = document.createElement('div');
+    row.className = 'tree-row';
+    row.style.paddingLeft = `${10 + depth * 18}px`;
+
+    if (hasChildren) {
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'tree-toggle';
+      toggle.dataset.treeToggle = child.path;
+      toggle.setAttribute('aria-expanded', String(!state.collapsed.has(child.path)));
+      toggle.textContent = state.collapsed.has(child.path) ? '▸' : '▾';
+      row.append(toggle);
+    } else {
+      const spacer = document.createElement('span');
+      spacer.className = 'tree-spacer';
+      row.append(spacer);
+    }
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.dataset.treeCheck = child.path;
+    checkbox.checked = docPaths.length > 0 && included === docPaths.length;
+    checkbox.indeterminate = included > 0 && included < docPaths.length;
+    row.append(checkbox);
+
+    const label = document.createElement('span');
+    label.className = hasChildren ? 'tree-label tree-folder' : 'tree-label';
+    label.textContent = child.doc ? child.doc.title : child.name;
+    label.title = child.doc ? child.doc.path : child.path;
+    row.append(label);
+
+    const count = document.createElement('small');
+    count.className = 'tree-count';
+    count.textContent = `${included}/${docPaths.length}`;
+    row.append(count);
+
+    container.append(row);
+
+    if (hasChildren && !state.collapsed.has(child.path)) {
+      renderTreeNode(child, depth + 1, container);
+    }
+  }
 }
 
 function renderPrivateDocumentList() {
   const query = $('#privateDocumentSearch').value.trim().toLowerCase();
   const documents = state.siyuanDocuments.filter((item) => `${item.title} ${item.path}`.toLowerCase().includes(query));
   const list = $('#privateDocumentList');
-  list.innerHTML = documents.length ? documents.map((item) => `
-    <label class="private-document-item">
-      <input type="checkbox" data-private-document="${escapeHtml(item.path)}" ${state.privateSelected.has(item.path) ? 'checked' : ''}>
-      <span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.path)}</small></span>
-    </label>`).join('') : '<div class="local-note">没有找到可选择的文档，可在下方手动填写路径。</div>';
-  list.querySelectorAll('[data-private-document]').forEach((checkbox) => checkbox.addEventListener('change', () => {
-    if (checkbox.checked) state.privateSelected.add(checkbox.dataset.privateDocument);
-    else state.privateSelected.delete(checkbox.dataset.privateDocument);
+  list.replaceChildren();
+  if (documents.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'local-note';
+    empty.textContent = query ? '没有匹配的文档。' : '没有找到可选择的文档，可在下方手动填写路径。';
+    list.append(empty);
     updatePrivateDocumentCount();
-  }));
+    return;
+  }
+  state.documentTree = buildDocumentTree(documents);
+  renderTreeNode(state.documentTree, 0, list);
   updatePrivateDocumentCount();
 }
+
+$('#privateDocumentList').addEventListener('change', (event) => {
+  const checkbox = event.target.closest('[data-tree-check]');
+  if (!checkbox) return;
+  const node = findTreeNode(state.documentTree, checkbox.dataset.treeCheck);
+  if (!node) return;
+  const docPaths = collectDocPaths(node);
+  if (checkbox.checked) docPaths.forEach((item) => state.privateIncluded.add(item));
+  else docPaths.forEach((item) => state.privateIncluded.delete(item));
+  renderPrivateDocumentList();
+});
+
+$('#privateDocumentList').addEventListener('click', (event) => {
+  const toggle = event.target.closest('[data-tree-toggle]');
+  if (!toggle) return;
+  const path = toggle.dataset.treeToggle;
+  if (state.collapsed.has(path)) state.collapsed.delete(path);
+  else state.collapsed.add(path);
+  renderPrivateDocumentList();
+});
 
 async function openSiyuanPrivacyDialog() {
   try {
     const data = await api('/api/siyuan-privacy');
     state.siyuanDocuments = data.documents || [];
     const known = new Set(state.siyuanDocuments.map((item) => item.path));
-    state.privateSelected = new Set((data.rules?.excludedDocuments || []).filter((item) => known.has(item)));
+    const excluded = new Set(data.rules?.excludedDocuments || []);
+    state.privateIncluded = new Set(
+      state.siyuanDocuments.filter((item) => !excluded.has(item.path)).map((item) => item.path),
+    );
     $('#manualPrivateDocuments').value = (data.rules?.excludedDocuments || []).filter((item) => !known.has(item)).join('\n');
     $('#privateValues').value = (data.rules?.privateValues || []).join('\n');
     $('#privateDocumentSearch').value = '';
+    state.collapsed = new Set();
     renderPrivateDocumentList();
     $('#siyuanPrivacyDialog').showModal();
   } catch (error) { toast(`无法读取思源隐私规则：${error.message}`, true); }
@@ -1027,7 +1136,13 @@ async function openSiyuanPrivacyDialog() {
 async function saveSiyuanPrivacy(event) {
   event.preventDefault();
   try {
-    const excludedDocuments = [...new Set([...state.privateSelected, ...linesFrom($('#manualPrivateDocuments').value)])];
+    const manualExcluded = linesFrom($('#manualPrivateDocuments').value);
+    const excludedDocuments = [...new Set([
+      ...state.siyuanDocuments
+        .filter((item) => !state.privateIncluded.has(item.path))
+        .map((item) => item.path),
+      ...manualExcluded,
+    ])];
     const privateValues = linesFrom($('#privateValues').value);
     const data = await api('/api/siyuan-privacy', {
       method: 'POST', body: JSON.stringify({ excludedDocuments, privateValues }),
@@ -1169,6 +1284,14 @@ $('#siyuanPrivacyForm').addEventListener('submit', saveSiyuanPrivacy);
 $('#closeSiyuanPrivacy').addEventListener('click', () => $('#siyuanPrivacyDialog').close());
 $('#cancelSiyuanPrivacy').addEventListener('click', () => $('#siyuanPrivacyDialog').close());
 $('#privateDocumentSearch').addEventListener('input', renderPrivateDocumentList);
+$('#privateSelectAll').addEventListener('click', () => {
+  state.privateIncluded = new Set(state.siyuanDocuments.map((item) => item.path));
+  renderPrivateDocumentList();
+});
+$('#privateSelectNone').addEventListener('click', () => {
+  state.privateIncluded = new Set();
+  renderPrivateDocumentList();
+});
 $('#manualPrivateDocuments').addEventListener('input', updatePrivateDocumentCount);
 $('#markdownHelpButton').addEventListener('click', () => $('#markdownHelpDialog').showModal());
 $('#closeMarkdownHelp').addEventListener('click', () => $('#markdownHelpDialog').close());

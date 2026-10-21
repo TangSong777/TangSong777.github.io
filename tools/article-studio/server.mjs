@@ -37,7 +37,7 @@ const studioSettingsFile = resolve(process.env.ARTICLE_STUDIO_SETTINGS_FILE || (
 const siyuanPrivacyFile = resolve(process.env.SIYUAN_PRIVACY_RULES_FILE || (process.platform === 'linux'
   ? '/srv/blog/state/siyuan-privacy-rules.json'
   : join(repoDir, '.siyuan-privacy-rules.json')));
-const siyuanSourceDir = resolve(process.env.SIYUAN_SOURCE_DIR || join(repoDir, 'origin', '学习笔记.md', '学习笔记.md'));
+const siyuanSourceDir = resolve(process.env.SIYUAN_SOURCE_DIR || join(repoDir, 'origin', '学习笔记.md'));
 const articlePendingFile = '/srv/blog/state/article-pending-push.json';
 const publishLockFile = '/srv/blog/locks/publish.lock';
 const lockHolderFile = join(studioDir, 'lock-holder.mjs');
@@ -654,7 +654,16 @@ async function loadSiyuanPrivacyRules() {
 }
 
 async function listSiyuanDocuments() {
-  const roots = [siyuanSourceDir, join(repoDir, 'source', 'siyuan')].filter((root, index, all) => existsSync(root) && all.indexOf(root) === index);
+  const candidates = [siyuanSourceDir, join(repoDir, 'source', 'siyuan')];
+  const roots = [];
+  for (const candidate of candidates) {
+    if (roots.includes(candidate)) continue;
+    try {
+      if ((await stat(candidate)).isDirectory()) roots.push(candidate);
+    } catch {
+      // 不存在或不可读，跳过
+    }
+  }
   const documents = new Map();
   async function visit(root, directory) {
     for (const item of await readdir(directory, { withFileTypes: true })) {

@@ -127,12 +127,16 @@
         <div><span class="eyebrow">SIYUAN PRIVACY</span><h2>思源隐私规则</h2></div>
         <button id="closeSiyuanPrivacy" class="dialog-close" type="button" aria-label="关闭思源隐私规则">×</button>
       </div>
-      <p>勾选的文档不会发布；指定的 IP、ID 或其他文本只在公开副本中替换为 <code>████</code>，思源原文保持不变。</p>
+      <p>勾选的文档会发布到博客，取消勾选则不发布；指定的 IP、ID 或其他文本只在公开副本中替换为 <code>████</code>，思源原文保持不变。</p>
       <section class="privacy-section">
-        <div class="privacy-section-title"><strong>不发布的文档</strong><span id="privateDocumentCount">0 篇</span></div>
-        <input id="privateDocumentSearch" type="search" placeholder="搜索文档标题或路径">
+        <div class="privacy-section-title"><strong>要展示的文档</strong><span id="privateDocumentCount">0 / 0 篇展示</span></div>
+        <div class="privacy-toolbar">
+          <input id="privateDocumentSearch" type="search" placeholder="搜索文档标题或路径">
+          <button type="button" id="privateSelectAll" class="settings-button">全选</button>
+          <button type="button" id="privateSelectNone" class="settings-button">全不选</button>
+        </div>
         <div id="privateDocumentList" class="private-document-list"></div>
-        <label>补充文档路径<textarea id="manualPrivateDocuments" rows="3" placeholder="列表中找不到时，每行填写一个相对于思源笔记本的 Markdown 路径"></textarea></label>
+        <label>补充不展示的路径<textarea id="manualPrivateDocuments" rows="3" placeholder="列表中找不到时，每行填写一个相对于思源笔记本的 Markdown 路径"></textarea></label>
       </section>
       <section class="privacy-section">
         <div class="privacy-section-title"><strong>需要遮盖的文本</strong><span>逐字匹配，不区分大小写</span></div>
