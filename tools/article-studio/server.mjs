@@ -134,6 +134,15 @@ function sessionCookie(token, maxAge = sessionMaxAgeSeconds, secure = false) {
   return `article_studio_session=${encodeURIComponent(token)}; Max-Age=${maxAge}; Path=/; HttpOnly;${secure ? ' Secure;' : ''} SameSite=Lax`;
 }
 
+/** 经 Cloudflare Tunnel 时 remoteAddress 恒为回环地址，真实来源在 cf-connecting-ip。 */
+function clientAddress(req) {
+  const cf = String(req.headers['cf-connecting-ip'] || '').trim();
+  if (cf) return cf;
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  if (forwarded) return forwarded;
+  return String(req.socket.remoteAddress || 'unknown');
+}
+
 const failedLogins = new Map();
 function loginAllowed(address) {
   const now = Date.now();
@@ -1075,7 +1084,7 @@ async function deleteAndPublishArticle(articlePath) {
 async function routeApi(req, res, url, identity) {
   if (req.method === 'POST' && url.pathname === '/api/login') {
     if (authMode !== 'password') return fail(res, 404, '当前工作台未启用密码登录。');
-    const address = String(req.socket.remoteAddress || 'unknown');
+    const address = clientAddress(req);
     if (!loginAllowed(address)) return fail(res, 429, '登录尝试过多，请 15 分钟后重试。');
     const body = await readJson(req);
     if (!verifyPassword(body.password)) {
