@@ -165,3 +165,12 @@ a:hover {
 ::selection {
   background: rgba(47, 111, 97, .18);
 }
+/* 标志元素：与 blogs.yanghanlin.cn、server.yanghanlin.cn 共用的顶部品牌渐变条 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1f5147, #6b998d);
+  z-index: 999;
+}
