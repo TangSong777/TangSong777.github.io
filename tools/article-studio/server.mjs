@@ -25,7 +25,7 @@ const requestedPort = Number(process.env.ARTICLE_STUDIO_PORT || 4173);
 const csrfToken = randomBytes(24).toString('hex');
 const accessKey = authMode === 'key' ? randomBytes(24).toString('base64url') : '';
 const passwordHash = String(process.env.ARTICLE_STUDIO_PASSWORD_HASH || '').trim();
-const totpSecret = String(process.env.ARTICLE_STUDIO_TOTP_SECRET || '').trim();
+const totpSecret = String(process.env.YANGHANLIN_TOTP_SECRET || process.env.ARTICLE_STUDIO_TOTP_SECRET || '').trim();
 const ssoSecret = String(process.env.YANGHANLIN_SSO_SECRET || '').trim();
 const sessionSecret = String(process.env.ARTICLE_STUDIO_SESSION_SECRET || '').trim();
 const sessionMaxAgeSeconds = 12 * 60 * 60;
