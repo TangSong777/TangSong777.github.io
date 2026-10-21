@@ -16,7 +16,7 @@ body {
 // Keep published article typography aligned with Article Studio's WYSIWYG canvas.
 .post-body {
   color: #263c37;
-  font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif;
   font-size: 16px;
   line-height: 2;
 
@@ -109,12 +109,26 @@ body {
   }
 }
 
+// 统一字体：与 editor.yanghanlin.cn / server.yanghanlin.cn 完全一致。
+// 不使用 Lato / Inter 这类未实际加载的字体，避免不同平台回退路径不同。
 body,
+h1, h2, h3, h4, h5, h6,
+.site-title,
+.site-subtitle,
+.post-title,
+.post-body,
+.post-meta-container,
+.menu,
+.menu-item,
+.sidebar,
+.site-author-name,
+.links-of-author a,
+.footer,
 input,
 button,
 select,
 textarea {
-  font-family: Inter, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif;
 }
 
 a:hover {
