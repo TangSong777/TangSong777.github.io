@@ -5,6 +5,7 @@ import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { createHmac, createPublicKey, randomBytes, scryptSync, timingSafeEqual, verify as verifySignature } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { verifyTotp } from './totp.mjs';
+import { SSO_COOKIE, createSsoToken, ssoCookie, verifySsoToken } from '../shared/sso.mjs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { networkInterfaces } from 'node:os';
 import Hexo from 'hexo';
@@ -25,6 +26,7 @@ const csrfToken = randomBytes(24).toString('hex');
 const accessKey = authMode === 'key' ? randomBytes(24).toString('base64url') : '';
 const passwordHash = String(process.env.ARTICLE_STUDIO_PASSWORD_HASH || '').trim();
 const totpSecret = String(process.env.ARTICLE_STUDIO_TOTP_SECRET || '').trim();
+const ssoSecret = String(process.env.YANGHANLIN_SSO_SECRET || '').trim();
 const sessionSecret = String(process.env.ARTICLE_STUDIO_SESSION_SECRET || '').trim();
 const sessionMaxAgeSeconds = 12 * 60 * 60;
 if (authMode === 'password' && (!passwordHash || !sessionSecret)) {
@@ -265,7 +267,9 @@ async function authenticateRequest(req) {
   if (authMode === 'password') {
     const pathname = new URL(req.url || '/', 'http://127.0.0.1').pathname;
     const cookies = parseCookies(req);
-    const session = verifySessionToken(cookies.article_studio_session);
+    const localSession = verifySessionToken(cookies.article_studio_session);
+    const session = localSession
+      || (ssoSecret ? verifySsoToken(cookies[SSO_COOKIE], ssoSecret) : null);
     if (pathname === '/api/login' || pathname === '/api/config' || !pathname.startsWith('/api/')) {
       return { mode: 'password', email: '', authenticated: Boolean(session) };
     }
@@ -1103,15 +1107,27 @@ async function routeApi(req, res, url, identity) {
     }
     failedLogins.delete(address);
     const token = createSessionToken();
+    const loginCookies = [sessionCookie(token, sessionMaxAgeSeconds, isSecureRequest(req))];
+    if (ssoSecret) {
+      loginCookies.push(ssoCookie(createSsoToken(ssoSecret, sessionMaxAgeSeconds), {
+        maxAge: sessionMaxAgeSeconds,
+        secure: isSecureRequest(req),
+        host: req.headers.host,
+      }));
+    }
     return send(res, 200, { ok: true, token, authMode, authenticated: true }, 'application/json; charset=utf-8', {
-      'Set-Cookie': sessionCookie(token, sessionMaxAgeSeconds, isSecureRequest(req)),
+      'Set-Cookie': loginCookies,
     });
   }
 
   if (req.method === 'POST' && url.pathname === '/api/logout') {
     if (authMode !== 'password') return fail(res, 404, '当前工作台未启用密码登录。');
+    const logoutCookies = [sessionCookie('', 0, isSecureRequest(req))];
+    if (ssoSecret) {
+      logoutCookies.push(ssoCookie('', { maxAge: 0, secure: isSecureRequest(req), host: req.headers.host }));
+    }
     return send(res, 200, { ok: true }, 'application/json; charset=utf-8', {
-      'Set-Cookie': sessionCookie('', 0, isSecureRequest(req)),
+      'Set-Cookie': logoutCookies,
     });
   }
 
