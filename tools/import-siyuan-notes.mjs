@@ -8,8 +8,9 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultBlogDir = path.dirname(scriptDir);
 const DEFAULT_DATE = '2026-08-31T00:00:00+08:00';
-const PRIVATE_DOCUMENT_ROOTS = ['能力体系'];
-const PRIVATE_DOCUMENT_TITLES = new Set(['能力体系', '能力评估', '能力规划', '学习方法论'].map(key));
+// 私密文档只由工作台保存的规则决定（/srv/blog/state/siyuan-privacy-rules.json），
+// 不再内置任何默认排除目录；被排除文档的同名标题仍会动态加入下面的集合。
+const PRIVATE_DOCUMENT_TITLES = new Set();
 const BLOCK_ID_PATTERN = String.raw`\d{14}-[a-z0-9]{7}`;
 
 function key(value) {
@@ -149,10 +150,7 @@ function isPrivateRelative(relative, configuredDocuments = []) {
       || normalizedKey === `${rootKey}.md`
       || normalizedKey.startsWith(`${rootKey}/`);
   });
-  return configuredRoot || PRIVATE_DOCUMENT_ROOTS.some((root) => {
-    const rootKey = key(root);
-    return normalizedKey === `${rootKey}.md` || normalizedKey.startsWith(`${rootKey}/`);
-  });
+  return configuredRoot;
 }
 
 function isPrivateTitle(title) {

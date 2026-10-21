@@ -1148,8 +1148,28 @@ async function saveSiyuanPrivacy(event) {
       method: 'POST', body: JSON.stringify({ excludedDocuments, privateValues }),
     });
     $('#siyuanPrivacyDialog').close();
-    toast(`隐私规则已保存：排除 ${data.rules.excludedDocuments.length} 篇文档，遮盖 ${data.rules.privateValues.length} 个值`);
+    if (data.republish?.started) {
+      toast('隐私规则已保存，正在重新导入、构建并发布…');
+      setTimeout(pollRepublishStatus, 3000);
+    } else {
+      toast(`隐私规则已保存：排除 ${data.rules.excludedDocuments.length} 篇文档（已有发布任务在运行，稍后自动重试）`);
+    }
   } catch (error) { toast(error.message, true); }
+}
+
+async function pollRepublishStatus() {
+  try {
+    const data = await api('/api/siyuan-privacy/status');
+    const task = data.republish || {};
+    if (task.running) {
+      setTimeout(pollRepublishStatus, 3000);
+      return;
+    }
+    if (task.ok === true) toast(`笔记已重新发布：${task.message}`);
+    else if (task.ok === false) toast(`发布失败：${task.message}`, true);
+  } catch {
+    setTimeout(pollRepublishStatus, 5000);
+  }
 }
 
 async function saveSettings(event) {

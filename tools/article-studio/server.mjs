@@ -681,6 +681,56 @@ async function listSiyuanDocuments() {
   return [...documents.values()].sort((left, right) => left.path.localeCompare(right.path, 'zh-CN'));
 }
 
+/* --------------------------------- 隐私规则保存后自动重发布 */
+
+let republishTask = null;
+
+function republishSnapshot() {
+  if (!republishTask) return { running: false, ok: null, message: '', startedAt: null, tail: '' };
+  return {
+    running: republishTask.running,
+    ok: republishTask.ok,
+    message: republishTask.message,
+    startedAt: republishTask.startedAt,
+    tail: republishTask.tail,
+  };
+}
+
+function startRepublishTask() {
+  if (publishRequestActive || (republishTask && republishTask.running)) return false;
+  republishTask = { running: true, ok: null, message: '正在重新导入并构建…', startedAt: Date.now(), tail: '' };
+  const script = join(repoDir, 'tools', 'republish-siyuan.mjs');
+  let child;
+  try {
+    child = spawn(process.execPath, [script], {
+      cwd: repoDir,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+  } catch (error) {
+    republishTask.running = false;
+    republishTask.ok = false;
+    republishTask.message = `无法启动发布：${error.message}`;
+    return false;
+  }
+  const append = (data) => {
+    republishTask.tail = `${republishTask.tail}${String(data)}`.slice(-4000);
+  };
+  child.stdout.on('data', append);
+  child.stderr.on('data', append);
+  child.on('close', (code) => {
+    republishTask.running = false;
+    republishTask.ok = code === 0;
+    republishTask.message = code === 0 ? '已提交并推送，GitHub Actions 正在部署' : `发布失败（退出码 ${code}）`;
+  });
+  child.on('error', (error) => {
+    republishTask.running = false;
+    republishTask.ok = false;
+    republishTask.message = `发布进程异常：${error.message}`;
+  });
+  return true;
+}
+
 async function withPublishLock(action) {
   if (localPublishing) throw new Error('已有文章发布任务正在运行，请稍后再试。');
   localPublishing = true;
@@ -1081,10 +1131,15 @@ async function routeApi(req, res, url, identity) {
     return send(res, 200, { ok: true, settings });
   }
 
+  if (req.method === 'GET' && url.pathname === '/api/siyuan-privacy/status') {
+    return send(res, 200, { ok: true, republish: republishSnapshot() });
+  }
+
   if (req.method === 'POST' && url.pathname === '/api/siyuan-privacy') {
     const rules = normalizeSiyuanPrivacyRules(await readJson(req));
     await writeJsonAtomic(siyuanPrivacyFile, rules);
-    return send(res, 200, { ok: true, rules });
+    const started = startRepublishTask();
+    return send(res, 200, { ok: true, rules, republish: { started } });
   }
 
   if (req.method === 'POST' && url.pathname === '/api/create') {
