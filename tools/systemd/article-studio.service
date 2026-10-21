@@ -9,6 +9,7 @@ User=radxa
 Group=radxa
 WorkingDirectory=/srv/blog/repo
 EnvironmentFile=/srv/blog/config/article-studio.env
+EnvironmentFile=-/srv/blog/config/sso.env
 Environment=NODE_ENV=production
 Environment=GIT_TERMINAL_PROMPT=0
 Environment=GCM_INTERACTIVE=Never
