@@ -1,6 +1,6 @@
 // Small site-wide refinements. Knowledge-base layout lives in siyuan-knowledge.css.
 :root {
-  --knowledge-accent: #5f8f82;
+  --knowledge-accent: #2f6f61;
 }
 
 body {
@@ -16,7 +16,7 @@ body {
 // Keep published article typography aligned with Article Studio's WYSIWYG canvas.
 .post-body {
   color: #263c37;
-  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
   font-size: 16px;
   line-height: 2;
 
@@ -76,6 +76,92 @@ body {
   transition: none !important;
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// 统一视觉规范：与 editor.yanghanlin.cn、server.yanghanlin.cn 共用
+//   主色 #2f6f61 / 深绿 #1f5147 / 浅绿 #e5f0eb
+//   画布 #f3f7f4 / 纸面 #ffffff / 墨色 #17352f / 次要 #70837d
+//   字体 Inter, "Segoe UI", "Microsoft YaHei"
+//   标志元素：渐变绿圆角方块 + 单字（学 / 文 / 板）
+// ─────────────────────────────────────────────────────────────────────────
+
+:root {
+  --body-bg-color: #f3f7f4;
+  --content-bg-color: #ffffff;
+  --link-color: #2f6f61;
+  --link-hover-color: #1f5147;
+  --brand-color: #ffffff;
+  --theme-color: #2f6f61;
+  --btn-default-bg: #2f6f61;
+  --btn-default-color: #ffffff;
+  --border-color: #dce7e2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --body-bg-color: #101814;
+    --content-bg-color: #17211d;
+    --link-color: #8fc0b3;
+    --link-hover-color: #b7d9d1;
+    --brand-color: #eaf3ef;
+    --theme-color: #2f6f61;
+    --btn-default-bg: #2f6f61;
+    --border-color: #26332e;
+  }
+}
+
+body,
+input,
+button,
+select,
+textarea {
+  font-family: Inter, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+a:hover {
+  color: #1f5147;
+}
+
 .site-brand-container {
-  background: linear-gradient(135deg, #355b55, #6d988d);
+  background: linear-gradient(135deg, #1f5147, #6b998d);
+}
+
+// 品牌标记：与工作台「文」、面板「板」同款渐变方块
+.site-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.site-title::before {
+  content: "学";
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #1f5147, #6b998d);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.post-block,
+.sidebar-inner,
+.pagination,
+.post-nav {
+  border-radius: 14px;
+}
+
+.btn {
+  border-radius: 9px;
+}
+
+.post-body img,
+.post-body figure {
+  border-radius: 10px;
+}
+
+::selection {
+  background: rgba(47, 111, 97, .18);
 }
