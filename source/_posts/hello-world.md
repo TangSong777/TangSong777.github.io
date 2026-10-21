@@ -1,7 +1,7 @@
 ---
 title: "Hello World"
-date: 2026-09-01 00:00:00
-updated: 2026-09-01 00:00:00
+date: 2026-09-01 08:00:00 +08:00
+updated: 2026-09-01 08:00:00 +08:00
 categories:
 tags:
 description: ""
