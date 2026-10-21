@@ -119,7 +119,7 @@ categories:
   - [Python文件操作学习（已归档）](/siyuan/已归档/Python文件操作学习（已归档）/)
 - 会话状态恢复手册
 - Skill速查手册
-- [硬件需求](/siyuan/硬件需求/)
+- 硬件需求
 
 <section class="siyuan-references" aria-label="文档引用">
 
@@ -170,7 +170,6 @@ categories:
 - [学习文档](/siyuan/其他笔记/计算机网络/学习文档/)
 - [一口气学完CNN的卷积层、池化层、激活函数、全连接层、输出层](/siyuan/一口气学完CNN的卷积层、池化层、激活函数、全连接层、输出层/)
 - [已归档](/siyuan/已归档/)
-- [硬件需求](/siyuan/硬件需求/)
 - [知识点大纲](/siyuan/其他笔记/嵌入式/ESP32/知识点大纲/)
 - [知识点大纲](/siyuan/其他笔记/嵌入式/STM32/知识点大纲/)
 - [CMD专项](/siyuan/其他笔记/命令行/CMD专项/)
