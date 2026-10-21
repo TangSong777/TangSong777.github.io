@@ -471,7 +471,6 @@ print(np.mean(value))
 import numpy as np
 from pathlib import Path
 
-
 def make_signal(n=10, seed=0):
     """生成一条模拟信号：时间列 + 随机信号列（正弦 + 噪声，模拟 PPG）"""
     rng = np.random.default_rng(seed)              # 固定种子 → 每次运行结果一致
@@ -479,7 +478,6 @@ def make_signal(n=10, seed=0):
     signal = np.sin(2 * np.pi * t / 50) + 0.3 * rng.normal(size=n)
     #                 ↑ 低频基线             ↑ 加高斯噪声，更像真实信号
     return t, signal
-
 
 def gen_files(folder="numpy_file_demo", n_subjects=5, n_points=10):
     """生成 n_subjects 个 CSV，每个放在独立子目录（演示 rglob 递归）"""
@@ -497,7 +495,6 @@ def gen_files(folder="numpy_file_demo", n_subjects=5, n_points=10):
                    delimiter=",", header="time,value", comments="")
         print(f"已生成：{path}，{n_points} 个采样点")
 
-
 gen_files()   # 默认在 numpy_file_demo/ 下生成 5 个文件
 ```
 
@@ -506,7 +503,6 @@ gen_files()   # 默认在 numpy_file_demo/ 下生成 5 个文件
 ```python
 from pathlib import Path
 import numpy as np
-
 
 def compute_average(folder: str):
     """批量读取文件夹内所有 CSV 信号，返回逐采样点的平均值"""
@@ -540,7 +536,6 @@ def compute_average(folder: str):
     # np.array(signals)：把列表堆叠成二维数组 (文件数, 采样点数)
     # np.mean(..., axis=0)：沿"文件"这一轴求平均 → 得到每个采样点位置的平均值
     return np.mean(np.array(signals), axis=0)
-
 
 average = compute_average("numpy_file_demo")   # 传入数据目录名
 print(average)                                 # 打印平均后的信号数组
@@ -627,7 +622,6 @@ def merge_csv_files(folder: Path, output_file: Path):
 
     return len(all_data)                      # 返回数据行总数（不含表头）
 
-
 # ========== 2. 批量重命名文件 ==========
 def batch_rename(folder: Path, old_pattern: str, new_pattern: str):
     """把匹配 old_pattern 的文件改名（模式中 * 是通配符）"""
@@ -643,7 +637,6 @@ def batch_rename(folder: Path, old_pattern: str, new_pattern: str):
         renamed_count += 1
 
     return renamed_count                      # 返回实际改名数量
-
 
 # ========== 3. 查找大文件 ==========
 def find_large_files(folder: Path, size_mb: int = 100):

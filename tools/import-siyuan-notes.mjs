@@ -478,6 +478,9 @@ async function main() {
         warnings.push(`无法解析思源块链接：${doc.relative} -> ${target}`);
         return label;
       }
+      if (isPrivateRelative(String(target).split('#')[0], privateDocuments) || isPrivateTitle(label)) {
+        return '';
+      }
       if (/\.md(?:#|$)/iu.test(target)) warnings.push(`找不到引用目标：${doc.relative} -> ${target}`);
       return original;
     });
@@ -485,9 +488,9 @@ async function main() {
     body = body.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/gu, (_original, rawTarget, rawLabel) => {
       const targetName = rawTarget.trim();
       const label = rawLabel ? rawLabel.trim() : targetName;
-      if (isPrivateTitle(targetName)) {
+      if (isPrivateTitle(targetName) || isPrivateRelative(`${targetName}.md`, privateDocuments)) {
         warnings.push(`已移除指向私密文档的双链：${doc.relative}`);
-        return label;
+        return '';
       }
       const candidates = byTitle.get(key(targetName));
       if (candidates?.length === 1) {
@@ -509,7 +512,7 @@ async function main() {
         const label = rawLabel?.trim() || id;
         if (privateBlockIds.has(key(id))) {
           warnings.push(`已移除指向私密文档块的引用：${doc.relative}`);
-          return '[私密文档]';
+          return '';
         }
         const targetDoc = blockIndex.get(key(id));
         if (targetDoc) {
@@ -543,6 +546,17 @@ async function main() {
     );
 
     body = body.replace(/\uE000SIYUAN_CODE_(\d+)\uE001/gu, (_match, index) => codeFragments[Number(index)]);
+    // 私密链接整段移除后，可能留下空的列表项
+    body = body.replace(/^[ \t]*[-*+][ \t]*(?:📄[ \t]*)?\$/gmu, '');
+    body = body.replace(/\n{3,}/g, '\n\n');
+    // 目录里的纯文本列表项：整行命中私密标题则删除
+    const privateListTitles = new Set(privateDocuments.map((item) => key(item.split('/').pop().replace(/\.md$/i, ''))));
+    body = body.split('\n').filter((line) => {
+      const matched = /^\s*[-*+]\s+(.+?)\s*$/.exec(line);
+      if (!matched) return true;
+      const label = matched[1].replace(/[*_`\[\]]/g, '').trim();
+      return !privateListTitles.has(key(label));
+    }).join('\n');
     doc.convertedBody = body.trim();
   }
 

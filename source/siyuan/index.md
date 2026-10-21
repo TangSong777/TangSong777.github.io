@@ -12,19 +12,6 @@ categories:
   - '学习笔记'
 ---
 
-- 待学习
-
-  - OpenCV学习方案
-  - PPG与rPPG学习方案
-  - PyTorch与CNN基础学习方案
-  - 数据结构学习方案（CC++ 嵌入式）
-  - 嵌入式控制算法PID专项
-  - Docker学习方案
-- 能力体系
-
-  - 能力评估
-  - 能力规划
-  - 学习方法论
 - [其他笔记](/siyuan/其他笔记/)
 
   - [文本编码与字符集专项](/siyuan/其他笔记/文本编码与字符集专项/)
@@ -40,7 +27,6 @@ categories:
     - [CMD专项](/siyuan/其他笔记/命令行/CMD专项/)
   - [计算机网络](/siyuan/其他笔记/计算机网络/)
 
-    - 个人路由配置记录
     - 工作台端口转发
     - [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 
@@ -117,9 +103,6 @@ categories:
   - [NumPy基础练习（已归档）](/siyuan/已归档/NumPy基础练习（已归档）/)
   - [Python容器学习（已归档）](/siyuan/已归档/Python容器学习（已归档）/)
   - [Python文件操作学习（已归档）](/siyuan/已归档/Python文件操作学习（已归档）/)
-- 会话状态恢复手册
-- Skill速查手册
-- 硬件需求
 
 <section class="siyuan-references" aria-label="文档引用">
 
