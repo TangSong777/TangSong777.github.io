@@ -189,3 +189,76 @@ body::before {
   background: linear-gradient(90deg, #1f5147, #6b998d);
   z-index: 999;
 }
+
+// 侧栏：标签云 + 归档（替换站点概览计数）
+.site-state-wrap {
+  display: none;
+}
+
+.sidebar-widgets {
+  margin: 16px 0 0;
+  padding: 0 10px;
+}
+
+.sidebar-widget + .sidebar-widget {
+  margin-top: 18px;
+}
+
+.sidebar-widget h3 {
+  margin: 0 0 9px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: #2f6f61;
+}
+
+.sidebar-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sidebar-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #e5f0eb;
+  color: #1f5147;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .15s ease, color .15s ease;
+}
+
+.sidebar-tag:hover {
+  background: #2f6f61;
+  color: #ffffff;
+}
+
+.sidebar-tag sup,
+.sidebar-archive sup {
+  margin-left: 3px;
+  font-size: 10px;
+  opacity: .65;
+}
+
+.sidebar-archives {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sidebar-archive {
+  color: #70837d;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.sidebar-archive:hover {
+  color: #2f6f61;
+}
+
+.sidebar-empty {
+  color: #70837d;
+  font-size: 12px;
+}
