@@ -25,7 +25,7 @@ hexo.extend.filter.register('after_render:html', (str) => {
 
   const archiveCounts = new Map();
   for (const post of hexo.locals.get('posts').toArray()) {
-    const key = `${post.date.year()}-${String(post.date.month()).padStart(2, '0')}`;
+    const key = `${post.date.year()}-${String(post.date.month() + 1).padStart(2, '0')}`;
     archiveCounts.set(key, (archiveCounts.get(key) || 0) + 1);
   }
   const archives = [...archiveCounts.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 8);
