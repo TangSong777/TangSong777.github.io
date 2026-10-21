@@ -629,7 +629,8 @@ async function main() {
           [...doc.outgoing].map((relative) => byRelative.get(key(relative))).filter(Boolean),
         );
         const incomingDocs = uniqueSortedDocuments(incoming.get(doc.relative));
-        if (outgoingDocs.length || incomingDocs.length) {
+        const isKnowledgeOverview = doc.relative === '学习笔记.md';
+        if (!isKnowledgeOverview && (outgoingDocs.length || incomingDocs.length)) {
           references.push('', '<section class="siyuan-references" aria-label="文档引用">', '', '## 文档关系');
           if (outgoingDocs.length) {
             references.push('', '### 本文引用', ...outgoingDocs.map((item) => `- [${item.title}](${item.url})`));
