@@ -88,6 +88,7 @@
       <h2>登录工作台</h2>
       <p>请输入工作台访问密码。密码只用于本次登录，不会显示在地址栏。</p>
       <label>访问密码<input id="loginPassword" type="password" autocomplete="current-password" required autofocus></label>
+      <label id="loginTotpLabel" hidden>动态验证码<input id="loginTotp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="验证器 App 里的 6 位数字"></label>
       <p id="loginError" class="login-error" role="alert"></p>
       <div class="dialog-actions"><button id="loginSubmit" type="submit" class="button primary">登录</button></div>
     </form>

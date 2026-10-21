@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { createHmac, createPublicKey, randomBytes, scryptSync, timingSafeEqual, verify as verifySignature } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { verifyTotp } from './totp.mjs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { networkInterfaces } from 'node:os';
 import Hexo from 'hexo';
@@ -23,6 +24,7 @@ const requestedPort = Number(process.env.ARTICLE_STUDIO_PORT || 4173);
 const csrfToken = randomBytes(24).toString('hex');
 const accessKey = authMode === 'key' ? randomBytes(24).toString('base64url') : '';
 const passwordHash = String(process.env.ARTICLE_STUDIO_PASSWORD_HASH || '').trim();
+const totpSecret = String(process.env.ARTICLE_STUDIO_TOTP_SECRET || '').trim();
 const sessionSecret = String(process.env.ARTICLE_STUDIO_SESSION_SECRET || '').trim();
 const sessionMaxAgeSeconds = 12 * 60 * 60;
 if (authMode === 'password' && (!passwordHash || !sessionSecret)) {
@@ -1091,6 +1093,14 @@ async function routeApi(req, res, url, identity) {
       recordFailedLogin(address);
       return fail(res, 401, '密码错误。');
     }
+    if (totpSecret) {
+      const code = String(body.totp || '').replace(/\s+/g, '');
+      if (!code) return fail(res, 401, '请输入动态验证码。');
+      if (!verifyTotp(totpSecret, code)) {
+        recordFailedLogin(address);
+        return fail(res, 401, '动态验证码不正确。');
+      }
+    }
     failedLogins.delete(address);
     const token = createSessionToken();
     return send(res, 200, { ok: true, token, authMode, authenticated: true }, 'application/json; charset=utf-8', {
@@ -1111,6 +1121,7 @@ async function routeApi(req, res, url, identity) {
       authenticated: authMode === 'password' ? Boolean(identity.authenticated) : true,
       identity: identity.email ? { email: identity.email } : null,
       settings: await loadStudioSettings(),
+      totpEnabled: Boolean(totpSecret),
     });
   }
 

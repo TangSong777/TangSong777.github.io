@@ -77,6 +77,7 @@ function showLoginDialog() {
   const dialog = $('#loginDialog');
   if (!dialog || dialog.open) return;
   $('#loginPassword').value = '';
+  $('#loginTotp').value = '';
   $('#loginError').textContent = '';
   dialog.showModal();
   $('#loginPassword').focus();
@@ -90,7 +91,9 @@ async function login(event) {
   button.disabled = true;
   $('#loginError').textContent = '';
   try {
-    const result = await api('/api/login', { method: 'POST', body: JSON.stringify({ password }) });
+    const payload = { password };
+    if (!$('#loginTotp').hidden) payload.totp = $('#loginTotp').value.trim();
+    const result = await api('/api/login', { method: 'POST', body: JSON.stringify(payload) });
     state.token = result.token || '';
     state.authenticated = true;
     $('#loginDialog').close();
@@ -965,6 +968,10 @@ async function init() {
     state.authenticated = config.authenticated !== false;
     state.identity = config.identity;
     state.autoSaveMinutes = config.settings?.autoSaveMinutes || 3;
+    if (config.totpEnabled) {
+      $('#loginTotpLabel').hidden = false;
+      $('#loginTotp').hidden = false;
+    }
     if (state.authMode === 'password' && !state.authenticated) {
       $('#identityState').textContent = '需要登录';
       showLoginDialog();
