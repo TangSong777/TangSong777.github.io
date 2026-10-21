@@ -84,6 +84,8 @@
     feed.className = 'blog-home-feed';
     feed.innerHTML = '<header class="blog-home-section-title"><div><span>RECENT POSTS</span><h2>最近文章</h2></div><a href="/archives/">查看全部 →</a></header>';
     postBlocks.forEach(function (block) {
+      var staticMore = block.querySelector('.post-more-link');
+      if (staticMore) staticMore.remove();
       feed.appendChild(block);
       var postLink = block.querySelector('.post-title-link');
       if (postLink && !block.querySelector('.blog-home-readmore')) {
@@ -108,9 +110,14 @@
     });
     feed.appendChild(knowledge);
 
+    var tagsNode = document.querySelector('.sidebar-tags');
+    var archivesNode = document.querySelector('.sidebar-archives');
+    var tagsHtml = tagsNode ? tagsNode.innerHTML : '';
+    var archivesHtml = archivesNode ? archivesNode.innerHTML : '';
+
     var rail = document.createElement('aside');
     rail.className = 'blog-home-rail';
-    rail.innerHTML = '<section class="blog-home-profile"><img src="/images/avatar.jpg" width="82" height="82" alt="YangHanLin"><h2>YangHanLin</h2><p>相遇是知识连接的开始。</p><div class="blog-home-stats"><a href="/archives/"><strong>' + (Number.isFinite(articleCount) ? articleCount : postBlocks.length) + '</strong><span>文章</span></a><a href="/siyuan/"><strong>' + (data.documents.length - dailyCount) + '</strong><span>笔记</span></a></div></section><section class="blog-home-side-card"><span class="blog-home-side-label">公告</span><p>保持好奇，尊重事实，让每次记录都能成为下一次思考的起点。</p></section><section class="blog-home-side-card"><span class="blog-home-side-label">快速抵达</span><nav><a href="/siyuan/Python笔记/">Python 笔记</a><a href="/siyuan/待学习/">待学习</a><a href="/siyuan/其他笔记/命令行/">命令行</a><a href="/archives/">文章归档</a></nav></section><section class="blog-home-side-card blog-home-site-info"><span class="blog-home-side-label">网站信息</span><dl><div><dt>知识文档</dt><dd>' + data.documents.length + '</dd></div><div><dt>非日记笔记</dt><dd>' + (data.documents.length - dailyCount) + '</dd></div><div><dt>内容组织</dt><dd>双向引用</dd></div></dl></section>';
+    rail.innerHTML = '<section class="blog-home-profile"><img src="/images/avatar.jpg" width="82" height="82" alt="YangHanLin"><h2>YangHanLin</h2><p>相遇是知识连接的开始。</p><div class="blog-home-stats"><a href="/archives/"><strong>' + (Number.isFinite(articleCount) ? articleCount : postBlocks.length) + '</strong><span>文章</span></a><a href="/siyuan/"><strong>' + (data.documents.length - dailyCount) + '</strong><span>笔记</span></a></div></section><section class="blog-home-side-card"><span class="blog-home-side-label">公告</span><p>保持好奇，尊重事实，让每次记录都能成为下一次思考的起点。</p></section><section class="blog-home-side-card"><span class="blog-home-side-label">标签</span><div class="sidebar-tags">' + tagsHtml + '</div></section><section class="blog-home-side-card"><span class="blog-home-side-label">归档</span><div class="sidebar-archives">' + archivesHtml + '</div></section>';
 
     layout.appendChild(feed);
     layout.appendChild(rail);

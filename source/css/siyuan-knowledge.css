@@ -1004,3 +1004,8 @@ body.siyuan-tree-open { overflow: hidden !important; }
     color: var(--sy-ink);
   }
 }
+
+
+/* 首页文章不再做底部渐变遮罩，标题锚点也隐藏 */
+body.blog-home-mode .blog-home-feed .post-body::after { display: none; }
+body.blog-home-mode .headerlink { display: none !important; }
