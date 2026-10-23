@@ -1,6 +1,23 @@
 /* Custom assets injected without modifying the NexT theme package. */
 const siteRoot = hexo.config.root || '/';
 const style = `<link rel="stylesheet" href="${siteRoot}css/siyuan-knowledge.css">`;
+// 导航流畅化：浏览器预渲染（悬停即准备）+ 跨文档平滑过渡，纯原生零 JS 开销
+const navEnhance = [
+  '<script type="speculationrules">',
+  '{"prerender":[{"where":{"href_matches":"/*"},"eagerness":"moderate"}]}',
+  '</scr' + 'ipt>',
+  '<style>',
+  '@view-transition{navigation:auto}',
+  '::view-transition-old(root){animation:vt-out .18s ease both}',
+  '::view-transition-new(root){animation:vt-in .18s ease both}',
+  '@keyframes vt-out{to{opacity:0}}',
+  '@keyframes vt-in{from{opacity:0}}',
+  '@media (prefers-reduced-motion:reduce){',
+  '::view-transition-old(root),::view-transition-new(root){animation:none}',
+  '}',
+  '</style>'
+].join('');
+
 const icons = `<link rel="stylesheet" href="${siteRoot}css/icons.css">`;
 const shell = `<script src="${siteRoot}js/site-shell.js?v=20261021" defer></script>`;
 const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=20261021" defer></script><script src="${siteRoot}js/siyuan-knowledge.js?v=20261021" defer></script>`;
@@ -9,6 +26,7 @@ const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=20261021" defer><
 hexo.extend.injector.register('head_end', style, 'page');
 hexo.extend.injector.register('head_end', style, 'home');
 ['home', 'post', 'page', 'archive', 'tag', 'category'].forEach(type => {
+  hexo.extend.injector.register('head_end', navEnhance, type);
   hexo.extend.injector.register('body_end', shell, type);
 });
 
