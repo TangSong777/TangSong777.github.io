@@ -1,7 +1,7 @@
 ---
 title: '学习笔记'
 date: '2026-06-23T16:54:27+08:00'
-updated: '2026-10-23T16:28:32+08:00'
+updated: '2026-10-23T17:12:25+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -12,7 +12,7 @@ categories:
   - '学习笔记'
 ---
 
-- 
+- 思源笔记中写 LaTeX 公式[^1]
 - [Python笔记](/siyuan/Python笔记/)
 
   - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
@@ -103,6 +103,3 @@ categories:
   - [Python容器学习（已归档）](/siyuan/已归档/Python容器学习（已归档）/)
   - [Python文件操作学习（已归档）](/siyuan/已归档/Python文件操作学习（已归档）/)
 - [手册](/siyuan/手册/)
-
-  - [Skill速查手册](/siyuan/手册/Skill速查手册/)
-  - [会话状态恢复手册](/siyuan/手册/会话状态恢复手册/)

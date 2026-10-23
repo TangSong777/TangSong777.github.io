@@ -13,16 +13,11 @@ categories:
   - '手册'
 ---
 
-- [Skill速查手册](/siyuan/手册/Skill速查手册/)
-- [会话状态恢复手册](/siyuan/手册/会话状态恢复手册/)
+
 
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系
-
-### 本文引用
-- [会话状态恢复手册](/siyuan/手册/会话状态恢复手册/)
-- [Skill速查手册](/siyuan/手册/Skill速查手册/)
 
 ### 反向引用
 - [学习笔记](/siyuan/)
