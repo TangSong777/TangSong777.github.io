@@ -47,3 +47,8 @@ motion:
 
 custom_file_path:
   style: source/_data/styles.styl
+
+# 用内联 SVG 图标替代 74KB 的 Font Awesome 全量 CSS
+vendors:
+  # 用轻量内联 SVG 图标样式顶替 Font Awesome 全量 CSS（74KB → 2KB）
+  fontawesome: /css/icons.css
