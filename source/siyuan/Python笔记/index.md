@@ -1,7 +1,7 @@
 ---
 title: 'Python笔记'
 date: '2026-08-02T00:01:29+08:00'
-updated: '2026-09-19T13:35:16+08:00'
+updated: '2026-08-24T17:25:14+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -12,12 +12,6 @@ categories:
   - '学习笔记'
   - 'Python笔记'
 ---
-
-- 📄 [数据结构专项](/siyuan/Python笔记/数据结构专项/)
-- 📄 [算法专项](/siyuan/Python笔记/算法专项/)
-- 📄 [PathLib专项](/siyuan/Python笔记/PathLib专项/)
-- 📄 [NumPy专项](/siyuan/Python笔记/NumPy专项/)
-- 📄 [subprocess专项](/siyuan/Python笔记/subprocess专项/)
 
 ## 学习索引
 
@@ -645,8 +639,6 @@ match point:
 
    只在文件被直接运行时执行 `main()`；被其他文件 import 时不会执行。
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系
@@ -654,11 +646,7 @@ match point:
 ### 本文引用
 - [4 小时彻底掌握 C 指针](/siyuan/4-小时彻底掌握-C-指针/)
 - [数据结构专项](/siyuan/Python笔记/数据结构专项/)
-- [算法专项](/siyuan/Python笔记/算法专项/)
-- [NumPy专项](/siyuan/Python笔记/NumPy专项/)
-- [PathLib专项](/siyuan/Python笔记/PathLib专项/)
 - [Python 调用系统命令学习方案（已归档）](/siyuan/已归档/Python-调用系统命令学习方案（已归档）/)
-- [subprocess专项](/siyuan/Python笔记/subprocess专项/)
 
 ### 反向引用
 - [学习笔记](/siyuan/)

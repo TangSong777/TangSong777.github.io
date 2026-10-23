@@ -20,8 +20,6 @@ categories:
 
 数据结构进阶：双向链表，双指针，添加删除Node
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系

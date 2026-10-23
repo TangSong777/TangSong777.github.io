@@ -376,8 +376,6 @@ s1.find(s2, 1)
 # find方法作用于字符串，用于寻找s1中的第i个子串s2
 ```
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系

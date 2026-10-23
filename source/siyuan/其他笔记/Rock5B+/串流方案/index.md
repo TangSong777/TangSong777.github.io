@@ -21,6 +21,7 @@ categories:
 ## 文档关系
 
 ### 反向引用
+- [其他笔记](/siyuan/其他笔记/)
 - [学习笔记](/siyuan/)
 
 </section>

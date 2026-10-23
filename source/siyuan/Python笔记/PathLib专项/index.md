@@ -809,8 +809,6 @@ def load_env_config(env_path: Path):
 4. **什么时候用** **​`csv`​**​ **，什么时候用** **​`np.loadtxt`​**​ **？**   
    答：纯数值、格式简单的实验数据用 `np.loadtxt`​（一步得到数组，快）；含复杂文本、缺失值、混合类型时用标准库 `csv` 模块（逐行灵活处理）。
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系
@@ -822,6 +820,5 @@ def load_env_config(env_path: Path):
 ### 反向引用
 - [学习笔记](/siyuan/)
 - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
-- [Python笔记](/siyuan/Python笔记/)
 
 </section>

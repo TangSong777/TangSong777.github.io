@@ -373,8 +373,6 @@ class Solution:
 
 - 要求原地修改，所以不能使用nums = nums[-k:] + nums[:-k]，只能使用nums[:] = nums[-k:] + nums[:-k]
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系

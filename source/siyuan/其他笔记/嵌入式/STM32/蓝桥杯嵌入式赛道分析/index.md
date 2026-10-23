@@ -88,8 +88,6 @@ categories:
 - [STM32CubeMX配置](/siyuan/其他笔记/嵌入式/STM32/STM32CubeMX配置/)：工程与引脚配置
 - [旋转编码器与电机详解](/siyuan/其他笔记/嵌入式/STM32/旋转编码器与电机详解/)：编码器/电机计数
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系

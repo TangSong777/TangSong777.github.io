@@ -281,13 +281,12 @@ ls | Get-Member          # 观察 ls 输出的是对象（证明它实际是 Get
 - 能根据任务选择 PowerShell 或 CMD。
 - 能解释两者的管道、帮助、重定向和环境变量差异。
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系
 
 ### 反向引用
 - [学习笔记](/siyuan/)
+- [已归档](/siyuan/已归档/)
 
 </section>

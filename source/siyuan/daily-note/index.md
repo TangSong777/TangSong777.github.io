@@ -15,7 +15,6 @@ categories:
 
 - 📑 [2026](/siyuan/daily-note/2026/)
 
-  - 📄 09
   - 📑 [08](/siyuan/daily-note/2026/08/)
 
     - 📄 [2026-08-31](/siyuan/daily-note/2026/08/2026-08-31/)

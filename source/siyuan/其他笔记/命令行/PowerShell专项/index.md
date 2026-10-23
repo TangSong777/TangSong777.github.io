@@ -14,8 +14,6 @@ categories:
   - '命令行'
 ---
 
-‍
-
 > PowerShell 是 Windows 面向对象的命令行与脚本环境，命令（cmdlet）为核心，管道传递**对象**而非文本。本专项整理自《Windows命令行学习（已归档）》，覆盖基础命令、与 CMD/Linux 命令的兼容机制（别名）、IP 与网络排查。相关专项：[CMD专项](/siyuan/其他笔记/命令行/CMD专项/)、[Linux专项](/siyuan/其他笔记/命令行/Linux专项/)。
 
 ## 一、PowerShell 基础

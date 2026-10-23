@@ -406,8 +406,6 @@ for i, ch in enumerate(s):
 # 同时获取字符串s的下标及其对应值
 ```
 
-‍
-
 [enumerate](/siyuan/daily-note/2026/08/2026-08-05/#20260805215546-0l0l4vl)
 
 # <span id="20260804102143-3fz8wth" class="siyuan-block-anchor" aria-hidden="true"></span>力扣刷题：[58. 最后一个单词的长度](https://leetcode.cn/problems/length-of-last-word/)
@@ -724,8 +722,6 @@ a *= 1j
 a *= -1j
 # 用于旋转方向，将a顺时针旋转90度
 ```
-
-‍
 
 <section class="siyuan-references" aria-label="文档引用">
 

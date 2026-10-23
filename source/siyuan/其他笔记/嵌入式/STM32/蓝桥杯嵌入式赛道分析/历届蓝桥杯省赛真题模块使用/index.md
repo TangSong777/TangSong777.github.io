@@ -30,8 +30,6 @@ categories:
 
 **ADC获取**：使用ADC获取得到的电压
 
-‍
-
 第十五届：
 
 **LCD**：三个界面
@@ -44,15 +42,11 @@ categories:
 
 **ADC采集**：无要求
 
-‍
-
 由上面两届省赛可以看出大致要求的功能
 
 必考:LCD,LED,KEY
 
 LCD一般有三个界面，分别为**数据界面**、**参数界面**、**记录界面**，使用B4的短按或者长按去进行界面之间的切换
-
-‍
 
 <section class="siyuan-references" aria-label="文档引用">
 

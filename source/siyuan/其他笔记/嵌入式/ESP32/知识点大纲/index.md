@@ -1,7 +1,7 @@
 ---
 title: '知识点大纲'
 date: '2026-08-26T17:24:56+08:00'
-updated: '2026-08-26T17:37:31+08:00'
+updated: '2026-10-23T15:37:02+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -85,8 +85,8 @@ ledcSetup(chan, freq, bit_num);
 |freq|PWM 频率（Hz）|
 |bit_num|计数位数（占空比分辨率）|
 
-- `bit_num = 8`​ → 占空比范围 **0~255**
-- `bit_num = 10`​ → 占空比范围 **0~1023**
+- `bit_num = 8`​ → 占空比范围 **0～255**
+- `bit_num = 10`​ → 占空比范围 **0～1023**
 
 ### 3.2 绑定通道到 GPIO：ledcAttachPin
 

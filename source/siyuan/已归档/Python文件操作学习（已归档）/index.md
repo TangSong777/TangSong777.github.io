@@ -974,8 +974,6 @@ experiment/
 
 若能脱离本文档，独立写出“递归查找 CSV → 读取信号 → 校验 → 汇总”的新脚本，并通过 learn-verify 验证归档后，才是 L2 → L3 候选。归档前仍按 L0 记录。
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系
@@ -985,5 +983,6 @@ experiment/
 
 ### 反向引用
 - [学习笔记](/siyuan/)
+- [已归档](/siyuan/已归档/)
 
 </section>

@@ -66,6 +66,7 @@ app/moonlight
 - [Rock5B+](/siyuan/其他笔记/Rock5B+/)
 
 ### 反向引用
+- [其他笔记](/siyuan/其他笔记/)
 - [学习笔记](/siyuan/)
 
 </section>

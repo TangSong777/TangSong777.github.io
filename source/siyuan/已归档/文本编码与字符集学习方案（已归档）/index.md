@@ -232,5 +232,6 @@ with open("with_bom.csv", "r", encoding="utf-8-sig") as f:
 
 ### 反向引用
 - [学习笔记](/siyuan/)
+- [已归档](/siyuan/已归档/)
 
 </section>

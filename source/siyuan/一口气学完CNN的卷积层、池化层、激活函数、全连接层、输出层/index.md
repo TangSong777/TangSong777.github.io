@@ -230,8 +230,6 @@ $\frac{\partial a_{i,j}^{l-1}}{\partial net_{i,j}^{l-1}} = f'(net_{i,j}^{l-1})$
 - 深度神经网络训练问题
 - 激活函数问题。
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系

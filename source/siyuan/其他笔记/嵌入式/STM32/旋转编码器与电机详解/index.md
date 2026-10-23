@@ -67,8 +67,6 @@ count = __HAL_TIM_GET_COUNTER(&htim1);
 - 定时器相关配置（引脚、PSC/ARR、中断）见 [知识点大纲](/siyuan/其他笔记/嵌入式/STM32/知识点大纲/) 六～七章
 - CubeMX 中 PA15（TIM2_CH1，编码器可用通道）配置见 [STM32CubeMX配置](/siyuan/其他笔记/嵌入式/STM32/STM32CubeMX配置/) 引脚表
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系

@@ -13,8 +13,6 @@ categories:
   - 'Python笔记'
 ---
 
-‍
-
 > 在 Python 中运行系统命令（Linux/Windows）的标准做法：**首选标准库** **​`subprocess`​**​ **，尤其** **​`subprocess.run()`​** ​。本专项覆盖选型、参数详解、安全、跨平台、自动化封装与易错点。来源：《Python 调用系统命令学习方案（已归档）》。相关：[Python笔记](/siyuan/Python笔记/)、[Python笔记：8.4 从其他脚本导入函数](/siyuan/Python笔记/#20260827115231-aynpyzs)。
 
 ## 一、为什么在 Python 里运行系统命令
@@ -169,6 +167,5 @@ proc.wait()
 
 ### 反向引用
 - [学习笔记](/siyuan/)
-- [Python笔记](/siyuan/Python笔记/)
 
 </section>

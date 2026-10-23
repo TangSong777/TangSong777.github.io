@@ -307,15 +307,11 @@ class Solution:
 
 - ‍
 
-‍
-
 [「新」动计划 · 编程入门 - 学习计划 - 力扣（LeetCode）全球极客挚爱的技术成长平台](https://leetcode.cn/studyplan/primers-list/)
 
 这里面的全部题目已完成提交，大部分由于过于简单所以不做笔记与记录。
 
 但需要计算刷题量时，需把这个题单里的题与题号记录下来。
-
-‍
 
 <section class="siyuan-references" aria-label="文档引用">
 

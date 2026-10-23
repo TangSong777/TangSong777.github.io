@@ -20,8 +20,6 @@ $Sigmoid\left(x\right)=\frac{1}{1+e^{-x}}$
 
 - Sigmoid激活函数存在"梯度饱和效应”问题，即Sigmoid激活函数两端梯度都趋于0，因此在使用误差反向传播算法进行网络训练时，该区域的误差无法传递到前一层，从而导致网络训练失败。
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系

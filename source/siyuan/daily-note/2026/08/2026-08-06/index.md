@@ -137,8 +137,6 @@ return pre(high) - pre(low - 1)
 a // b计算等价于floor(a / b)
 ```
 
-‍
-
 [divmod - lambda](/siyuan/daily-note/2026/08/2026-08-04/#20260804012834-t4osqfs)
 
 # <span id="20260806021923-y46p07w" class="siyuan-block-anchor" aria-hidden="true"></span>力扣刷题：[1491. 去掉最低工资和最高工资后的工资平均值](https://leetcode.cn/problems/average-salary-excluding-the-minimum-and-maximum-salary/)
@@ -529,8 +527,6 @@ class Solution:
 ## 笔记：
 
 - ‍
-
-‍
 
 <section class="siyuan-references" aria-label="文档引用">
 

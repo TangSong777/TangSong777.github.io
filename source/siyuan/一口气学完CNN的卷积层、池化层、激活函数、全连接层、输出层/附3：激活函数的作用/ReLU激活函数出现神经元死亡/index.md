@@ -22,8 +22,6 @@ $\text{ReLU}(x) =  \begin{cases}  x  x \geq 0 \\  0  x < 0  \end{cases}$
 - 但ReLU本身也存在缺陷，如果输入为负值，其梯度等于0，导致“神经元死亡”，将无法进行权重更新，进而无法完成网络训练。
 - 即便如此，ReLU仍然是当前深度学习领域中最为常用的激活函数之一。
 
-‍
-
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系
