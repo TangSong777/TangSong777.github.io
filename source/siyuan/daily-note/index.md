@@ -1,7 +1,7 @@
 ---
 title: 'daily note'
 date: '2026-08-04T00:17:25+08:00'
-updated: '2026-09-10T09:04:24+08:00'
+updated: '2026-10-23T16:30:19+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'

@@ -1,7 +1,7 @@
 ---
 title: 'ESP32'
 date: '2026-08-26T17:16:28+08:00'
-updated: '2026-08-26T17:31:00+08:00'
+updated: '2026-10-23T16:29:53+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -14,7 +14,7 @@ categories:
   - '嵌入式'
 ---
 
-- 📄 [函数与配置](/siyuan/其他笔记/嵌入式/ESP32/知识点大纲/)
+- 📄 [知识点大纲](/siyuan/其他笔记/嵌入式/ESP32/知识点大纲/)
 
 <section class="siyuan-references" aria-label="文档引用">
 

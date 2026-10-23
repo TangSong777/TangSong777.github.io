@@ -1,7 +1,7 @@
 ---
 title: '命令行'
 date: '2026-08-25T09:11:43+08:00'
-updated: '2026-08-27T14:41:13+08:00'
+updated: '2026-10-23T16:29:06+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
