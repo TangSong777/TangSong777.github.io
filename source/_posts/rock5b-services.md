@@ -1,7 +1,7 @@
 ---
-title: 这台 Rock 5B+ 到底在跑什么
+title: Rock5B+调教成果
 date: 2026-10-25 00:20:00
-updated: 2026-10-25 00:20:00
+updated: 2026-10-25 00:30:00
 description: "一次完整盘点：这块开发板上部署的所有服务、各自的用途，以及在什么场景下真正有效。"
 categories:
 tags:

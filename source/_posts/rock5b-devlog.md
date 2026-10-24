@@ -1,7 +1,7 @@
 ---
-title: Rock5b+ 调教日志
+title: Rock5B+调教日志
 date: 2026-10-21 16:00:00
-updated: 2026-10-24 20:25:00
+updated: 2026-10-25 00:30:00
 description: "按天记录对这块 Rock 5B+ 的功能拓展：这一天做了什么、达成了什么效果。最新记录在最上方。"
 categories:
 tags:
