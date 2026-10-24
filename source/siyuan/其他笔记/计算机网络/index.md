@@ -1,7 +1,7 @@
 ---
 title: '计算机网络'
 date: '2026-08-19T15:09:07+08:00'
-updated: '2026-10-23T16:30:06+08:00'
+updated: '2026-10-25T00:48:05+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,13 +15,13 @@ categories:
 
 - 📁 [学习文档](/siyuan/其他笔记/计算机网络/学习文档/)
 
-  - 📄 [计算机网络专项](/siyuan/其他笔记/计算机网络/学习文档/计算机网络专项/)
-  - 📄 [ZeroTier专项](/siyuan/其他笔记/计算机网络/学习文档/ZeroTier专项/)
-- 📑 [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
+  - 📘 [计算机网络专项](/siyuan/其他笔记/计算机网络/学习文档/计算机网络专项/)
+  - 🔗 [ZeroTier专项](/siyuan/其他笔记/计算机网络/学习文档/ZeroTier专项/)
+- 🛰 [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)
 
   - 📄 [基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/基于OpenWrt与ZeroTier的个人组网/)
-  - 📄 [Prompt-基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/Prompt-基于OpenWrt与ZeroTier的个人组网/)
-- 🛜 个人路由配置记录
+  - 📋 [Prompt-基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/Prompt-基于OpenWrt与ZeroTier的个人组网/)
+- 🛠 个人路由配置记录
 
 <section class="siyuan-references" aria-label="文档引用">
 
