@@ -1117,6 +1117,11 @@ function switchEditorMode(mode) {
 }
 
 async function init() {
+  // 被管理中心以 iframe 内嵌时（?embed=1），压扁顶栏、去掉文章列表。
+  // 必须放在最前面：未登录时 init 会提前 return，放后面就永远加不上这个类。
+  if (new URLSearchParams(location.search).get('embed') === '1') {
+    document.body.classList.add('embed-mode');
+  }
   try {
     const config = await api('/api/config');
     state.authMode = config.authMode || 'local';
@@ -1136,12 +1141,7 @@ async function init() {
     $('#identityState').textContent = config.identity?.email || (config.authMode === 'cloudflare' ? '已安全登录' : '本地模式');
     await loadArticles();
     // 从管理中心跳过来时带着 ?path=，直接打开对应文章
-    // 被管理中心以 iframe 内嵌时（?embed=1），隐藏重复的顶栏与左侧文章列表
-  if (new URLSearchParams(location.search).get('embed') === '1') {
-    document.body.classList.add('embed-mode');
-  }
-
-  const deepLink = new URLSearchParams(location.search).get('path');
+    const deepLink = new URLSearchParams(location.search).get('path');
     if (deepLink && state.authenticated) {
       try {
         await selectArticle(deepLink);

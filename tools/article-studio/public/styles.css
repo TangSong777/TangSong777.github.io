@@ -383,15 +383,23 @@ a.settings-button {
 .studio-frame {
   display: block;
   width: 100%;
-  height: calc(100vh - 190px);
+  /* 母页面占用：顶栏 60 + 卡片头 60 + 上下留白 30 ≈ 150 */
+  height: calc(100vh - 150px);
   min-height: 520px;
   border: 0;
   background: #fff;
 }
 
-/* 被管理中心内嵌时：去掉重复的顶栏与文章列表，让编辑器占满 */
-body.embed-mode .topbar,
+/* 被管理中心内嵌时（?embed=1）：
+   顶栏不能整块隐藏 —— 「保存」「上传文章」就在 .top-actions 里。
+   只去掉左侧品牌、文章列表和没用的外链，把顶栏压扁，让编辑区占满。 */
+body.embed-mode .topbar { height: 52px; padding: 0 14px; justify-content: flex-end; }
+body.embed-mode .topbar .brand,
+body.embed-mode .topbar .mobile-menu { display: none; }
+body.embed-mode .topbar .top-actions { gap: 8px; }
+body.embed-mode .topbar .top-actions > a.settings-button { display: none; }
 body.embed-mode .article-panel,
 body.embed-mode .panel-backdrop { display: none; }
-body.embed-mode .workspace { grid-template-columns: minmax(0, 1fr); padding: 0; }
-body.embed-mode .editor-shell { border-radius: 0; border: 0; }
+body.embed-mode .workspace { grid-template-columns: minmax(0, 1fr); height: calc(100vh - 52px); }
+body.embed-mode .editor-shell { padding: 12px; }
+body.embed-mode .editor-view { border-radius: 12px; }
