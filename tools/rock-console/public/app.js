@@ -932,6 +932,8 @@ function renderServices(status) {
     const badge = tr.children[1].firstChild;
     badge.dataset.state = service.error ? 'unknown' : service.active || 'unknown';
     badge.textContent = service.error ? '查询失败' : stateLabel(service.active);
+    // 整行也带上状态，styles.css 的 tbody tr[data-state="…"] 才能画出左侧色条
+    tr.dataset.state = badge.dataset.state;
 
     const memoryCell = tr.children[2];
     memoryCell.textContent = service.memory ? formatMemory(service.memory) : '—';
