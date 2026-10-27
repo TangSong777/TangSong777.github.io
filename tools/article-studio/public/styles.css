@@ -376,3 +376,22 @@ a.settings-button {
   .editor-toolbar { padding: 0 8px; }
   .editor-toolbar .format-hint { display: none; }
 }
+
+/* 管理中心内嵌的文章工作台 */
+.card-editor { padding: 0; overflow: hidden; }
+.card-editor > .card-head { padding: 16px 20px; margin: 0; border-bottom: 1px solid var(--line); }
+.studio-frame {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 190px);
+  min-height: 520px;
+  border: 0;
+  background: #fff;
+}
+
+/* 被管理中心内嵌时：去掉重复的顶栏与文章列表，让编辑器占满 */
+body.embed-mode .topbar,
+body.embed-mode .article-panel,
+body.embed-mode .panel-backdrop { display: none; }
+body.embed-mode .workspace { grid-template-columns: minmax(0, 1fr); padding: 0; }
+body.embed-mode .editor-shell { border-radius: 0; border: 0; }

@@ -474,7 +474,11 @@
 
   function buildDecorationsUnsafe(view) {
     var state = view.state;
-    var activeLines = collectActiveLines(state);
+    /* 用户要求：编辑时不显示 #、>、** 这类最终会被隐藏的语法符号。
+       因此活动行也按普通行处理，activeLines 恒为空。
+       若要恢复「光标所在行显示源码标记」的 Typora 行为，
+       把下一行换回 collectActiveLines(state) 即可。 */
+    var activeLines = new Set();
     var decorations = [];
     // 只收集 replace 装饰，供 atomicRanges 使用
     var atomicDecorations = [];

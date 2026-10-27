@@ -171,15 +171,14 @@
   }
 
   function viewEditor() {
-    return '<section class="card">' +
+    // 直接把文章工作台（CodeMirror 所见即所得）嵌进管理中心，
+    // 不再整页跳转，编辑完点「返回列表」就回到这里。
+    return '<section class="card card-editor">' +
       '<div class="card-head"><h2>编辑：' + esc(state.editing.path) + '</h2>' +
       '<div class="row-actions"><button class="btn" data-action="back-to-articles">返回列表</button></div></div>' +
-      '<div id="richEditor" class="rich-editor"></div>' +
-      '<div class="row-actions" style="margin-top:12px">' +
-      '<button class="btn primary" data-action="save-article">保存</button>' +
-      '<button class="btn" data-action="publish-article">保存并发布</button>' +
-      '<button class="btn danger" data-action="delete-article">删除</button>' +
-      '</div></section>';
+      '<iframe class="studio-frame" title="文章工作台" src="/studio.html?embed=1&path=' +
+      encodeURIComponent(state.editing.path) + '"></iframe>' +
+      '</section>';
   }
 
   /* ---------------- 隐私规则（树形 + 父子联动） ---------------- */
@@ -359,7 +358,14 @@
 
   /* ---------------- 交互 ---------------- */
   function openEditor(path) {
-    // 编辑交给文章工作台（CodeMirror 所见即所得），管理中心只负责列表与运维
+    // 编辑器内嵌在管理中心里（iframe 载入文章工作台），不做整页跳转
+    state.editing = { path: path };
+    render();
+  }
+
+  function openEditorLegacy(path) {
+    // 旧实现：整页跳到文章工作台，保留作参考
+
     location.href = '/studio.html?path=' + encodeURIComponent(path);
   }
 
