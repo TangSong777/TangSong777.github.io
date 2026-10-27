@@ -217,6 +217,38 @@ a:hover {
     linear-gradient(135deg, var(--green-deep) 0%, var(--green-raw) 62%, var(--pop-amber-deep) 100%);
 }
 
+// NexT Muse 给 .brand 设了 background: var(--btn-default-bg)。
+// 我们把 --btn-default-bg 设成了烟雨青，于是这块在渐变顶栏上变成一块实色贴片。
+// 计算样式实测：.site-brand-container 是渐变图，而 .brand 自己是 rgb(77,117,114)。
+// 让它透明，把顶栏渐变完整让出来。
+.brand {
+  background: transparent !important;
+  padding: 0 18px;
+}
+
+// 顶栏是「深青 → 琥珀」渐变，文字必须是浅色才看得见。
+// 实测原来是 .site-title rgb(51,84,79) 深青、.site-subtitle rgb(153,153,153) 灰，
+// 深青字压在深青底上，左侧那半截几乎读不出来。
+.site-brand-container .site-title {
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(12, 34, 30, .28);
+}
+
+.site-brand-container .site-title a,
+.site-brand-container .site-title a:hover {
+  color: #fff !important;
+}
+
+.site-brand-container .site-title::before {
+  color: #fff !important;
+  text-shadow: none;
+}
+
+.site-brand-container .site-subtitle {
+  color: rgba(255, 255, 255, .78) !important;
+  text-shadow: 0 1px 2px rgba(12, 34, 30, .22);
+}
+
 // 品牌标记：与工作台「文」、面板「板」同款渐变方块
 .site-title {
   display: inline-flex;

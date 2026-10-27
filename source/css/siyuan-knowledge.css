@@ -314,13 +314,31 @@ body.blog-home-mode .main-inner.index { padding-top: 26px; }
 .blog-home-actions a.is-secondary { background: transparent; color: white; }
 .blog-home-actions a:hover { box-shadow: 0 8px 22px rgba(0,0,0,.14); transform: translateY(-1px); }
 
+/* hero 右侧装饰环：环与胶囊都要在深青渐变上真的看得见。
+   原先是白 13-18% 透明度，实测几乎消失。 */
 .blog-home-orbit { height: 190px; position: relative; width: 190px; z-index: 1; }
-.blog-home-orbit::before, .blog-home-orbit::after { border: 1px solid rgba(255,255,255,.18); border-radius: 50%; content: ''; inset: 15px; position: absolute; }
-.blog-home-orbit::after { inset: 52px; }
-.blog-home-orbit span { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; font-size: 10px; letter-spacing: .12em; padding: 7px 10px; position: absolute; }
-.blog-home-orbit span:nth-child(1) { right: 0; top: 42px; }
-.blog-home-orbit span:nth-child(2) { bottom: 18px; left: 52px; }
-.blog-home-orbit span:nth-child(3) { left: 0; top: 70px; }
+.blog-home-orbit::before, .blog-home-orbit::after {
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 50%;
+  content: '';
+  inset: 15px;
+  position: absolute;
+}
+.blog-home-orbit::before { box-shadow: 0 0 46px rgba(255,255,255,.07), inset 0 0 36px rgba(255,255,255,.05); }
+.blog-home-orbit::after { border-color: rgba(255,255,255,.2); inset: 52px; }
+.blog-home-orbit span {
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  padding: 7px 11px;
+  position: absolute;
+}
+.blog-home-orbit span:nth-child(1) { background: rgba(217,131,36,.24); border-color: rgba(217,131,36,.58); color: #ffd9a8; right: 0; top: 42px; }
+.blog-home-orbit span:nth-child(2) { background: rgba(255,255,255,.15); color: #eaf5f1; bottom: 18px; left: 52px; }
+.blog-home-orbit span:nth-child(3) { background: rgba(194,91,126,.24); border-color: rgba(194,91,126,.55); color: #ffd2de; left: 0; top: 70px; }
 
 .blog-home-layout { align-items: start; display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr) 300px; margin-top: 28px; }
 .blog-home-feed, .blog-home-rail { min-width: 0; }
