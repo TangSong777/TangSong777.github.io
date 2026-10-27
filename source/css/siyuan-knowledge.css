@@ -3106,3 +3106,71 @@ body.blog-home-mode .blog-home-hero {
     linear-gradient(120deg, rgba(28, 68, 59, .96), rgba(85, 133, 119, .92)),
     var(--green-deep);
 }
+
+/* ==== Round 25：右侧「文章目录」改成常开、行距统一 ====
+
+   NexT 自带的目录是「手风琴」：
+     .post-toc .nav .nav-child { height: 0; opacity: 0; visibility: hidden }
+     .post-toc .nav .active > .nav-child { height: var(--height, auto); ... }
+   只有「当前正在读的那一节」的子项会展开，其余收起。
+
+   问题在长文里很直观：一边往下滚，目录一边不停地开合，
+   刚记住的条目位置下一刻就变了；而未展开的父项只占一行，
+   和展开的父项之间留下深浅不一的空隙 —— 看起来像行距出了问题。
+
+   这里把折叠整个取消：全部层级一直展开。面板本身能滚（max-height +
+   overflow-y），长目录也只是长一点，换来的是「位置固定」。
+   ---- */
+body.blog-post-mode .post-toc .nav .nav-child,
+body.siyuan-mode .post-toc .nav .nav-child {
+  height: auto;
+  opacity: 1;
+  transition: none;
+  visibility: visible;
+}
+
+/* 行距统一交给 .nav-link 的 padding，li 不再带 margin，
+   否则「有子项的父行」与「叶子行」的高度差会让节奏忽紧忽松。 */
+body.blog-post-mode .post-toc .nav-item,
+body.siyuan-mode .post-toc .nav-item { margin: 0; }
+
+/* 一级条目：左边 3px 书签条 + 圆点，所以文字起点要给到 14px，
+   不然圆点紧贴着书签条，看着像「❙•」连在一起。 */
+body.blog-post-mode .post-toc .nav-level-2 > .nav-link,
+body.siyuan-mode .post-toc .nav-level-2 > .nav-link { padding-left: 14px; }
+
+/* 二三级条目缩进由 .nav-child 的 margin/padding 提供，自身回到 8px */
+body.blog-post-mode .post-toc .nav-child .nav-link,
+body.siyuan-mode .post-toc .nav-child .nav-link { padding-left: 8px; }
+
+/* 子项左侧那条竖线只在有子项时出现，缩进里已经算过 8px，
+   这里统一一下颜色别用纯黑（NexT 的 .post-toc ol 没设 border，来源是下面的 nav-child 规则） */
+body.blog-post-mode .post-toc .nav-child,
+body.siyuan-mode .post-toc .nav-child { border-left-color: var(--sy-line); }
+
+/* ==== Round 25b：右侧栏要有一块自己的白底
+
+   实测（同源 iframe 读计算样式）：
+     .sidebar-nav             bg rgba(0,0,0,0)
+     .sidebar-panel-container bg rgba(0,0,0,0)
+     .post-toc-wrap           bg rgba(0,0,0,0)
+     .post-block              bg rgba(255,255,255,0.95)
+
+   正文卡片是接近纯白的 .95，而侧栏整条**没有背景色**，只有一层阴影 ——
+   透过它看到的是页面底色 #f2f7f6 加两层暖色光斑，
+   于是同一条右栏里「目录卡片」偏米黄、正文卡片是白的，
+   看着像那块没洗干净。
+
+   补一层与正文卡片同值的白底，两栏才在同一个纸面上。
+   保留原来 main.css 给的 14px 圆角。
+   ---- */
+body.blog-post-mode .sidebar-inner,
+body.siyuan-mode .sidebar-inner,
+body.archive-mode .sidebar-inner {
+  background: rgba(255, 255, 255, .95);
+  border: 1px solid var(--sy-line);
+}
+
+/* 白底之后，页签下方那条分隔线要与卡片边框区分开，压淡一点 */
+body.blog-post-mode .sidebar-nav,
+body.siyuan-mode .sidebar-nav { border-bottom-color: var(--sy-line); }
