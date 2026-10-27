@@ -129,7 +129,7 @@ body.blog-post-mode .post-body th { background: #eaf1f0; color: var(--sy-ink); }
   border-spacing: 0;
   display: table !important;
   margin: 0 !important;
-  min-width: 640px;
+  min-width: 0;
   width: 100%;
 }
 
@@ -153,6 +153,7 @@ body.blog-post-mode .post-body th { background: #eaf1f0; color: var(--sy-ink); }
   font-weight: 700;
   white-space: nowrap;
 }
+.post-body .table-container tbody tr:nth-child(odd) { background: transparent; }
 .post-body .table-container tbody tr:nth-child(even) { background: rgba(237, 243, 239, .52); }
 .post-body .table-container tbody tr:hover { background: rgba(226, 238, 233, .72); }
 

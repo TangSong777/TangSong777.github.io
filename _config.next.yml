@@ -1,6 +1,6 @@
 # NexT overrides. Kept outside node_modules so theme upgrades are safe.
 scheme: Muse
-darkmode: true
+darkmode: false
 
 favicon:
   small: /images/avatar.jpg?v=20260904
