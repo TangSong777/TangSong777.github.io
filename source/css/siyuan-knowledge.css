@@ -2622,3 +2622,146 @@ body.archive-mode .posts-collapse .post-content::before {
   background: var(--pop-amber-line);
   color: var(--pop-amber-deep);
 }
+
+/* ==== Round 18：学习笔记详情页的页尾导航 ==== */
+
+/* 笔记树很深，读完一篇常有「然后呢」。面包屑在顶部回答位置，
+   页尾这两块回答「同层还有什么」——上一篇/下一篇 + 回上级/回索引。 */
+.note-nav-wrap {
+  border-top: 1px solid var(--sy-line);
+  margin: 34px 0 4px;
+  padding-top: 20px;
+}
+
+.note-nav {
+  display: flex;
+  gap: 12px;
+}
+
+.note-nav-item {
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid var(--sy-line);
+  border-radius: 12px;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 12px 16px 12px 20px;
+  position: relative;
+  text-decoration: none;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+/* 左侧从青到琥珀的细条，和文章页 .post-nav 同一套语言 */
+.note-nav-item::before {
+  background: linear-gradient(180deg, var(--green), var(--pop-amber));
+  border-radius: 2px;
+  bottom: 12px;
+  content: "";
+  left: 0;
+  position: absolute;
+  top: 12px;
+  width: 3px;
+}
+
+.note-nav-item.is-next {
+  padding: 12px 20px 12px 16px;
+  text-align: right;
+}
+
+.note-nav-item.is-next::before {
+  background: linear-gradient(180deg, var(--pop-amber), var(--pop-rose));
+  left: auto;
+  right: 0;
+}
+
+.note-nav-item span {
+  color: var(--muted-2);
+  display: block;
+  font-size: 11.5px;
+  letter-spacing: .08em;
+}
+
+.note-nav-item strong {
+  color: var(--green-deep);
+  display: block;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.45;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-nav-item:hover {
+  border-color: var(--green-line);
+  box-shadow: 0 10px 26px rgba(43, 73, 64, .10);
+  transform: translateY(-1px);
+}
+
+.note-nav-item:hover strong {
+  color: var(--green);
+}
+
+/* 只有一篇笔记时，留一个等宽占位，避免单卡片被拉成整行 */
+.note-nav-item.is-placeholder {
+  background: transparent;
+  border: 1px dashed var(--sy-line);
+  box-shadow: none;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.note-nav-up {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.note-nav-up a {
+  background: var(--green-wash);
+  border-radius: 999px;
+  color: var(--green);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 13px;
+  text-decoration: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.note-nav-up a:hover {
+  background: var(--green-soft);
+  color: var(--green-deep);
+}
+
+/* Round 18b：手机端改成竖排后要把 flex-basis 收回来 */
+@media (max-width: 560px) {
+  /* 手机上两张卡并排会挤成一列竖排文字，改成上下各一行 */
+  .note-nav {
+    flex-direction: column;
+  }
+
+  /* 桌面用的是 flex: 1 1 0（横向各占一半）。改成列方向后，basis 0 变成「高度 0」，
+     卡片只剩一行文字的高度，标题被 overflow: hidden 裁掉 —— 必须显式写回 auto。 */
+  .note-nav-item {
+    flex: 0 0 auto;
+    padding: 11px 16px 11px 20px;
+    text-align: left;
+  }
+
+  .note-nav-item.is-next {
+    padding: 11px 16px 11px 20px;
+    text-align: left;
+  }
+
+  .note-nav-item.is-next::before {
+    left: 0;
+    right: auto;
+  }
+
+  /* 竖排时缺省的那一半没有对齐意义，直接不占位 */
+  .note-nav-item.is-placeholder {
+    display: none;
+  }
+}
