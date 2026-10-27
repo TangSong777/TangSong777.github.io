@@ -2212,3 +2212,139 @@ body.siyuan-mode .main-inner > .breadcrumb {
   top: .48em;
   width: 10px;
 }
+
+/* ==== 笔记页目录沿用文章页那套（round 13）==== */
+/* 下面这些是脚本从上面 body.blog-post-mode 的目录规则复制来的，只换了前缀。
+   笔记详情页右侧「文档关系」目录因此和文章页目录长得一样。 */
+body.siyuan-mode .sidebar-inner{ color: var(--sy-ink); }
+body.siyuan-mode .sidebar-nav{ border-bottom-color: var(--sy-line); }
+body.siyuan-mode .sidebar-nav li{ color: var(--sy-muted); }
+body.siyuan-mode .sidebar-nav .sidebar-nav-active{ color: var(--green); }
+body.siyuan-mode .post-toc .nav-link{ color: var(--muted); }
+body.siyuan-mode .post-toc .active > .nav-link{ color: var(--green-deep); }
+body.siyuan-mode .sidebar-nav{
+  border-bottom: 1px solid var(--sy-line);
+  display: flex;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0 0 12px;
+}
+body.siyuan-mode .sidebar-nav li{
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--sy-muted);
+  cursor: pointer;
+  flex: 1;
+  font-size: 12.5px;
+  letter-spacing: .02em;
+  padding: 6px 10px;
+  text-align: center;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+body.siyuan-mode .sidebar-nav li:hover{
+  background: var(--green-wash);
+  color: var(--green);
+}
+body.siyuan-mode .sidebar-inner.sidebar-overview-active .sidebar-nav-overview{
+  background: var(--green-soft);
+  border-color: var(--green-line);
+  color: var(--green-deep);
+  font-weight: 700;
+}
+body.siyuan-mode .sidebar-panel-container{
+  max-height: calc(100vh - 230px);
+  overscroll-behavior: contain;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* 原来左右是 0，目录项贴着卡片边缘；留 12px 与上方页签对齐 */
+  padding: 16px 12px 24px;
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+body.siyuan-mode .sidebar-panel-container::-webkit-scrollbar{ width: 6px; }
+body.siyuan-mode .sidebar-panel-container::-webkit-scrollbar-thumb{
+  background: var(--line-strong);
+  border-radius: 6px;
+}
+body.siyuan-mode .sidebar-panel-container::-webkit-scrollbar-track{ background: transparent; }
+body.siyuan-mode .post-toc{ padding: 2px 0 16px; }
+body.siyuan-mode .post-toc .nav{ list-style: none; margin: 0; padding: 0; }
+body.siyuan-mode .post-toc .nav-item{ margin: 1px 0; }
+body.siyuan-mode .post-toc .nav-child{
+  border-left: 1px solid var(--sy-line);
+  margin: 2px 0 4px 10px;
+  padding-left: 8px;
+}
+body.siyuan-mode .post-toc .nav-link{
+  /* NexT 给 .post-toc .nav-link 留了一条 border-bottom（浅蓝 rgb(135,218,255)），
+     不清掉的话每个目录项看起来都像一个输入框。 */
+  border: 0;
+  border-radius: 7px;
+  color: var(--muted);
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.55;
+  overflow: hidden;
+  padding: 5px 8px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  transition: background-color .15s ease, color .15s ease;
+  white-space: nowrap;
+}
+body.siyuan-mode .post-toc .nav-level-2 > .nav-link{
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+body.siyuan-mode .post-toc .nav-level-3 > .nav-link{ font-size: 12.5px; }
+body.siyuan-mode .post-toc .nav-link:hover{
+  background: var(--green-wash);
+  color: var(--green);
+}
+body.siyuan-mode .post-toc .active > .nav-link{
+  /* 左边直角、右边圆角 —— 看起来像插了一枚书签，而不是一个圆角气泡 */
+  background: linear-gradient(90deg, var(--green-soft), rgba(230, 239, 238, .26));
+  border-radius: 0 7px 7px 0;
+  box-shadow: inset 3px 0 0 var(--green);
+  color: var(--green-deep);
+  font-weight: 700;
+}
+body.siyuan-mode .post-toc .nav-level-2 > .nav-link::before{
+  background: var(--line-strong);
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  height: 4px;
+  margin-right: 8px;
+  transition: background-color .15s ease;
+  vertical-align: middle;
+  width: 4px;
+}
+body.siyuan-mode .post-toc .nav-level-2 > .nav-link:hover::before{
+  background: var(--green);
+}
+body.siyuan-mode .post-toc .nav-level-2 > .nav-link.active::before{
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(106, 141, 140, .18);
+}
+body.siyuan-mode .sidebar-inner .sidebar-archive{
+  border-bottom: 0;
+}
+body.siyuan-mode .sidebar-inner .sidebar-archive{
+  color: var(--muted);
+  display: block;
+  padding: 7px 2px;
+  transition: color .15s ease, padding-left .15s ease;
+}
+body.siyuan-mode .sidebar-inner .sidebar-archive:hover{
+  color: var(--green-deep);
+  padding-left: 6px;
+}
+body.siyuan-mode .sidebar-inner .sidebar-archive sup{
+  color: var(--green);
+  font-weight: 700;
+  margin-left: 4px;
+}
+body.siyuan-mode .sidebar-inner .sidebar-tag{
+  color: var(--green-deep);
+}

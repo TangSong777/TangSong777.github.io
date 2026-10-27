@@ -535,9 +535,10 @@
     for (var i = 0; i < items.length; i++) {
       var li = items[i];
       var first = li.firstChild;
-      if (first && first.nodeType === 3 && first.nodeValue.replace(/\s/g, '').charAt(0) === '\uD83D') {
+      // 只认 📄。早前用 surrogate 高字节判断，会把 📘 🔗 📋 🔐 一起剥掉（实测 10 处）。
+      if (first && first.nodeType === 3 && first.nodeValue.trim().indexOf('📄') === 0) {
         li.className = (li.className ? li.className + ' ' : '') + 'doc-link';
-        first.nodeValue = first.nodeValue.replace(/^[\s\uD83D\uDCC4]+/, '');
+        first.nodeValue = first.nodeValue.replace(/^\s*\uD83D\uDCC4\s*/, '');
       }
     }
   }
