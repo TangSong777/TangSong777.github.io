@@ -2425,3 +2425,168 @@ body.siyuan-mode .sidebar-inner .sidebar-tag{
 }
 
 .tag-index-item.is-major sup { color: var(--green); }
+
+/* ==== Round 15：归档页年份锚点 + 侧栏标签/归档行全局化 ==== */
+
+/* NexT 的选择器是 .posts-collapse .post-content .collection-year::before，权重 (0,3,1)，
+   而原来那条 body.archive-mode .collection-year::before 只有 (0,2,2) ——
+   于是既没画上我们的渐变条，还留着 NexT 的 #bbb 灰线（截图上年份左边那根细线）。
+   日期区同理：NexT 的 margin: 60px 0 把年份和第一张卡片撑得很开。 */
+body.archive-mode .posts-collapse .post-content .collection-year {
+  border-left: 0;
+  margin: 30px 0 16px;
+  padding-left: 16px;
+  position: relative;
+}
+
+body.archive-mode .posts-collapse .post-content .collection-year::before {
+  background: linear-gradient(180deg, var(--green) 0%, var(--pop-amber) 100%);
+  border: 0;
+  border-radius: 2px;
+  bottom: 4px;
+  content: "";
+  display: block;
+  left: 0;
+  margin: 0;
+  position: absolute;
+  top: 4px;
+  width: 3px;
+}
+
+body.archive-mode .posts-collapse .post-content .collection-year .collection-header {
+  color: var(--sy-ink);
+  font-size: 26px;
+  font-weight: 750;
+  margin: 0;
+}
+
+/* 计数徽章嵌在 26px 的年份里，NexT 给的是 #eee 方块 + border-radius: 0，
+   12px 的字被父级行高顶着，看着像上标。改成独立胶囊 + 光学对齐。 */
+body.archive-mode .posts-collapse .post-content .collection-year .collection-year-count {
+  background: var(--pop-amber-soft);
+  border-radius: 999px;
+  color: var(--pop-amber-deep);
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: 10px;
+  padding: 5px 10px;
+  vertical-align: .18em;
+}
+
+/* 侧栏的标签胶囊与归档行之前只修了 siyuan-mode / blog-post-mode，
+   归档页、标签页、首页挂的是 archive-mode / blog-home-mode，仍带着 NexT 的
+   border-bottom（无颜色，取 currentColor）与 #eee 方块计数。这里去掉作用域，全站统一。 */
+.sidebar .sidebar-inner a.sidebar-tag,
+.sidebar .sidebar-inner a.sidebar-archive {
+  border-bottom: 0;
+}
+
+.sidebar .sidebar-inner a.sidebar-archive {
+  border-radius: 6px;
+  color: var(--muted);
+  display: block;
+  padding: 7px 4px;
+  transition: background-color .15s ease, color .15s ease, padding-left .15s ease;
+}
+
+.sidebar .sidebar-inner a.sidebar-archive:hover {
+  background: var(--green-wash);
+  color: var(--green-deep);
+  padding-left: 9px;
+}
+
+.sidebar .sidebar-inner a.sidebar-archive sup {
+  color: var(--green);
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.sidebar .sidebar-inner a.sidebar-tag {
+  color: var(--green-deep);
+}
+
+/* 归档行的两条分隔线来自 NexT 的 border-top/bottom，去掉后靠内部间距分组；
+   但两行之间还需要一条极淡的分隔，否则上下粘在一起。 */
+.sidebar .sidebar-inner .sidebar-archives a.sidebar-archive + a.sidebar-archive {
+  box-shadow: inset 0 1px 0 var(--sy-line);
+}
+
+/* ==== Round 15b：归档页整块只剩一条贯穿全页的橙线 ==== */
+
+/* .post-block::before 是给「一张卡片」用的左侧撞色条（top/bottom 16px）。
+   归档页整年的日志都塞在同一个 .post-block 里，这条线就变成贯穿全页的橙杠，
+   看着像布局错位的分隔线。归档页里年份和每篇日志已经各有自己的标记，这里去掉。 */
+body.archive-mode .post-block::before {
+  display: none;
+}
+
+/* 手机版的 .collection-title 还在用早期的「浅青底 + 描边 + 圆角」盒子，
+   和桌面（透明 + 下划线）不是一套；套在白色卡片里就成了「盒子里再套一个盒子」。 */
+@media (max-width: 768px) {
+  body.archive-mode .collection-title {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--sy-line);
+    border-radius: 0;
+    color: var(--green-deep);
+    margin: 0 0 16px;
+    padding: 0 0 12px;
+    text-align: left;
+  }
+
+  body.archive-mode .collection-title .collection-header {
+    color: var(--green-deep);
+    font-size: 17px;
+    font-weight: 700;
+  }
+}
+
+/* 侧栏的标签与归档行是居中排的（NexT 默认），一条条等宽横线居中后
+   左右两端参差，像没对齐的表格。统一左对齐。 */
+.sidebar .sidebar-inner .sidebar-tags,
+.sidebar .sidebar-inner .sidebar-archives {
+  display: block;
+  text-align: left;
+}
+
+/* 年份左边那根渐变条只有一个行盒高（约 22px），太短像个小刻度，
+   撑到标题的完整高度。 */
+body.archive-mode .posts-collapse .post-content .collection-year::before {
+  bottom: 1px;
+  top: 1px;
+}
+
+/* ==== Round 15c：归档页说明行被 justify 拉开 ==== */
+
+/* 「嗯..！目前共计 5 篇日志。 继续努力。」里的空格在两端对齐下被撑成一大段空白，
+   短行 + 中文 + justify 就是这个效果。这句本来是一行说明，左对齐即可。
+   NexT 的选择器是 .posts-collapse .post-content .collection-title（权重 0,3,1），
+   所以这里必须带同样的前缀才压得住。 */
+body.archive-mode .posts-collapse .post-content .collection-title,
+body.archive-mode .posts-collapse .post-content .collection-title .collection-header {
+  text-align: left;
+  text-wrap: pretty;
+}
+
+/* ==== Round 15d：归档页说明行与 NexT 的灰导轨 ==== */
+
+/* 「嗯..! 目前共计 5 篇日志。 继续努力。」用的是 .collection-title > .collection-header，
+   而 Round 13 给 .collection-header 定了 24px / 750 权重（那是标签页、分类页的大标题用的）。
+   两者撞在一起，说明行被放大成标题尺寸 —— 24px 的字里，空格跟着变成 24px 宽，
+   看着就像「每个空格被拉开一大段」。年份走的是 .collection-year 容器，不受这条影响。 */
+body.archive-mode .posts-collapse .post-content .collection-title .collection-header {
+  color: var(--muted-2);
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.7;
+}
+
+/* NexT 在归档时间线上画了一条 4px 宽的浅灰竖导轨（.posts-collapse .post-content::before，
+   height: 100%）。原本被我们那条贯穿全页的橙杠盖着看不出来，橙杠去掉后就露出一根灰线。
+   归档页已经有年份竖线与每篇日志的点标记，这条导轨纯属多余。 */
+body.archive-mode .posts-collapse .post-content::before {
+  display: none;
+}
