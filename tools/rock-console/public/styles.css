@@ -1086,3 +1086,24 @@ body::before {
 #stream-state[data-state="active"]   { background: var(--ok-soft);   color: var(--ok-deep); }
 #activity-state[data-state="warn"]   { background: var(--amber-soft); color: var(--amber-deep); }
 #activity-state[data-state="active"] { background: var(--green-soft); color: var(--green-deep); }
+/* ==== Round 33：登录页在窄屏上的两处不齐 ====
+   1) 提交按钮原来是青→琥珀三段渐变，跟管理中心的实心青不是一套；
+      登录只是「进入」这一个动作，实心更稳，也让两个后台看起来是同一个产品。
+   2) .login-shell 的背景用了三个写死像素尺寸的 ellipse（1300/1000/800px），
+      手机只有 430 宽，椭圆比视口大一圈，顶部被染成一条米黄横带。
+      窄屏收敛成纯画布色 + 一层极淡的绿光。 */
+.login-card button[type="submit"] {
+  background: var(--green);
+}
+
+.login-card button[type="submit"]:hover {
+  background: var(--green-deep);
+}
+
+@media (max-width: 768px) {
+  .login-shell {
+    background:
+      radial-gradient(ellipse 260px 180px at 82% -6%, rgba(217, 131, 36, .10), transparent 70%),
+      var(--canvas);
+  }
+}
