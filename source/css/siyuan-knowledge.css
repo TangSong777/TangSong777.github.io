@@ -2916,3 +2916,43 @@ body.siyuan-mode .post-body p {
 body.blog-post-mode .site-brand-container {
   background: linear-gradient(120deg, var(--green-deep) 0%, var(--green) 55%, var(--green-raw) 100%);
 }
+
+
+/* ==== Round 21c：侧栏「分类」行跟标签对齐 ==== */
+/* 标签是一排左对齐的胶囊（.sidebar-tags > a.sidebar-tag），
+   分类只有 .sidebar-categories > a.sidebar-category，而我们从来没给它写过样式 ——
+   于是它继承 NexT 的居中排布，单独一行浮在中间，看着像漏改。
+   两类都是「按什么看」的入口，统一成同一种排布；分类用琥珀系，和标签的绿系区分开。 */
+.sidebar .sidebar-inner .sidebar-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.sidebar .sidebar-inner a.sidebar-category {
+  background: var(--pop-amber-soft);
+  border: 1px solid var(--pop-amber-line);
+  border-radius: 999px;
+  color: var(--pop-amber-deep);
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 3px 10px;
+  text-decoration: none;
+  transition: background-color .15s ease, transform .15s ease;
+}
+
+.sidebar .sidebar-inner a.sidebar-category:hover {
+  background: var(--pop-amber-soft);
+  border-color: var(--pop-amber);
+  transform: translateY(-1px);
+}
+
+.sidebar .sidebar-inner a.sidebar-category sup {
+  color: var(--pop-amber-deep);
+  font-size: 9.5px;
+  margin-left: 3px;
+  opacity: .8;
+}
