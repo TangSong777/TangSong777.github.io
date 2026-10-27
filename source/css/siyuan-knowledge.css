@@ -1441,3 +1441,73 @@ body.archive-mode .collection-year-count {
   color: var(--green-deep);
   font-weight: 750;
 }
+
+
+/* ===== 文章页底部「上一篇 / 下一篇」 =====
+   NexT 只给了 border-top: 1px solid #eee，和整套白卡 + 撞色竖条的风格脱节。
+   改成两张独立小卡片：前一篇青，后一篇琥珀→玫红。 */
+body.blog-post-mode .post-nav {
+  border-top: 0;
+  gap: 14px;
+  margin-top: 26px;
+  padding: 0;
+}
+
+body.blog-post-mode .post-nav-item {
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid var(--sy-line);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+
+body.blog-post-mode .post-nav-item::before {
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-raw) 100%);
+  border-radius: 0 3px 3px 0;
+  bottom: 10px;
+  content: "";
+  left: 0;
+  position: absolute;
+  top: 10px;
+  width: 3px;
+}
+
+body.blog-post-mode .post-nav-item:last-child::before {
+  background: linear-gradient(180deg, var(--pop-amber) 0%, var(--pop-rose) 100%);
+}
+
+body.blog-post-mode .post-nav-item a {
+  padding: 13px 16px 13px 20px;
+}
+
+body.blog-post-mode .post-nav-item:hover {
+  box-shadow: 0 10px 26px rgba(45, 67, 59, .1);
+  transform: translateY(-1px);
+}
+
+body.blog-post-mode .post-nav-item .fa {
+  color: var(--green);
+  opacity: .7;
+}
+
+body.blog-post-mode .post-nav-item:last-child .fa {
+  color: var(--pop-amber);
+}
+
+
+/* 最新的一篇没有「下一篇」，NexT 仍会输出一个空的 .post-nav-item，
+   加上卡片样式后就成了「只有一根橙色竖条的白框」，看着像破图。 */
+body.blog-post-mode .post-nav-item:not(:has(a)) {
+  display: none;
+}
+
+/* 卡片里的标题别用默认的浅灰，压到正文墨色 */
+body.blog-post-mode .post-nav-item a {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+body.blog-post-mode .post-nav-item:hover a {
+  color: var(--green-deep);
+}
