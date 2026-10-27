@@ -2065,3 +2065,42 @@ body.archive-mode .collection-title .collection-header {
     margin: 0;
   }
 }
+
+/* ==== 手机版：段落左对齐 + 代码块滚动条可见（round 11）==== */
+/* 两端对齐在 430px 这种窄栏里会把拉丁词之间的空隙拉得很开，
+   一句话被撑成「现在的  方式 ： 浏览器  打开」，读起来像排版坏了。
+   桌面宽度下保持 justify（满行更像书），窄屏一律左对齐。 */
+@media (max-width: 768px) {
+  body.blog-post-mode .post-body p,
+  body.siyuan-mode .post-body p,
+  body.blog-post-mode .post-body li,
+  body.siyuan-mode .post-body li,
+  body.blog-post-mode .post-body blockquote p,
+  body.siyuan-mode .post-body blockquote p {
+    text-align: left;
+  }
+
+  /* 代码块是横向滚动的（保留行号与代码的对齐，不做折行），
+     但滚动条又细又淡，读者不知道右边还有内容。这里把它做成看得见的细条。 */
+  body.blog-post-mode figure.highlight,
+  body.siyuan-mode figure.highlight {
+    scrollbar-width: thin;
+    scrollbar-color: var(--green-line) transparent;
+  }
+
+  body.blog-post-mode figure.highlight::-webkit-scrollbar,
+  body.siyuan-mode figure.highlight::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  body.blog-post-mode figure.highlight::-webkit-scrollbar-thumb,
+  body.siyuan-mode figure.highlight::-webkit-scrollbar-thumb {
+    background: var(--green-line);
+    border-radius: 3px;
+  }
+
+  body.blog-post-mode figure.highlight::-webkit-scrollbar-track,
+  body.siyuan-mode figure.highlight::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
