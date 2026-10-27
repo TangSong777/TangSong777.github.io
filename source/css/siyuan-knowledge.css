@@ -1787,3 +1787,40 @@ body.siyuan-mode .sidebar-inner .sidebar-tag,
 body.blog-post-mode .sidebar-inner .sidebar-tag {
   color: var(--green-deep);
 }
+
+/* ==== 学习笔记正文对齐博客文章（round 7）==== */
+
+/* 下面这些规则原来只写在 body.blog-post-mode 作用域里，
+   而 /siyuan/ 的 body 挂的是 siyuan-mode，所以文档页一直是「旧样式」：
+   引用块是 4px 青色而不是 3px 琥珀、表格没有圆角、表头底色与下框也不对。 */
+body.siyuan-mode .post-body blockquote {
+  border-left-color: var(--pop-amber);
+  border-left-width: 3px;
+  box-shadow: inset 3px 0 0 var(--green-line);
+}
+
+body.siyuan-mode .post-body table {
+  border: 1px solid var(--sy-line);
+  border-collapse: separate;
+  border-radius: 12px;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+body.siyuan-mode .post-body thead th {
+  background: var(--green-wash);
+  border-bottom: 2px solid var(--pop-amber-line);
+  color: var(--sy-ink);
+}
+
+body.siyuan-mode .post-body tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+body.siyuan-mode .post-body table caption {
+  caption-side: top;
+  color: var(--sy-muted);
+  font-size: 12px;
+  padding: 0 0 8px;
+  text-align: left;
+}
