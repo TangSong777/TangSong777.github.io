@@ -84,8 +84,10 @@
     feed.className = 'blog-home-feed';
     feed.innerHTML = '<header class="blog-home-section-title"><div><span>RECENT POSTS</span><h2>最近文章</h2></div><a href="/archives/">查看全部 →</a></header>';
     postBlocks.forEach(function (block) {
-      var staticMore = block.querySelector('.post-button') || block.querySelector('.post-more-link');
-      if (staticMore) staticMore.remove();
+      // NexT 首页卡片里可能同时有 .post-button / .post-more-link 与普通 a.btn，
+      // 只删前两个会留下第二个「阅读全文」，和下面新建的 .blog-home-readmore 叠在一起。
+      var staticMores = block.querySelectorAll('.post-button, .post-more-link, a.btn');
+      for (var sm = 0; sm < staticMores.length; sm++) staticMores[sm].remove();
       feed.appendChild(block);
       var postLink = block.querySelector('.post-title-link');
       if (postLink && !block.querySelector('.blog-home-readmore')) {

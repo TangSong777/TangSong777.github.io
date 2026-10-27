@@ -281,8 +281,8 @@ body.blog-home-mode .main-inner.index { padding-top: 26px; }
 .blog-home-hero {
   align-items: center;
   background:
-    radial-gradient(circle at 88% 10%, rgba(217, 131, 36, .26), transparent 54%),
-    radial-gradient(circle at 4% 94%, rgba(194, 91, 126, .17), transparent 48%),
+    radial-gradient(circle at 86% 6%, rgba(217, 131, 36, .30), transparent 50%),
+    radial-gradient(circle at 8% 98%, rgba(194, 91, 126, .20), transparent 44%),
     linear-gradient(120deg, rgba(28, 68, 59, .96), rgba(85, 133, 119, .92)),
     var(--green-deep);
   border-radius: 24px;
@@ -290,9 +290,9 @@ body.blog-home-mode .main-inner.index { padding-top: 26px; }
   color: white;
   display: flex;
   justify-content: space-between;
-  min-height: 340px;
+  min-height: 280px;
   overflow: hidden;
-  padding: 54px 62px;
+  padding: 40px 54px;
   position: relative;
 }
 
@@ -307,14 +307,14 @@ body.blog-home-mode .main-inner.index { padding-top: 26px; }
 
 .blog-home-hero-inner { max-width: 650px; position: relative; z-index: 1; }
 .blog-home-eyebrow { font-size: 11px; font-weight: 750; letter-spacing: .18em; opacity: .7; }
-.blog-home-hero h1 { border: 0; color: white; font-size: clamp(34px, 4vw, 54px); letter-spacing: -.04em; line-height: 1.12; margin: 20px 0 16px; }
+.blog-home-hero h1 { border: 0; color: white; font-size: clamp(30px, 3.4vw, 46px); letter-spacing: -.04em; line-height: 1.14; margin: 16px 0 12px; }
 .blog-home-hero p { font-size: 17px; line-height: 1.8; margin: 0; opacity: .82; }
-.blog-home-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.blog-home-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 .blog-home-actions a { background: white; border: 1px solid white; border-radius: 10px; color: var(--green-deep); font-size: 13px; font-weight: 700; padding: 11px 17px; text-decoration: none; }
 .blog-home-actions a.is-secondary { background: transparent; color: white; }
 .blog-home-actions a:hover { box-shadow: 0 8px 22px rgba(0,0,0,.14); transform: translateY(-1px); }
 
-.blog-home-orbit { height: 230px; position: relative; width: 230px; z-index: 1; }
+.blog-home-orbit { height: 190px; position: relative; width: 190px; z-index: 1; }
 .blog-home-orbit::before, .blog-home-orbit::after { border: 1px solid rgba(255,255,255,.18); border-radius: 50%; content: ''; inset: 15px; position: absolute; }
 .blog-home-orbit::after { inset: 52px; }
 .blog-home-orbit span { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; font-size: 10px; letter-spacing: .12em; padding: 7px 10px; position: absolute; }
@@ -1102,4 +1102,172 @@ a.tag-cloud-tags a,
 /* 文章页标题下方的分隔线：青 → 琥珀 → 玫红 */
 .posts-expand .post-eof {
   background: linear-gradient(90deg, var(--green-line), var(--pop-amber-line), var(--pop-rose-line)) !important;
+}
+
+/* ─────────────────────────────────────────────
+   首页文章卡片：让每篇文章成为一张真正的卡片
+   NexT 的 .post-block 只有 border-radius、没有背景，
+   结果卡片与页面底色融成一片，看不出「一条一条」。
+   这里补上白底、描边、轻阴影，并让左侧撞色条更明确。
+   ───────────────────────────────────────────── */
+.post-block {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 3px rgba(28, 64, 55, .04);
+  margin-bottom: 22px;
+  padding: 26px 30px 24px;
+  transition: box-shadow .22s ease, transform .22s ease, border-color .22s ease;
+}
+
+.post-block:hover {
+  border-color: var(--green-line);
+  box-shadow: 0 12px 34px rgba(28, 64, 55, .10);
+  transform: translateY(-2px);
+}
+
+/* 左侧撞色条：贴住卡片左边框，从顶部留白处延伸到末尾 */
+.post-block::before {
+  border-radius: 0;
+  bottom: 0;
+  left: -1px;
+  top: 0;
+  width: 4px;
+}
+
+/* 卡片内标题：更紧凑 */
+.post-block .post-title {
+  font-size: 21px;
+  letter-spacing: -.015em;
+  margin-bottom: 10px;
+}
+
+.post-block .post-title a {
+  color: var(--ink);
+  transition: color .16s ease;
+}
+
+.post-block .post-block:hover .post-title a,
+.post-block:hover .post-title a {
+  color: var(--green-deep);
+}
+
+/* 卡片内的元信息：日期 / 分类 那一行 */
+.post-block .post-meta-container {
+  color: var(--muted);
+  font-size: 12.5px;
+  margin-bottom: 14px;
+}
+
+.post-block .post-meta-container a {
+  color: var(--green);
+}
+
+/* 「阅读全文」按钮：琥珀描边，成为卡片的视觉落点。
+   为什么必须 !important：NexT 的 .btn 默认是「浅青底 + 深青字」（var(--btn-default-bg)
+   / var(--btn-default-color)），而首页卡片里还有 .post-tags a:nth-child(3n+1) 规则
+   带 !important 的 --green-soft 背景。普通声明压不过它们，实测按钮一直是浅青底。
+   这里用 !important 一次性锁定描边样式，hover 反白为琥珀实心。 */
+.post-block a.btn {
+  background: transparent !important;
+  border: 1px solid var(--pop-amber-line) !important;
+  border-radius: 9px;
+  color: var(--pop-amber-deep) !important;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px 16px;
+  text-decoration: none;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.post-block a.btn:hover {
+  background: var(--pop-amber) !important;
+  border-color: var(--pop-amber) !important;
+  box-shadow: 0 6px 18px rgba(217, 131, 36, .30);
+  color: var(--on-accent) !important;
+  transform: translateY(-1px);
+}
+
+/* 窄屏收紧内边距 */
+@media (max-width: 767px) {
+  .post-block {
+    padding: 20px 18px 18px;
+  }
+  .post-block::before {
+    width: 3px;
+  }
+}
+
+/* 首篇文章在 NexT 里有额外的 padding-top: 70px，卡片化之后没必要留那么多 */
+.post-block:first-of-type {
+  padding-top: 26px;
+}
+
+@media (max-width: 767px) {
+  .post-block:first-of-type {
+    padding-top: 20px;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   首页卡片·撞色条修正
+   为什么之前看不见：
+   1) body.blog-home-mode .blog-home-feed > .post-block 有 overflow 与 border-radius: 18px，
+      撞色条用 left: -1px 会被裁掉；用 left: 0 又压在 1px 边框上，4px 里有 1px 被描边盖住。
+   2) 通用 .post-block::before 的优先级(0,1,0) 低于带 body.class 前缀的规则，
+      而首页卡片的外观由后者决定，所以必须用同前缀写。
+   现在把色条画在卡片内侧，并让它从顶部 22px 延伸到末尾 22px，避开圆角。
+   ───────────────────────────────────────────── */
+body.blog-home-mode .blog-home-feed > .post-block::before {
+  border-radius: 0 3px 3px 0;
+  bottom: 22px;
+  content: "";
+  left: 0;
+  position: absolute;
+  top: 22px;
+  width: 4px;
+  background: linear-gradient(180deg, var(--pop-amber) 0%, var(--pop-amber) 18%, var(--pop-rose) 82%, var(--pop-rose) 100%);
+  z-index: 1;
+}
+
+/* 卡片 hover：撞色条加长，形成「划重点」的动效 */
+body.blog-home-mode .blog-home-feed > .post-block {
+  transition: box-shadow .22s ease, border-color .22s ease, transform .22s ease;
+}
+
+body.blog-home-mode .blog-home-feed > .post-block:hover {
+  border-color: var(--green-line);
+  box-shadow: 0 16px 40px rgba(45, 67, 59, .12);
+  transform: translateY(-2px);
+}
+
+/* 「阅读全文」按钮：NexT 首页用的是 .blog-home-readmore，不是 .btn */
+.blog-home-readmore {
+  background: transparent !important;
+  border: 1px solid var(--pop-amber-line) !important;
+  border-radius: 9px !important;
+  color: var(--pop-amber-deep) !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  padding: 8px 16px !important;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.blog-home-readmore:hover {
+  background: var(--pop-amber) !important;
+  border-color: var(--pop-amber) !important;
+  box-shadow: 0 6px 18px rgba(217, 131, 36, .30);
+  color: var(--on-accent) !important;
+  transform: translateX(2px);
+}
+
+/* 卡片标题前的小色点：让标题行也有撞色 */
+body.blog-home-mode .blog-home-feed .post-title::before {
+  background: linear-gradient(135deg, var(--pop-amber), var(--pop-rose));
+  border-radius: 2px;
+  content: "";
+  display: inline-block;
+  height: 0.62em;
+  margin-right: 10px;
+  transform: translateY(-2px);
+  width: 4px;
 }
