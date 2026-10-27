@@ -1,6 +1,35 @@
 /* Custom assets injected without modifying the NexT theme package. */
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+
 const siteRoot = hexo.config.root || '/';
-const style = `<link rel="stylesheet" href="${siteRoot}css/siyuan-knowledge.css">`;
+
+/**
+ * CSS 缓存指纹。
+ *
+ * 背景：`main.css` 与 `siyuan-knowledge.css` 一直是不带版本号的静态链接，
+ * 而 blogs 走 Fastly（cache-control: max-age=600）—— 改完样式发布后，
+ * 用户（包括我自己）最多要看 10 分钟的旧样式，好几次误判成「改动没生效」。
+ *
+ * 做法：构建时按内容算 md5 前 8 位挂到 `?v=` 上。内容一变指纹就变，
+ * CDN 缓存自然失效；内容没变则链接不变，缓存照旧命中。
+ * 这样不用手工 bump 版本号，也不会每次构建都无意义地失效缓存。
+ */
+function hashOf(relPath) {
+  try {
+    const file = path.join(hexo.base_dir, relPath);
+    return crypto.createHash('md5').update(fs.readFileSync(file)).digest('hex').slice(0, 8);
+  } catch (err) {
+    hexo.log.warn(`[assets] 读不到 ${relPath}，缓存指纹降级为 0：${err.message}`);
+    return '0';
+  }
+}
+
+const siyuanCssVersion = hashOf('source/css/siyuan-knowledge.css');
+const mainCssVersion = hashOf('source/_data/styles.styl');
+
+const style = `<link rel="stylesheet" href="${siteRoot}css/siyuan-knowledge.css?v=${siyuanCssVersion}">`;
 const shell = `<script src="${siteRoot}js/site-shell.js?v=20261029" defer></script>`;
 const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=20261029" defer></script><script src="${siteRoot}js/siyuan-knowledge.js?v=20261029" defer></script>`;
 
@@ -31,6 +60,12 @@ const navEnhance = [
 // The full document index is only needed by the home and knowledge pages.
 hexo.extend.injector.register('body_end', knowledge, 'home');
 hexo.extend.injector.register('body_end', knowledge, 'page');
+
+// 给主题自己输出的 main.css 补上同样的缓存指纹（NexT 模板不改，只在渲染结果里替换）。
+hexo.extend.filter.register('after_render:html', html => html.replace(
+  /(<link[^>]+href=")([^"]*?css\/main\.css)(")/gi,
+  (match, head, href, tail) => (/[?&]v=/.test(href) ? match : `${head}${href}?v=${mainCssVersion}${tail}`)
+));
 
 // Defer below-the-fold content images without delaying the small profile avatar.
 hexo.extend.filter.register('after_render:html', html => html.replace(/<img\b(?![^>]*\bloading=)([^>]*?)>/gi, (tag, attrs) => {
