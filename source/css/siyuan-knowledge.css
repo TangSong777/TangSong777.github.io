@@ -3465,3 +3465,117 @@ body.siyuan-mode .post-body ul li > p > a:hover {
   margin-top: 18px;
   padding-top: 16px;
 }
+/* ==== Round 32：归档条目从「每篇一张大卡」改成「一行一条」的时间线 ====
+   原来每篇日志是一张独立的圆角卡片、上下各留 10px，5 篇就撑满一屏还看不全，
+   而归档页本该是「扫一眼时间线」的地方。改成行：日期固定宽 + 标题，行间一条细线，
+   hover 整行淡绿底 + 左侧撞色条淡入，比「卡片位移」安静，也更像一个列表。 */
+@media (min-width: 768px) {
+  body.archive-mode .posts-collapse article {
+    border: 0;
+    border-bottom: 1px solid var(--sy-line);
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+    transition: background-color .16s ease;
+  }
+  body.archive-mode .posts-collapse article:last-child { border-bottom: 0; }
+  body.archive-mode .posts-collapse article:hover {
+    background: var(--green-wash);
+    border-color: var(--sy-line);
+    box-shadow: none;
+    transform: none;
+  }
+  body.archive-mode .posts-collapse article::before { bottom: 8px; top: 8px; width: 3px; }
+  body.archive-mode .posts-collapse .post-header {
+    align-items: baseline;
+    display: flex;
+    gap: 12px;
+    padding: 11px 10px 11px 14px;
+  }
+  body.archive-mode .posts-collapse .post-meta-container {
+    background: transparent;
+    border-radius: 0;
+    color: var(--muted-2);
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .04em;
+    padding: 0;
+    width: 46px;
+  }
+  body.archive-mode .posts-collapse .post-title-link { font-size: 15.5px; line-height: 1.5; }
+}
+/* ==== Round 32b：归档行里真正把行高撑起来的是标题的 line-height，不是内边距 ====
+   量出来的：article h=72、header pad 11/11、但 title h=42（fs=21px lh=42px）、
+   meta 还有 14px 下边距。行高是继承 NexT 的 2 倍，必须改到 .post-title 本身，
+   改 .post-title-link 不管用（那是行内元素，行盒由父级 line-height 决定）。 */
+body.archive-mode .posts-collapse .post-title {
+  font-size: 15.5px;
+  line-height: 1.5;
+  margin: 0;
+}
+body.archive-mode .posts-collapse .post-title-link { line-height: inherit; }
+body.archive-mode .posts-collapse .post-meta-container { margin: 0; }
+/* ==== Round 32c：NexT 给归档行留了 margin: 30px 2px 0 和一条虚线，行距全在它身上 ====
+   只改 padding 不改 margin，量出来每行还是 72px、内容挤在行顶、分隔线悬在中间。
+   这里把 margin 归零、虚线去掉，行距交给 article 的 1px 分隔线和 11px 内边距。 */
+body.archive-mode .posts-collapse .post-header {
+  border-bottom: 0;
+  margin: 0;
+}
+body.archive-mode .posts-collapse .post-content { margin: 0 0 18px; }
+/* ==== Round 32d：行底色是第 15 轮那条 .post-header { background: var(--surface) } 留下的 ====
+   当时每篇是一张独立卡片，行底是浅灰白还能当「卡片面」；
+   现在行与行只靠一条细线分隔，浅灰底反而像表格隔行、也把白卡片切出一块。
+   底色交给 :hover 的淡绿，行本身保持透明。 */
+body.archive-mode .posts-collapse .post-header { background: transparent; }
+/* ==== Round 32e：手机上还是「一篇一张卡」，位置没变但换了形状 ====
+   桌面这轮改成了行式时间线，手机仍沿用旧的「圆角卡片 + 日期在上」，
+   同一页在两种宽度下是两种结构，切窗口会愣一下。手机也改成一行一条：
+   日期定宽 40px（10-25 正好放得下）、标题占剩余宽度，行间细线。 */
+@media (max-width: 767px) {
+  body.archive-mode .posts-collapse article {
+    border: 0;
+    border-bottom: 1px solid var(--sy-line);
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+  }
+  body.archive-mode .posts-collapse article:last-child { border-bottom: 0; }
+  body.archive-mode .posts-collapse .post-header {
+    align-items: baseline;
+    background: transparent;
+    border: 0;
+    display: flex;
+    gap: 10px;
+    margin: 0;
+    padding: 10px 4px 10px 6px;
+  }
+  body.archive-mode .posts-collapse .post-meta-container {
+    background: transparent;
+    color: var(--muted-2);
+    display: block;
+    flex: 0 0 auto;
+    font-size: 11.5px;
+    margin: 0;
+    padding: 0;
+    width: 40px;
+  }
+  body.archive-mode .posts-collapse .post-title { font-size: 14.5px; line-height: 1.45; margin: 0; }
+  body.archive-mode .posts-collapse .post-title-link { display: block; white-space: normal; }
+}
+/* ==== Round 32f：手机上真正的「卡片」是 .post-content > article .post-header ====
+   这条规则的权重是 (0,3,2) —— 比我这轮写的 (0,3,1) 高一级，所以 article 的
+   border 归零了、而内层还留着 1px 描边 + 10px 圆角 + 白底 + flex-direction: column，
+   于是「行」里套着「卡」。这里用多一级元素选择器压回去。 */
+body.archive-mode .posts-collapse .post-content > article .post-header {
+  align-items: baseline;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 4px 10px 6px;
+}
