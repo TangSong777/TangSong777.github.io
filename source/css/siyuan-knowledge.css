@@ -92,7 +92,7 @@ body.blog-post-mode .post-block {
 
 body.blog-post-mode .post-title { color: var(--sy-ink); letter-spacing: -.025em; }
 body.blog-post-mode .post-meta { color: var(--sy-muted); }
-body.blog-post-mode .post-body { color: #223331; }
+body.blog-post-mode .post-body { color: #1c2b2a; }
 body.blog-post-mode .post-body a { border-bottom-color: rgba(95,143,130,.35); color: #527d79; }
 body.blog-post-mode .post-body blockquote { background: #eef4f3; border-left-color: var(--sy-accent); border-radius: 0 8px 8px 0; }
 body.blog-post-mode .post-body table { border-color: var(--sy-line); }
