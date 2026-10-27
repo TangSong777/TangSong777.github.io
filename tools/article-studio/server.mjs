@@ -1147,7 +1147,9 @@ async function routeApi(req, res, url, identity) {
 
   if (req.method === 'GET' && url.pathname === '/api/siyuan-privacy') {
     const [rules, documents] = await Promise.all([loadSiyuanPrivacyRules(), listSiyuanDocuments()]);
-    return send(res, 200, { ok: true, rules, documents });
+    // 笔记本根文档名（导出目录名去掉 .md），前端据此把根文档提为树根
+    const notebook = siyuanSourceDir.split(/[\\/]/).pop().replace(/\.md$/i, '');
+    return send(res, 200, { ok: true, rules, documents, notebook });
   }
 
   if (req.method === 'GET' && url.pathname === '/api/article') {
@@ -1310,6 +1312,63 @@ async function routeApi(req, res, url, identity) {
     } finally {
       publishRequestActive = false;
     }
+  }
+
+  // ---- 岁月史书管理：评论与补充申请 ----
+  const historyDataDir = '/srv/blog/history-site/data';
+
+  async function readList(file) {
+    try { return JSON.parse(await readFile(file, 'utf8')); } catch { return []; }
+  }
+
+  async function writeList(file, data) {
+    const temporary = `${file}.tmp-${process.pid}`;
+    await writeFile(temporary, JSON.stringify(data, null, 2), 'utf8');
+    await rename(temporary, file);
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/admin/comments') {
+    const list = await readList(join(historyDataDir, 'comments.json'));
+    return send(res, 200, { ok: true, comments: list.slice().reverse() });
+  }
+
+  if (req.method === 'DELETE' && url.pathname === '/api/admin/comments') {
+    const id = url.searchParams.get('id');
+    const list = await readList(join(historyDataDir, 'comments.json'));
+    await writeList(join(historyDataDir, 'comments.json'), list.filter((item) => item.id !== id));
+    return send(res, 200, { ok: true });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/admin/submissions') {
+    const list = await readList(join(historyDataDir, 'submissions.json'));
+    // 垃圾桶：被忽略超过 30 天的申请自动删除
+    const cutoff = Date.now() - 30 * 24 * 3600 * 1000;
+    const kept = list.filter((item) => !(item.status === 'rejected' && new Date(item.createdAt || 0).getTime() < cutoff));
+    if (kept.length !== list.length) await writeList(join(historyDataDir, 'submissions.json'), kept);
+    return send(res, 200, { ok: true, submissions: kept.slice().reverse() });
+  }
+
+  if (req.method === 'DELETE' && url.pathname === '/api/admin/submissions') {
+    const id = url.searchParams.get('id');
+    const purgeAll = url.searchParams.get('all') === '1';
+    const list = await readList(join(historyDataDir, 'submissions.json'));
+    // all=1 清空垃圾桶（只删已忽略的，不动待处理与已采纳）
+    const next = purgeAll
+      ? list.filter((item) => (item.status || 'pending') !== 'rejected')
+      : list.filter((item) => item.id !== id);
+    if (next.length === list.length) return fail(res, 404, purgeAll ? '垃圾桶已经是空的。' : '申请不存在。');
+    await writeList(join(historyDataDir, 'submissions.json'), next);
+    return send(res, 200, { ok: true, removed: list.length - next.length });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/admin/submissions/status') {
+    const body = await readJson(req);
+    const list = await readList(join(historyDataDir, 'submissions.json'));
+    const target = list.find((item) => item.id === body.id);
+    if (!target) return fail(res, 404, '申请不存在。');
+    target.status = ['approved', 'rejected', 'pending'].includes(body.status) ? body.status : 'pending';
+    await writeList(join(historyDataDir, 'submissions.json'), list);
+    return send(res, 200, { ok: true });
   }
 
   return false;

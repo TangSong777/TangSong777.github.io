@@ -23,7 +23,7 @@ let richChangeFrame;
 
 function splitEditorDocument(value) {
   const text = String(value || '');
-  const match = text.match(/^---\s*\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/);
+  const match = text.match(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/);
   return match ? { frontMatter: match[0], body: text.slice(match[0].length) } : { frontMatter: '', body: text };
 }
 
@@ -44,14 +44,67 @@ function currentEditorContent() {
   return sourceEditor.value;
 }
 
+/**
+ * 编辑器统一门面。
+ * - 所见即所得模式（CodeMirror）下所有读写都落到 CodeMirror 上
+ * - 源码模式下落到 textarea
+ *
+ * 坐标注意：editor.value 包含 front matter，而 CodeMirror 只装正文，
+ * 因此读写选中范围都要做一次 offset 换算。
+ */
 const editor = {
   get value() { return currentEditorContent(); },
   set value(value) { setEditorContent(value); },
-  get selectionStart() { return sourceEditor.selectionStart; },
-  get selectionEnd() { return sourceEditor.selectionEnd; },
-  setSelectionRange(...args) { sourceEditor.setSelectionRange(...args); },
-  setRangeText(...args) { sourceEditor.setRangeText(...args); },
-  focus(options) { if (editorMode === 'wysiwyg' && richEditor) richEditor.focus(); else sourceEditor.focus(options); },
+
+  get _cm() { return (editorMode === 'wysiwyg' && richEditor) ? richEditor : null; },
+  get _offset() { return this._cm ? richFrontMatter.length : 0; },
+
+  get selectionStart() {
+    const cm = this._cm;
+    if (cm) return cm.state.selection.main.from + this._offset;
+    return sourceEditor.selectionStart;
+  },
+  get selectionEnd() {
+    const cm = this._cm;
+    if (cm) return cm.state.selection.main.to + this._offset;
+    return sourceEditor.selectionEnd;
+  },
+
+  setSelectionRange(start, end) {
+    const cm = this._cm;
+    if (cm) {
+      const offset = this._offset;
+      const total = cm.state.doc.length;
+      const anchor = Math.max(0, Math.min(total, start - offset));
+      const head = Math.max(0, Math.min(total, (end ?? start) - offset));
+      cm.dispatch({ selection: { anchor, head } });
+      return;
+    }
+    sourceEditor.setSelectionRange(start, end);
+  },
+
+  setRangeText(replacement, start, end) {
+    const cm = this._cm;
+    if (cm) {
+      const offset = this._offset;
+      const total = cm.state.doc.length;
+      const from = Math.max(0, Math.min(total, start - offset));
+      const to = Math.max(0, Math.min(total, (end ?? start) - offset));
+      cm.dispatch({
+        changes: { from, to, insert: replacement },
+        selection: { anchor: from + replacement.length },
+      });
+      return;
+    }
+    sourceEditor.setRangeText(replacement, start, end, 'end');
+  },
+
+  focus(options) {
+    const cm = this._cm;
+    if (cm) { cm.focus(); return; }
+    sourceEditor.focus(options);
+  },
+
   addEventListener(...args) { sourceEditor.addEventListener(...args); },
 };
 const articleMetadata = globalThis.ArticleMetadata;
@@ -127,11 +180,31 @@ function titleFromContent(content, fallback) {
   return match ? match[1].trim().replace(/^['"]|['"]$/g, '') : fallback.replace(/\.md$/i, '');
 }
 
-function renderPreview() {
-  const content = editor.value;
-  const raw = stripFrontMatter(content);
-  $('#wordCount').textContent = `${raw.replace(/\s/g, '').length} 字`;
-  $('#documentTitle').textContent = titleFromContent(content, state.currentPath);
+let previewCache = { value: null, text: '' };
+
+function renderPreview(options = {}) {
+  const content = options.value ?? editor.value;
+
+  // 值没变就跳过统计，避免每次按键都全文扫描
+  if (content !== previewCache.value) {
+    const raw = stripFrontMatter(content);
+    const chars = raw.replace(/\s/g, '').length;
+    $('#wordCount').textContent = `${chars} 字`;
+    $('#documentTitle').textContent = titleFromContent(content, state.currentPath);
+    previewCache = { value: content, text: null };
+  }
+
+  if (options.resetScroll) {
+    const cm = editor._cm;
+    if (cm) {
+      cm.dispatch({ selection: { anchor: 0 }, scrollIntoView: true });
+      cm.scrollDOM.scrollTop = 0;
+    } else {
+      sourceEditor.setSelectionRange(0, 0);
+      sourceEditor.scrollTop = 0;
+    }
+    previewCache.value = null; // 强制下一次重算标题
+  }
 }
 
 function updateCursor() {
@@ -197,13 +270,14 @@ function draftKey(path) {
   return `article-studio:draft:${path}`;
 }
 
-function storeDraftSoon() {
+function storeDraftSoon(pendingValue) {
   clearTimeout(state.draftTimer);
   if (!state.currentPath) return;
   state.draftTimer = setTimeout(() => {
     try {
       localStorage.setItem(draftKey(state.currentPath), JSON.stringify({
-        content: editor.value, savedAt: new Date().toISOString(),
+        content: pendingValue ?? editor.value,
+        savedAt: new Date().toISOString(),
       }));
     } catch { /* 浏览器禁用或空间不足时仍可手动保存到服务端 */ }
   }, 600);
@@ -287,6 +361,10 @@ async function selectArticle(path) {
   $('#documentPath').textContent = `source/_posts/${data.path}`;
   $('#emptyState').classList.add('hidden');
   $('#editorView').classList.remove('hidden');
+  // CodeMirror 在隐藏状态下创建时量不到尺寸，显示后必须重新测量
+  if (richEditor && typeof richEditor.requestMeasure === 'function') {
+    requestAnimationFrame(() => richEditor.requestMeasure());
+  }
   renderPreview({ immediate: true, resetScroll: true });
   updateCursor();
   setDirty(initialContent !== data.content);
@@ -462,11 +540,15 @@ function editorSnapshot() {
 }
 
 function refreshEditorState() {
+  // 只取一次全文：CodeMirror 下每次 editor.value 都是 doc.toString()，
+  // 大文档里调三次会明显掉帧。
+  const value = editor.value;
+  const dirty = value !== state.content;
   scheduleArticleOutline();
-  renderPreview();
+  renderPreview({ value });
   updateCursor();
-  setDirty(editor.value !== state.content);
-  if (editor.value !== state.content) storeDraftSoon();
+  setDirty(dirty);
+  if (dirty) storeDraftSoon(value);
 }
 
 let outlineTimer;
@@ -475,7 +557,7 @@ let outlineActiveButton = null;
 let outlineScrollFrame;
 function syncArticleOutline() {
   const nav = $('#articleOutline');
-  const container = editorMode === 'wysiwyg' ? $('#richEditor .toastui-editor-ww-container .ProseMirror') : sourceEditor;
+  const container = editorMode === 'wysiwyg' ? ($('#richEditor .cm-scroller') || $('#richEditor')) : sourceEditor;
   if (!nav || !container || !outlineEntries.length) return;
   const bounds = container.getBoundingClientRect();
   const threshold = Math.min(180, container.clientHeight * .24);
@@ -499,7 +581,7 @@ function syncArticleOutline() {
   }
 }
 $('#editingSurface').addEventListener('scroll', (event) => {
-  if (event.target !== sourceEditor && !event.target.matches?.('#richEditor .toastui-editor-ww-container .ProseMirror')) return;
+  if (event.target !== sourceEditor && !event.target.matches?.('#richEditor .cm-scroller')) return;
   if (outlineScrollFrame) return;
   outlineScrollFrame = requestAnimationFrame(() => { outlineScrollFrame = null; syncArticleOutline(); });
 }, true);
@@ -508,12 +590,39 @@ function scheduleArticleOutline() {
   outlineTimer = setTimeout(renderArticleOutline, 120);
 }
 
+/**
+ * 从 Markdown 正文里解析标题，返回 { level, title, offset }。
+ * CodeMirror 与源码模式共用这一套逻辑。
+ */
+function parseMarkdownHeadings(body, baseOffset, out) {
+  let offset = baseOffset;
+  let fence = null;
+  const lines = String(body || '').split('\n');
+  lines.forEach((line, index) => {
+    const marker = line.match(/^ {0,3}(`{3,}|~{3,})/);
+    if (marker) {
+      if (!fence) fence = marker[1];
+      else if (marker[1][0] === fence[0] && marker[1].length >= fence.length && /^\s*$/.test(line.slice(marker[0].length))) fence = null;
+    } else if (!fence) {
+      const atx = line.match(/^ {0,3}(#{1,6})(?:[ \t]+|$)(.*)/);
+      const setext = line.trim() && lines[index + 1]?.match(/^ {0,3}(=+|-+)\s*$/);
+      if (atx) out.push({ level: atx[1].length, title: atx[2].replace(/[ \t]+#+\s*$/, ''), offset });
+      else if (setext) out.push({ level: setext[1][0] === '=' ? 1 : 2, title: line.trim(), offset });
+    }
+    offset += line.length + 1;
+  });
+  return out;
+}
+
 function renderArticleOutline() {
   const nav = $('#articleOutline');
   if (!nav) return;
   let headings;
   if (editorMode === 'wysiwyg') {
-    headings = [...document.querySelectorAll('#richEditor .toastui-editor-ww-container .ProseMirror h1, #richEditor .toastui-editor-ww-container .ProseMirror h2, #richEditor .toastui-editor-ww-container .ProseMirror h3, #richEditor .toastui-editor-ww-container .ProseMirror h4, #richEditor .toastui-editor-ww-container .ProseMirror h5, #richEditor .toastui-editor-ww-container .ProseMirror h6')].map((node) => ({ title: node.textContent, level: Number(node.tagName[1]), node }));
+    // CodeMirror 里标题不是 DOM 元素，直接从文本解析，点击时按行定位
+    headings = [];
+    const parts = splitEditorDocument(richEditor ? richEditor.getMarkdown() : sourceEditor.value);
+    parseMarkdownHeadings(parts.body, parts.frontMatter.length, headings);
   } else {
     headings = [];
     const parts = splitEditorDocument(sourceEditor.value);
@@ -546,16 +655,21 @@ function renderArticleOutline() {
     button.textContent = heading.title.trim() || '未命名标题';
     button.title = `H${heading.level} · ${button.textContent}`;
     button.addEventListener('click', () => {
-      if (heading.node) {
-        const container = heading.node.closest('.ProseMirror');
-        container.scrollTop += heading.node.getBoundingClientRect().top - container.getBoundingClientRect().top - 20;
-        syncArticleOutline();
-      } else {
-        sourceEditor.focus(); sourceEditor.setSelectionRange(heading.offset, heading.offset);
-        const line = sourceEditor.value.slice(0, heading.offset).split('\n').length - 1;
-        sourceEditor.scrollTop = Math.max(0, line * parseFloat(getComputedStyle(sourceEditor).lineHeight) - 40);
-        updateCursor();
+      if (editorMode === 'wysiwyg' && richEditor) {
+        // CodeMirror：按偏移量定位并滚动到可视区
+        const position = Math.min(heading.offset + 0, richEditor.state.doc.length);
+        richEditor.dispatch({
+          selection: { anchor: position },
+          scrollIntoView: true,
+        });
+        richEditor.focus();
+        return;
       }
+      sourceEditor.focus();
+      sourceEditor.setSelectionRange(heading.offset, heading.offset);
+      const line = sourceEditor.value.slice(0, heading.offset).split('\n').length - 1;
+      sourceEditor.scrollTop = Math.max(0, line * parseFloat(getComputedStyle(sourceEditor).lineHeight) - 40);
+      updateCursor();
     });
     nav.append(button);
     outlineEntries.push({ ...heading, button });
@@ -760,179 +874,221 @@ function handleRichEditorChange() {
   if (suppressRichChange) return;
   cancelAnimationFrame(richChangeFrame);
   richChangeFrame = requestAnimationFrame(() => {
-    sourceEditor.value = currentEditorContent();
+    // CodeMirror 直接持有 Markdown 源码，不需要回写到隐藏的 textarea
+    // 只有切到源码模式时才需要同步
+    if (editorMode !== 'wysiwyg') sourceEditor.value = currentEditorContent();
     refreshEditorState();
   });
 }
 
 // Toast UI's WYSIWYG mode does not ship Markdown heading input rules.
 // Use its ProseMirror transaction/history API so typing and undo stay coherent.
-function markdownHeadingInputPlugin({ pmRules, pmKeymap, pmState }) {
-  const { InputRule, inputRules, undoInputRule } = pmRules;
-  const inlineRule = (pattern, markName) => new InputRule(pattern, (state, match, start, end) => {
-    if (!state.selection.empty) return null;
-    const prefix = match[1] || '';
-    const text = match[2];
-    const from = start + prefix.length;
-    const mark = state.schema.marks[markName];
-    if (!mark || !text || text.includes('\n')) return null;
-    const tr = state.tr.insertText(text, from, end);
-    tr.addMark(from, from + text.length, mark.create());
-    tr.removeStoredMark(mark);
-    return tr;
-  });
-  const linkRule = (pattern, automatic = false) => new InputRule(pattern, (state, match, start, end) => {
-    if (!state.selection.empty) return null;
-    const prefix = match[1] || '', label = match[2], url = automatic ? label : match[3];
-    if (!/^(?:https?:\/\/|mailto:|\/(?!\/)|#)/i.test(url)) return null;
-    const from = start + prefix.length, mark = state.schema.marks.link;
-    if (!mark) return null;
-    return state.tr.insertText(label, from, end).addMark(from, from + label.length, mark.create({ linkUrl: url })).removeStoredMark(mark);
-  });
-  const listRule = new InputRule(/^(?:([-+*]) |(\d{1,9})\. )$/, (state, match, start, end) => {
-    const { $from, empty } = state.selection;
-    if (!empty || $from.parent.type.name !== 'paragraph') return null;
-    const n = state.schema.nodes;
-    const type = match[2] ? n.orderedList : n.bulletList;
-    const parent = $from.node($from.depth - 1), index = $from.index($from.depth - 1);
-    if (!parent.canReplaceWith(index, index + 1, type)) return null;
-    const paragraph = n.paragraph.create(null, $from.parent.content.cut(end - $from.start()));
-    const list = type.create(match[2] ? { order: Number(match[2]) } : null, n.listItem.create(null, paragraph));
-    const from = $from.before();
-    const tr = state.tr.replaceWith(from, $from.after(), list);
-    return tr.setSelection(pmState.TextSelection.create(tr.doc, from + 3));
-  });
-  const taskRule = new InputRule(/^\[([ xX])\] $/, (state, match, start, end) => {
-    const { $from } = state.selection;
-    if (!state.selection.empty || $from.parent.type.name !== 'paragraph') return null;
-    if ($from.depth < 2 || $from.node($from.depth - 1).type.name !== 'listItem') return null;
-    const item = $from.node($from.depth - 1);
-    return state.tr.delete(start, end).setNodeMarkup($from.before($from.depth - 1), null, { ...item.attrs, task: true, checked: match[1].toLowerCase() === 'x' });
-  });
-  const codeRule = new InputRule(/^(```|~~~)([\w+-]*) $/, (state, match, start, end) => {
-    const { $from } = state.selection;
-    const type = state.schema.nodes.codeBlock;
-    if (!state.selection.empty || $from.parent.type.name !== 'paragraph' || $from.parentOffset !== $from.parent.content.size) return null;
-    if (!$from.node($from.depth - 1).canReplaceWith($from.index($from.depth - 1), $from.index($from.depth - 1) + 1, type)) return null;
-    return state.tr.delete(start, end).setBlockType(start, start, type, { language: match[2] || null });
-  });
-  const blockRule = (pattern, quote) => new InputRule(pattern, (state, match, start, end) => {
-    const { $from, empty } = state.selection;
-    if (!empty || $from.parent.type.name !== 'paragraph') return null;
-    const { paragraph, blockQuote, thematicBreak } = state.schema.nodes;
-    const from = $from.before(), to = $from.after();
-    const rest = $from.parent.content.cut(end - $from.start());
-    const text = paragraph.create(null, rest);
-    const nodes = quote ? [blockQuote.create(null, text)] : [thematicBreak.create(), text];
-    const parent = $from.node($from.depth - 1), index = $from.index($from.depth - 1);
-    if (!parent.canReplaceWith(index, index + 1, nodes[0].type)) return null;
-    const tr = state.tr.replaceWith(from, to, nodes);
-    return tr.setSelection(pmState.TextSelection.create(tr.doc, from + (quote ? 2 : nodes[0].nodeSize + 1)));
-  });
-  return {
-    wysiwygPlugins: [
-      () => inputRules({ rules: [new InputRule(/^(#{1,6}) $/, (state, match, start, end) => {
-        const { $from, empty } = state.selection;
-        const heading = state.schema.nodes.heading;
-        if (!empty || $from.parent.type.name !== 'paragraph' || !heading) return null;
-        const parent = $from.node($from.depth - 1);
-        const index = $from.index($from.depth - 1);
-        if (!parent.canReplaceWith(index, index + 1, heading)) return null;
-        return state.tr.delete(start, end).setBlockType(start, start, heading, {
-          level: match[1].length,
-        });
-      }), blockRule(/^> $/, true), blockRule(/^(?:\*\*\*|---|___) $/, false), listRule, taskRule, codeRule,
-      inlineRule(/(^|[^\\*])\*\*([^*]+)\*\*$/, 'strong'),
-      inlineRule(/(^|[^\\_\w])__([^_]+)__$/, 'strong'),
-      inlineRule(/(^|[^\\*])\*([^*]+)\*$/, 'emph'),
-      inlineRule(/(^|[^\\_\w])_([^_]+)_$/, 'emph'),
-      inlineRule(/(^|[^\\~])~~([^~]+)~~$/, 'strike'),
-      inlineRule(/(^|[^\\`])`([^`]+)`$/, 'code'),
-      linkRule(/(^|[^\\!])\[([^\]\n]+)\]\(([^\s()]+)\)$/),
-      linkRule(/(^|[^\\])<(https?:\/\/[^<>\s]+)>$/, true)
-      ] }),
-      () => new pmState.Plugin({ props: { handleKeyDown(view, event) {
-        if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || view.composing) return false;
-        const { $from, empty } = view.state.selection;
-        if (!empty || $from.parent.type.name !== 'paragraph' || !/^(?:```|~~~)[\w+-]*$/.test($from.parent.textContent)) return false;
-        return view.someProp('handleTextInput', handler => handler(view, $from.pos, $from.pos, ' ')) || false;
-      } } }),
-      () => pmKeymap.keymap({ Backspace: undoInputRule }),
-    ],
-  };
-}
 
-function bottomWritingSpacePlugin({ pmState }) {
-  return { wysiwygPlugins: [() => new pmState.Plugin({
-    props: { handleDOMEvents: { click(view, event) {
-      if (event.button !== 0 || event.target !== view.dom || view.composing || !view.editable) return false;
-      const lastElement = view.dom.lastElementChild;
-      if (!lastElement || event.clientY <= lastElement.getBoundingClientRect().bottom) return false;
-      const { doc, schema } = view.state;
-      const last = doc.lastChild;
-      if (!last) return false;
-      const tr = view.state.tr;
-      let position;
-      if (last.type === schema.nodes.paragraph && last.content.size === 0) {
-        position = doc.content.size - last.nodeSize + 1;
-      } else {
-        const paragraph = schema.nodes.paragraph.createAndFill();
-        if (!paragraph || !doc.canReplaceWith(doc.childCount, doc.childCount, paragraph.type)) return false;
-        position = doc.content.size + 1;
-        tr.insert(doc.content.size, paragraph);
-      }
-      tr.setSelection(pmState.TextSelection.create(tr.doc, position));
-      view.dispatch(tr.scrollIntoView());
-      view.focus();
-      event.preventDefault();
-      return true;
-    } } },
-  })] };
-}
 
 function initializeRichEditor() {
-  if (!globalThis.toastui?.Editor) throw new Error('所见即所得编辑器加载失败。');
-  richEditor = new globalThis.toastui.Editor({
-    el: $('#richEditor'),
-    height: '100%',
-    initialValue: '',
-    initialEditType: 'wysiwyg',
-    previewStyle: 'tab',
-    hideModeSwitch: true,
-    autofocus: false,
-    usageStatistics: false,
-    plugins: [markdownHeadingInputPlugin, bottomWritingSpacePlugin],
-    language: 'zh-CN',
-    toolbarItems: [
-      ['heading', 'bold', 'italic', 'strike'],
-      ['hr', 'quote'],
-      ['ul', 'ol', 'task', 'indent', 'outdent'],
-      ['table', 'image', 'link'],
-      ['code', 'codeblock'],
-    ],
-    events: { change: handleRichEditorChange },
-    hooks: {
-      addImageBlobHook(blob, callback) {
-        if (!state.currentPath) {
-          toast('请先创建或选择文章。', true);
-          return false;
-        }
-        toast(`正在保存图片：${blob.name || '粘贴的图片'}`);
-        uploadImageFile(blob).then((data) => {
-          callback(data.markdownPath, (blob.name || '图片').replace(/\.[^.]+$/, ''));
-          toast('图片已插入。');
-        }).catch((error) => toast(error.message, true));
-        return false;
-      },
+  const CM = globalThis.CM;
+  const TP = globalThis.TyporaPreview;
+  if (!CM) throw new Error('CodeMirror 加载失败。');
+  if (!TP) throw new Error('行内预览扩展加载失败。');
+
+  const {
+    EditorState, EditorView, keymap, history, historyKeymap, defaultKeymap,
+    markdown, markdownLanguage, drawSelection, dropCursor, highlightActiveLine,
+    highlightSpecialChars, highlightSelectionMatches, searchKeymap, indentWithTab,
+    bracketMatching, indentOnInput, codeLanguages,
+  } = CM;
+
+  const theme = EditorView.theme({
+    '&': {
+      height: '100%',
+      fontSize: '16px',
+      backgroundColor: 'transparent',
     },
+    '.cm-scroller': {
+      /* 与 blogs 的 .post-body 使用同一套字体栈和行高 */
+      fontFamily: '"Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif',
+      lineHeight: '1.85',
+      padding: '24px 26px 40vh 26px',
+    },
+    '.cm-content': { caretColor: 'var(--accent, #33544f)' },
+    '.cm-line': { padding: '0' },
+    '&.cm-focused': { outline: 'none' },
+    '.cm-activeLine': { backgroundColor: 'transparent' },
+    '.cm-selectionBackground, ::selection': { backgroundColor: 'rgba(31, 81, 71, .14)' },
+    '&.cm-focused .cm-selectionBackground': { backgroundColor: 'rgba(31, 81, 71, .18)' },
+    '.cm-cursor': { borderLeftWidth: '2px' },
   });
+
+  const state = EditorState.create({
+    doc: '',
+    extensions: [
+      highlightSpecialChars(),
+      history(),
+      drawSelection(),
+      dropCursor(),
+      EditorState.allowMultipleSelections.of(true),
+      indentOnInput(),
+      bracketMatching(),
+      highlightSelectionMatches(),
+      highlightActiveLine(),
+      markdown({ base: markdownLanguage, codeLanguages: codeLanguages || [] }),
+      TP.highlight,
+      TP.livePreview,
+      TP.liveStyles,
+      theme,
+      keymap.of([
+        // Markdown 快捷标记：与 Typora 保持一致
+        {
+          key: 'Mod-b',
+          run: (view) => TP.toggleInlineMark(view, '**', '**', '粗体'),
+        },
+        {
+          key: 'Mod-i',
+          run: (view) => TP.toggleInlineMark(view, '*', '*', '斜体'),
+        },
+        {
+          key: 'Mod-Shift-x',
+          run: (view) => TP.toggleInlineMark(view, '~~', '~~', '删除线'),
+        },
+        {
+          key: 'Mod-e',
+          run: (view) => TP.toggleInlineMark(view, '`', '`', '代码'),
+        },
+        {
+          key: 'Mod-k',
+          run: (view) => {
+            const range = view.state.selection.main;
+            const text = view.state.sliceDoc(range.from, range.to) || '链接文字';
+            const snippet = `[${text}](https://)`;
+            view.dispatch({
+              changes: { from: range.from, to: range.to, insert: snippet },
+              selection: { anchor: range.from + snippet.length - 1 },
+            });
+            return true;
+          },
+        },
+        // 官方 Markdown 键位：回车延续列表、列表标记上退格删除整块、
+        // Ctrl+Click 打开链接等。必须排在 defaultKeymap 之前，
+        // 否则 Enter 会先被 defaultKeymap 的 insertNewlineAndIndent 抢走。
+        ...(Array.isArray(CM.markdownKeymap) ? CM.markdownKeymap : []),
+        ...defaultKeymap,
+        ...historyKeymap,
+        ...searchKeymap,
+        ...(Array.isArray(CM.foldKeymap) ? CM.foldKeymap : []),
+        indentWithTab,
+      ]),
+      EditorView.lineWrapping,
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) handleRichEditorChange();
+      }),
+      EditorView.domEventHandlers({
+        paste(event, view) {
+          const files = [...(event.clipboardData?.files || [])].filter((f) => f.type.startsWith('image/'));
+          if (files.length) {
+            event.preventDefault();
+            insertImagesIntoCodeMirror(view, files);
+            return true;
+          }
+          // 选中文字后粘贴 URL → 自动变成 Markdown 链接
+          const text = event.clipboardData?.getData('text') || '';
+          const range = view.state.selection.main;
+          if (range.empty || !/^https?:\/\/\S+$/.test(text.trim())) return false;
+          event.preventDefault();
+          const label = view.state.sliceDoc(range.from, range.to);
+          const snippet = `[${label}](${text.trim()})`;
+          view.dispatch({
+            changes: { from: range.from, to: range.to, insert: snippet },
+            selection: { anchor: range.from + snippet.length },
+          });
+          return true;
+        },
+        drop(event, view) {
+          const files = [...(event.dataTransfer?.files || [])].filter((f) => f.type.startsWith('image/'));
+          if (!files.length) return false;
+          event.preventDefault();
+          insertImagesIntoCodeMirror(view, files);
+          return true;
+        },
+      }),
+    ],
+  });
+
+  const host = document.getElementById('richEditor');
+  if (!host) throw new Error('找不到编辑器容器 #richEditor。');
+  host.innerHTML = '';
+  richEditor = new EditorView({ state, parent: host });
+
+  // 诊断出口：浏览器控制台里执行 __CM__() 就能看到编辑器的真实状态
+  window.__CM__ = () => ({
+    ready: true,
+    mode: editorMode,
+    docLength: richEditor.state.doc.length,
+    lines: richEditor.state.doc.lines,
+    selection: richEditor.state.selection.main,
+    frontMatterLength: richFrontMatter.length,
+    contentPreview: richEditor.state.doc.toString().slice(0, 200),
+    viewportHeight: richEditor.scrollDOM?.clientHeight ?? null,
+    decorations: (() => {
+      try {
+        const plugin = richEditor.plugin(window.TyporaPreview.livePreview);
+        return plugin ? plugin.decorations.size : 'no-plugin';
+      } catch (error) { return 'error: ' + error.message; }
+    })(),
+  });
+
+  // 对外的契约方法，沿用 Toast UI 的命名，调用方无需改动
+  richEditor.getMarkdown = () => richEditor.state.doc.toString();
+  richEditor.setMarkdown = (text) => {
+    const next = String(text || '');
+    if (next === richEditor.state.doc.toString()) return;
+    suppressRichChange = true;
+    // 整篇替换不能进撤销历史：否则打开下一篇后按 Ctrl+Z 会「撤销」回上一篇文章
+    const addToHistory = CM.Transaction?.addToHistory;
+    richEditor.dispatch({
+      changes: { from: 0, to: richEditor.state.doc.length, insert: next },
+      annotations: addToHistory ? addToHistory.of(false) : undefined,
+    });
+    suppressRichChange = false;
+  };
+  // 保存原生 focus，避免覆盖后自我递归
+  const nativeFocus = EditorView.prototype.focus;
+  richEditor.focus = (options) => nativeFocus.call(richEditor, options);
+
+  // 图片插入：把上传结果写进光标位置
+  function insertImagesIntoCodeMirror(view, files) {
+    if (!state_currentPath()) {
+      toast('请先创建或选择文章。', true);
+      return;
+    }
+    [...files].forEach(async (file) => {
+      try {
+        toast(`正在保存图片：${file.name}`);
+        const data = await uploadImageFile(file);
+        const alt = file.name.replace(/\.[^.]+$/, '');
+        const snippet = `![${alt}](${data.markdownPath})`;
+        const { from, to } = view.state.selection.main;
+        view.dispatch({
+          changes: { from, to, insert: snippet },
+          selection: { anchor: from + snippet.length },
+        });
+        toast('图片已插入。');
+      } catch (error) {
+        toast(error.message, true);
+      }
+    });
+  }
+
+  function state_currentPath() {
+    return state.currentPath;
+  }
 }
 
 // Observe rendered headings as well as editor change callbacks: toolbar changes,
 // undo/redo and document replacement all update the same live outline.
 let outlineObserver;
 function watchArticleHeadings() {
-  const root = $('#richEditor .toastui-editor-ww-container .ProseMirror');
+  // CodeMirror 的内容区是 .cm-content，标题变化由编辑器更新监听统一驱动
+  const root = $('#richEditor .cm-content');
   if (!root) return;
   outlineObserver?.disconnect();
   outlineObserver = new MutationObserver(scheduleArticleOutline);
@@ -942,6 +1098,7 @@ function watchArticleHeadings() {
 function switchEditorMode(mode) {
   if (mode === editorMode) return;
   if (mode === 'source') {
+    // 先取当前 CodeMirror 内容（含 front matter），再切到纯文本编辑
     sourceEditor.value = currentEditorContent();
     editorMode = 'source';
     $('#editingSurface').className = 'editing-surface source-mode';
@@ -949,9 +1106,7 @@ function switchEditorMode(mode) {
   } else {
     const parts = splitEditorDocument(sourceEditor.value);
     richFrontMatter = parts.frontMatter;
-    suppressRichChange = true;
-    richEditor.setMarkdown(parts.body, false);
-    suppressRichChange = false;
+    richEditor.setMarkdown(parts.body);
     editorMode = 'wysiwyg';
     $('#editingSurface').className = 'editing-surface wysiwyg-mode';
     richEditor.focus();
@@ -979,6 +1134,15 @@ async function init() {
     }
     $('#identityState').textContent = config.identity?.email || (config.authMode === 'cloudflare' ? '已安全登录' : '本地模式');
     await loadArticles();
+    // 从管理中心跳过来时带着 ?path=，直接打开对应文章
+    const deepLink = new URLSearchParams(location.search).get('path');
+    if (deepLink && state.authenticated) {
+      try {
+        await selectArticle(deepLink);
+      } catch (error) {
+        toast(`打开文章失败：${error.message}`, true);
+      }
+    }
   } catch (error) {
     toast(`无法连接本地后台：${error.message}`, true);
   }
@@ -1212,12 +1376,17 @@ editor.addEventListener('keydown', (event) => {
   const modifier = event.ctrlKey || event.metaKey;
   const key = event.key.toLowerCase();
   if (modifier && !event.altKey && key === 'z') {
+    // 自维护的撤销栈只记录工具栏/元数据这类操作，普通打字并不入栈。
+    // 栈里没东西时必须放行，否则会吞掉按键又拦掉浏览器原生撤销，等于完全失效。
+    const available = event.shiftKey ? state.redoStack.length : state.undoStack.length;
+    if (!available) return;
     event.preventDefault();
     if (event.shiftKey) redoEditorEdit();
     else undoEditorEdit();
     return;
   }
   if (modifier && !event.altKey && key === 'y') {
+    if (!state.redoStack.length) return;
     event.preventDefault();
     redoEditorEdit();
     return;
@@ -1248,16 +1417,39 @@ editor.addEventListener('drop', (event) => {
   const images = [...event.dataTransfer.files].filter((file) => file.type.startsWith('image/'));
   if (images.length) { event.preventDefault(); insertImages(images); }
 });
-document.querySelectorAll('.format-bar button').forEach((button) => {
+document.querySelectorAll('.editor-toolbar button').forEach((button) => {
+  // 按下时不让编辑器失焦，否则插入位置会跳走
   button.addEventListener('mousedown', (event) => event.preventDefault());
   button.addEventListener('click', () => {
     if (button.dataset.wrap) replaceSelection(button.dataset.wrap);
     else if (button.dataset.prefix) prefixLines(button.dataset.prefix);
     else if (button.dataset.action === 'link') replaceSelection('[', '](https://)', '链接文字');
     else if (button.dataset.action === 'divider') insertDivider();
+    else if (button.dataset.action === 'codeblock') insertCodeBlock();
   });
 });
+
+/** 插入围栏代码块；有选中内容时把选中的内容包进去，并把光标放到代码区里。 */
+function insertCodeBlock() {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const selected = editor.value.slice(start, end);
+
+  if (selected) {
+    const replacement = `\`\`\`\n${selected}\n\`\`\``;
+    applyUndoableEdit(start, end, replacement, start + 4, start + 4 + selected.length);
+  } else {
+    applyUndoableEdit(start, end, '\`\`\`\n\n\`\`\`', start + 4);
+  }
+}
 document.querySelectorAll('.view-tab').forEach((button) => button.addEventListener('click', () => switchEditorMode(button.dataset.view)));
+
+// 窗口尺寸变化、侧栏折叠等都会改变编辑器可用宽度，需要重新测量换行
+window.addEventListener('resize', () => {
+  if (richEditor && typeof richEditor.requestMeasure === 'function') {
+    richEditor.requestMeasure();
+  }
+});
 $('#imageInput').addEventListener('change', (event) => { insertImages(event.target.files); event.target.value = ''; });
 $('#searchInput').addEventListener('input', renderList);
 $('#newButton').addEventListener('click', openNewDialog);
@@ -1331,5 +1523,13 @@ try {
   watchArticleHeadings();
   init();
 } catch (error) {
+  // 编辑器起不来时给出显眼提示，避免只剩一个空白区域
+  const host = document.getElementById('richEditor');
+  if (host) {
+    host.innerHTML = '<div style="padding:32px;color:#b91c1c;font-family:monospace;white-space:pre-wrap;">'
+      + '编辑器初始化失败：\n' + String(error && error.stack || error)
+      + '</div>';
+  }
   toast(error.message, true);
+  console.error('[article-studio] 编辑器初始化失败', error);
 }

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>文章工作台 · YangHanLin</title>
+  <link rel="icon" type="image/jpeg" href="/site-preview/images/avatar.jpg?v=80260904">
+  <link rel="apple-touch-icon" href="/site-preview/images/avatar.jpg?v=80260904">
+  <link rel="stylesheet" href="/styles.css?v=9">
+</head>
+<body>
+  <header class="topbar">
+    <button id="mobileMenuButton" class="mobile-menu" type="button" aria-label="打开文章列表" aria-expanded="false">☰</button>
+    <div class="brand">
+      <span class="brand-mark">文</span>
+      <div><strong>文章工作台</strong><small>Markdown · Hexo · Git</small></div>
+    </div>
+    <div class="top-actions">
+      <a class="settings-button" href="https://server.yanghanlin.cn" rel="noopener">状态面板</a>
+      <button id="siyuanPrivacyButton" class="settings-button privacy-button" type="button" title="思源隐私规则">思源隐私</button>
+      <button id="settingsButton" class="settings-button" type="button" title="工作台设置" aria-label="打开工作台设置">设置</button>
+      <span id="identityState" class="identity-state"></span>
+      <span id="saveState" class="save-state">尚未选择文章</span>
+      <button id="saveButton" class="button secondary" disabled>保存 <kbd>Ctrl S</kbd></button>
+      <button id="publishButton" class="button primary" disabled>上传文章</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <button id="panelBackdrop" class="panel-backdrop" type="button" aria-label="关闭文章列表"></button>
+    <aside class="article-panel">
+      <div class="panel-heading">
+        <div><span class="eyebrow">CONTENT</span><h1>文章</h1></div>
+        <div class="panel-actions"><button id="newButton" class="icon-button" title="新建文章" aria-label="新建文章">＋</button><button id="closePanelButton" class="icon-button panel-close" type="button" aria-label="关闭文章列表">×</button></div>
+      </div>
+      <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索文章"></label>
+      <div id="articleList" class="article-list" aria-live="polite"></div>
+      <div class="local-note">内容只在本机处理。上传时仅提交当前文章及其图片。</div>
+    </aside>
+
+    <section class="editor-shell">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">✦</div>
+        <h2>开始写一篇文章</h2>
+        <p>从左侧选择文章，或者创建一篇新文章。</p>
+        <button id="emptyNewButton" class="button primary">新建文章</button>
+      </div>
+
+      <div id="editorView" class="editor-view hidden">
+        <div class="document-bar">
+          <div><span id="documentPath" class="document-path"></span><h2 id="documentTitle">未命名文章</h2></div>
+          <div class="document-actions">
+            <button id="metadataButton" class="rename-button metadata-button" title="编辑标题、发布时间、分类等文章信息">信息</button>
+            <button id="renameButton" class="rename-button" title="修改 Markdown 文件名">重命名</button>
+            <button id="markdownHelpButton" class="rename-button" type="button" title="查看 Markdown 语法">语法</button>
+            <div class="view-tabs" role="tablist">
+              <button class="view-tab active" data-view="wysiwyg">所见即所得</button>
+              <button class="view-tab" data-view="source">源码</button>
+            </div>
+          </div>
+        </div>
+        <div id="editingSurface" class="editing-surface wysiwyg-mode">
+          <aside class="article-outline" aria-label="当前文章大纲">
+            <div class="outline-heading">文章大纲</div>
+            <nav id="articleOutline" aria-label="标题导航"><p class="outline-empty">添加标题后显示大纲</p></nav>
+          </aside>
+          <div class="editor-toolbar" aria-label="Markdown 工具栏">
+            <button data-wrap="**" title="加粗（Ctrl+B）">B</button><button data-wrap="*" title="斜体（Ctrl+I）"><em>I</em></button>
+            <button data-wrap="~~" title="删除线">S</button>
+            <button data-prefix="# " title="一级标题">H1</button><button data-prefix="## " title="二级标题">H2</button>
+            <button data-prefix="> " title="引用">❞</button>
+            <button data-prefix="- " title="无序列表">☷</button><button data-prefix="1. " title="有序列表">1.</button>
+            <button data-wrap="`" title="行内代码">&lt;/&gt;</button>
+            <button data-action="codeblock" title="代码块">{ }</button>
+            <button data-action="link" title="链接（Ctrl+K）">↗</button><button data-action="divider" title="插入分割线">—</button>
+            <label class="image-button" title="插入图片">▧<input id="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple></label>
+            <span class="format-hint">可粘贴或拖入图片</span>
+          </div>
+          <div id="richEditor" class="rich-editor" aria-label="所见即所得编辑器"></div>
+          <div class="source-pane">
+            <textarea id="markdownEditor" spellcheck="false" aria-label="Markdown 源码编辑器"></textarea>
+          </div>
+          <div class="pane-footer"><span id="cursorPosition">所见即所得</span><span id="wordCount">0 字</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="loginDialog" class="login-dialog">
+    <form id="loginForm" method="dialog">
+      <span class="eyebrow">ARTICLE STUDIO</span>
+      <h2>登录工作台</h2>
+      <p>请输入工作台访问密码。密码只用于本次登录，不会显示在地址栏。</p>
+      <label>访问密码<input id="loginPassword" type="password" autocomplete="current-password" required autofocus></label>
+      <label id="loginTotpLabel" hidden>动态验证码<input id="loginTotp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="验证器 App 里的 6 位数字"></label>
+      <p id="loginError" class="login-error" role="alert"></p>
+      <div class="dialog-actions"><button id="loginSubmit" type="submit" class="button primary">登录</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="newDialog">
+    <form id="newForm" method="dialog">
+      <span class="eyebrow">NEW ARTICLE</span><h2>创建文章</h2>
+      <label>文章标题<input id="newTitle" required placeholder="例如：如何搭建个人博客"></label>
+      <label>文章 slug<input id="newSlug" required placeholder="例如：build-personal-blog"><small>用于文件名和网址，发布后不建议修改。</small></label>
+      <div class="dialog-actions"><button id="cancelCreate" type="button" class="button secondary">取消</button><button id="createButton" type="submit" class="button primary">创建</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="settings-dialog">
+    <form id="settingsForm" method="dialog">
+      <span class="eyebrow">WORKSPACE SETTINGS</span><h2>工作台设置</h2>
+      <p>设置保存在 Rock 本机，刷新页面或重启工作台后仍然有效。</p>
+      <label>自动保存间隔
+        <div class="setting-input-row"><input id="autoSaveMinutes" type="number" min="1" max="1440" step="1" required><span>分钟</span></div>
+        <small>文档持续偏离上次保存状态达到该时长后自动保存，可设置 1～1440 分钟。</small>
+      </label>
+      <div class="setting-presets" aria-label="常用自动保存间隔">
+        <button type="button" data-autosave-minutes="1">1 分钟</button>
+        <button type="button" data-autosave-minutes="3">3 分钟</button>
+        <button type="button" data-autosave-minutes="5">5 分钟</button>
+        <button type="button" data-autosave-minutes="10">10 分钟</button>
+        <button type="button" data-autosave-minutes="30">30 分钟</button>
+      </div>
+      <div class="dialog-actions"><button id="cancelSettings" type="button" class="button secondary">取消</button><button type="submit" class="button primary">保存设置</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="siyuanPrivacyDialog" class="privacy-dialog">
+    <form id="siyuanPrivacyForm" method="dialog">
+      <div class="privacy-dialog-header">
+        <div><span class="eyebrow">SIYUAN PRIVACY</span><h2>思源隐私规则</h2></div>
+        <button id="closeSiyuanPrivacy" class="dialog-close" type="button" aria-label="关闭思源隐私规则">×</button>
+      </div>
+      <p>勾选的文档会发布到博客，取消勾选则不发布；指定的 IP、ID 或其他文本只在公开副本中替换为 <code>████</code>，思源原文保持不变。</p>
+      <section class="privacy-section">
+        <div class="privacy-section-title"><strong>要展示的文档</strong><span id="privateDocumentCount">0 / 0 篇展示</span></div>
+        <div class="privacy-toolbar">
+          <input id="privateDocumentSearch" type="search" placeholder="搜索文档标题或路径">
+          <button type="button" id="privateSelectAll" class="settings-button">全选</button>
+          <button type="button" id="privateSelectNone" class="settings-button">全不选</button>
+        </div>
+        <div id="privateDocumentList" class="private-document-list"></div>
+        <label>补充不展示的路径<textarea id="manualPrivateDocuments" rows="3" placeholder="列表中找不到时，每行填写一个相对于思源笔记本的 Markdown 路径"></textarea></label>
+      </section>
+      <section class="privacy-section">
+        <div class="privacy-section-title"><strong>需要遮盖的文本</strong><span>逐字匹配，不区分大小写</span></div>
+        <textarea id="privateValues" rows="6" placeholder="每行一个值，例如：&#10;192.168.1.10&#10;8056c2e21c000001"></textarea>
+        <small>至少 4 个字符。这里适合填写你已经知道的 IP、设备 ID、网络 ID、账号或名称。</small>
+      </section>
+      <div class="dialog-actions"><button id="cancelSiyuanPrivacy" type="button" class="button secondary">取消</button><button type="submit" class="button primary">保存隐私规则</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="publishDialog">
+    <form id="publishForm" method="dialog">
+      <span class="eyebrow">PUBLISH</span><h2>构建并上传</h2>
+      <p>将保存当前内容、执行 Hexo 构建检查，然后只提交当前文章及其图片并推送到 GitHub；仓库里其他未提交改动不会被提交或上传。</p>
+      <label>提交说明<input id="commitMessage" placeholder="docs(article): 更新《文章标题》"></label>
+      <div id="warningBox" class="warning-box hidden"></div>
+      <label id="warningConfirmLabel" class="confirm-row hidden"><input id="warningConfirm" type="checkbox">我已检查并确认这些内容可以公开</label>
+      <pre id="publishLog" class="publish-log hidden"></pre>
+      <div class="dialog-actions"><button id="cancelPublish" type="button" class="button secondary">取消</button><button id="confirmPublish" type="submit" class="button primary">开始上传</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="renameDialog">
+    <form id="renameForm" method="dialog">
+      <span class="eyebrow">RENAME</span><h2>修改文章文件名</h2>
+      <p>文件名会影响文章网址。已发布文章改名后，原网址可能失效；对应的文章图片目录和 Markdown 图片链接会一并更新。</p>
+      <label>新文件名<input id="renameFileName" required placeholder="例如：build-personal-blog"><small>无需输入 .md 后缀。</small></label>
+      <div class="dialog-actions"><button id="cancelRename" type="button" class="button secondary">取消</button><button type="submit" class="button primary">确认修改</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="metadataDialog" class="metadata-dialog">
+    <form id="metadataForm" method="dialog">
+      <span class="eyebrow">ARTICLE INFORMATION</span><h2>文章信息</h2>
+      <p id="metadataFileInfo" class="metadata-file-info"></p>
+      <p>修改文章信息后点击应用，再按 Ctrl+S 保存，或等待自动保存。应用不会发布文章。</p>
+      <div class="metadata-grid">
+        <label class="full-field">文章标题<input id="metadataTitle" required></label>
+        <label>发布时间<input id="metadataDate" type="datetime-local" step="1" required><button type="button" class="field-action" data-now-target="metadataDate">设为现在</button></label>
+        <label>更新时间<input id="metadataUpdated" type="datetime-local" step="1"><button type="button" class="field-action" data-now-target="metadataUpdated">设为现在</button></label>
+        <label class="full-field">分类<input id="metadataCategories" placeholder="例如：技术, Hexo"><small>多个分类使用逗号分隔。</small></label>
+        <label class="full-field">标签<input id="metadataTags" placeholder="例如：Markdown, 写作"><small>多个标签使用逗号分隔。</small></label>
+        <label class="full-field">文章摘要<textarea id="metadataDescription" rows="3" placeholder="用于列表页摘要和搜索结果描述"></textarea></label>
+      </div>
+      <div class="dialog-actions"><button id="deleteArticleButton" type="button" class="button danger danger-button">删除并同步网站</button><button id="cancelMetadata" type="button" class="button secondary">取消</button><button type="submit" class="button primary">应用修改</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="markdownHelpDialog" class="markdown-help-dialog">
+    <div class="markdown-help-header">
+      <div><span class="eyebrow">MARKDOWN GUIDE</span><h2>Markdown 语法速查</h2></div>
+      <button id="closeMarkdownHelp" class="dialog-close" type="button" aria-label="关闭 Markdown 语法说明">×</button>
+    </div>
+    <div class="markdown-help-content">
+      <section><h3>所见即所得：输入即转换</h3><p>在新段落开头输入前缀并按半角空格：<code>#</code> 到 <code>######</code>、<code>&gt;</code>、<code>-</code> / <code>+</code> / <code>*</code>、<code>1.</code>、<code>***</code> / <code>---</code> / <code>___</code>。待办先输入 <code>- </code>，再输入 <code>[ ] </code> 或 <code>[x] </code>。</p><p>粗体、斜体、删除线、行内代码、链接在输入闭合符号后转换；代码块输入 <code>```js</code> 或 <code>~~~js</code> 后按回车或空格。支持 Ctrl+Z；代码块内不触发这些规则。</p><p>列表嵌套使用工具栏缩进按钮；图片使用图片按钮、粘贴或拖入；表格使用表格按钮。完整 Markdown 表格、HTML、摘要分界、复杂链接及转义内容可在源码模式编辑；下方语法示例不代表所有内容都会实时转换。需要软换行时，在所见即所得模式按 Shift+Enter。</p></section>
+      <section><h3>文字与段落</h3><table><tbody>
+        <tr><th>标题</th><td><code>## 二级标题</code></td></tr>
+        <tr><th>粗体</th><td><code>**粗体文字**</code></td></tr>
+        <tr><th>斜体</th><td><code>*斜体文字*</code></td></tr>
+        <tr><th>删除线</th><td><code>~~删除文字~~</code></td></tr>
+        <tr><th>段落</th><td>段落之间留一个空行</td></tr>
+        <tr><th>换行</th><td>行末输入两个空格后回车</td></tr>
+      </tbody></table></section>
+      <section><h3>列表与引用</h3><table><tbody>
+        <tr><th>无序列表</th><td><code>- 列表项目</code></td></tr>
+        <tr><th>有序列表</th><td><code>1. 列表项目</code></td></tr>
+        <tr><th>任务列表</th><td><code>- [ ] 待办</code>　<code>- [x] 完成</code></td></tr>
+        <tr><th>引用</th><td><code>&gt; 引用内容</code></td></tr>
+        <tr><th>嵌套</th><td>在子项目之前缩进两个空格</td></tr>
+      </tbody></table></section>
+      <section><h3>链接与媒体</h3><table><tbody>
+        <tr><th>链接</th><td><code>[链接文字](https://example.com)</code></td></tr>
+        <tr><th>图片</th><td><code>![图片说明](/images/example.png)</code></td></tr>
+        <tr><th>自动链接</th><td><code>&lt;https://example.com&gt;</code></td></tr>
+      </tbody></table></section>
+      <section><h3>代码与结构</h3><table><tbody>
+        <tr><th>行内代码</th><td><code>`代码`</code></td></tr>
+        <tr><th>代码块</th><td><code>```js<br>const value = 1;<br>```</code></td></tr>
+        <tr><th>分割线</th><td><code>---</code></td></tr>
+        <tr><th>表格</th><td><code>| 名称 | 说明 |<br>| --- | --- |<br>| A | 内容 |</code></td></tr>
+        <tr><th>转义</th><td><code>\*不作为斜体*</code></td></tr>
+      </tbody></table></section>
+      <section><h3>Hexo 文章常用</h3><table><tbody>
+        <tr><th>摘要分界</th><td><code>&lt;!-- more --&gt;</code></td></tr>
+        <tr><th>文章信息</th><td>点击工作台上方的“信息”编辑标题、日期、分类和标签</td></tr>
+        <tr><th>快捷保存</th><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td></tr>
+      </tbody></table></section>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/metadata.js?v=9"></script>
+  <script src="/vendor/codemirror.bundle.js?v=9"></script>
+  <script src="/js/typora-live-preview.js?v=9"></script>
+  <script src="/app.js?v=9"></script>
+</body>
+</html>

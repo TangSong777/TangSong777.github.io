@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>管理中心 · 岁月史书</title>
+<link rel="icon" href="/images/avatar.jpg">
+<style>
+:root { --paper:#f4ede2; --card:#fbf7ef; --ink:#2a2420; --muted:#7a6d5f; --line:#ddd0bd; --accent:#8a3a2b; --accent-soft:#f0e0d4; --head:#3d2b24; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); font-family:Georgia,"Noto Serif SC","Songti SC",serif; }
+header { align-items:center; background:var(--head); border-bottom:3px solid #231712; color:#f2e8da; display:flex; gap:16px; justify-content:space-between; padding:14px clamp(14px,3vw,40px); position:sticky; top:0; z-index:10; }
+header h1 { font-size:18px; letter-spacing:.14em; margin:0; }
+header a { border:1px solid #6b5245; border-radius:999px; color:#e8d9c6; font-size:12px; padding:5px 12px; text-decoration:none; }
+main { margin:0 auto; max-width:1100px; padding:24px clamp(12px,3vw,28px) 60px; }
+.tabs { display:flex; gap:10px; margin-bottom:16px; }
+.tab { background:none; border:1px solid var(--line); border-radius:999px; color:var(--muted); cursor:pointer; font-family:inherit; font-size:13px; padding:7px 18px; }
+.tab.is-active { background:var(--accent); border-color:var(--accent); color:#fff; }
+.panel { background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:0 14px 34px rgba(61,43,36,.06); overflow:hidden; }
+.panel-head { align-items:center; border-bottom:1px solid var(--line); display:flex; gap:10px; justify-content:space-between; padding:12px 16px; }
+.panel-head strong { font-size:14px; }
+.panel-head span { color:var(--muted); font-size:12px; }
+.row { border-bottom:1px solid var(--line); padding:13px 16px; }
+.row:last-child { border-bottom:0; }
+.row-head { align-items:baseline; display:flex; flex-wrap:wrap; gap:8px; margin-bottom:5px; }
+.row-name { font-size:13.5px; font-weight:700; }
+.row-meta { color:var(--muted); font-size:11.5px; }
+.row-page { color:#a89886; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.row-body { font-size:14px; line-height:1.7; margin:0 0 8px; overflow-wrap:anywhere; white-space:pre-wrap; }
+.row-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.btn { background:none; border:1px solid var(--line); border-radius:7px; color:var(--muted); cursor:pointer; font-family:inherit; font-size:12px; padding:4px 12px; }
+.btn:hover { border-color:var(--accent); color:var(--accent); }
+.btn.danger:hover { border-color:#b33; color:#b33; }
+.btn.ok { border-color:#2f6f61; color:#2f6f61; }
+.tag { border-radius:999px; font-size:11px; padding:2px 9px; }
+.tag.pending { background:var(--accent-soft); color:#6b2f22; }
+.tag.approved { background:#e5f0eb; color:#2f6f61; }
+.tag.rejected { background:#eee; color:#888; }
+.empty { color:var(--muted); font-size:13px; padding:30px 16px; text-align:center; }
+@media (max-width:640px) { .row-meta { display:block; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>管理中心</h1>
+  <a href="/">返回工作台</a>
+</header>
+<main>
+  <div class="tabs">
+    <button class="tab is-active" data-tab="comments">评论管理</button>
+    <button class="tab" data-tab="submissions">补充申请</button>
+  </div>
+
+  <section class="panel" id="panel-comments">
+    <div class="panel-head"><strong>评论</strong><span id="comment-count"></span></div>
+    <div id="comment-list"></div>
+  </section>
+
+  <section class="panel" id="panel-submissions" hidden>
+    <div class="panel-head"><strong>补充申请</strong><span id="submission-count"></span></div>
+    <div id="submission-list"></div>
+  </section>
+</main>
+<script>
+(function () {
+  var activeTab = 'comments';
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function formatTime(iso) {
+    try {
+      var d = new Date(iso);
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    } catch (e) { return ''; }
+  }
+  function pageLabel(page) {
+    try { return decodeURIComponent(page || ''); } catch (e) { return page || ''; }
+  }
+
+  async function loadComments() {
+    var box = document.getElementById('comment-list');
+    var data = await fetch('/api/admin/comments', { credentials: 'same-origin' }).then(function (r) { return r.json(); });
+    var list = (data && data.comments) || [];
+    document.getElementById('comment-count').textContent = list.length ? list.length + ' 条' : '';
+    if (!list.length) { box.innerHTML = '<p class="empty">还没有评论</p>'; return; }
+    box.innerHTML = list.map(function (item) {
+      return '<div class="row" data-id="' + escapeHtml(item.id) + '">' +
+        '<div class="row-head"><strong class="row-name">' + escapeHtml(item.name) + '</strong>' +
+        '<span class="row-meta">' + formatTime(item.createdAt) + ' · ▲ ' + (item.likes ? item.likes.length : 0) + '</span>' +
+        '<span class="row-page">' + escapeHtml(pageLabel(item.page)) + '</span></div>' +
+        '<p class="row-body">' + escapeHtml(item.content) + '</p>' +
+        '<div class="row-actions"><button class="btn danger" data-delete-comment="' + escapeHtml(item.id) + '">删除</button></div></div>';
+    }).join('');
+  }
+
+  async function loadSubmissions() {
+    var box = document.getElementById('submission-list');
+    var data = await fetch('/api/admin/submissions', { credentials: 'same-origin' }).then(function (r) { return r.json(); });
+    var list = (data && data.submissions) || [];
+    document.getElementById('submission-count').textContent = list.length ? list.length + ' 条' : '';
+    if (!list.length) { box.innerHTML = '<p class="empty">还没有补充申请</p>'; return; }
+    box.innerHTML = list.map(function (item) {
+      var status = item.status || 'pending';
+      return '<div class="row" data-id="' + escapeHtml(item.id) + '">' +
+        '<div class="row-head"><strong class="row-name">' + escapeHtml(item.title || '（未指定文档）') + '</strong>' +
+        '<span class="tag ' + status + '">' + ({ pending: '待处理', approved: '已采纳', rejected: '已忽略' }[status] || status) + '</span>' +
+        '<span class="row-meta">' + formatTime(item.createdAt) + '</span>' +
+        '<span class="row-page">' + escapeHtml(pageLabel(item.page)) + '</span></div>' +
+        '<p class="row-body">' + escapeHtml(item.content) + '</p>' +
+        (item.contact ? '<p class="row-meta">联系方式：' + escapeHtml(item.contact) + '</p>' : '') +
+        '<div class="row-actions">' +
+        '<button class="btn ok" data-status="approved" data-id="' + escapeHtml(item.id) + '">采纳</button>' +
+        '<button class="btn" data-status="pending" data-id="' + escapeHtml(item.id) + '">待处理</button>' +
+        '<button class="btn danger" data-status="rejected" data-id="' + escapeHtml(item.id) + '">忽略</button>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  document.querySelectorAll('.tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      activeTab = tab.getAttribute('data-tab');
+      document.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('is-active', t === tab); });
+      document.getElementById('panel-comments').hidden = activeTab !== 'comments';
+      document.getElementById('panel-submissions').hidden = activeTab !== 'submissions';
+      if (activeTab === 'comments') loadComments(); else loadSubmissions();
+    });
+  });
+
+  document.getElementById('comment-list').addEventListener('click', async function (event) {
+    var button = event.target.closest('[data-delete-comment]');
+    if (!button) return;
+    if (!confirm('确定删除这条评论？')) return;
+    await fetch('/api/admin/comments?id=' + encodeURIComponent(button.getAttribute('data-delete-comment')), { method: 'DELETE', credentials: 'same-origin' });
+    loadComments();
+  });
+
+  document.getElementById('submission-list').addEventListener('click', async function (event) {
+    var button = event.target.closest('[data-status]');
+    if (!button) return;
+    await fetch('/api/admin/submissions/status', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: button.getAttribute('data-id'), status: button.getAttribute('data-status') }),
+    });
+    loadSubmissions();
+  });
+
+  loadComments();
+})();
+</script>
+</body>
+</html>

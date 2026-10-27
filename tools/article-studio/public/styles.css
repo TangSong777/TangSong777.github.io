@@ -1,13 +1,13 @@
 :root {
   color-scheme: light;
-  --ink: #17352f;
-  --muted: #70837d;
-  --line: #dce7e2;
+  --ink: #1c2b2a;
+  --muted: #6b807e;
+  --line: #d8e5e3;
   --paper: #ffffff;
-  --canvas: #f3f7f4;
-  --green: #2f6f61;
-  --green-deep: #1f5147;
-  --green-soft: #e5f0eb;
+  --canvas: #f2f7f6;
+  --green: #4d7572;
+  --green-deep: #33544f;
+  --green-soft: #e6efee;
   --amber: #a56213;
   --amber-soft: #fff4dd;
   --shadow: 0 18px 50px rgba(28, 64, 55, .10);
@@ -20,7 +20,7 @@ button, input, textarea { font: inherit; }
 button { cursor: pointer; }
 .topbar { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: 12px; }
-.brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: white; background: linear-gradient(135deg, var(--green-deep), #6b998d); font-weight: 800; }
+.brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: white; background: linear-gradient(135deg, var(--green-deep), #6a8d8c); font-weight: 800; }
 .brand strong, .brand small { display: block; }
 .brand small { color: var(--muted); margin-top: 3px; font-size: 11px; letter-spacing: .08em; }
 .top-actions { display: flex; align-items: center; gap: 10px; }
@@ -83,8 +83,8 @@ h1 { margin: 4px 0 0; font-size: 25px; }
 .format-hint { margin-left: auto; color: var(--muted); font-size: 11px; }
 .format-bar .help-button { display: flex; gap: 5px; margin-left: 4px; padding-inline: 9px; color: var(--green); background: var(--green-soft); font-weight: 700; }
 .format-bar .help-button:hover { color: #fff; background: var(--green); }
-.editing-surface { display: grid; grid-template-columns: 210px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 30px; min-height: 0; overflow: hidden; }
-.article-outline { grid-column: 1; grid-row: 1; min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: #f8fbf9; }
+.editing-surface { display: grid; grid-template-columns: 210px minmax(0, 1fr); grid-template-rows: 44px minmax(0, 1fr) 30px; min-height: 0; overflow: hidden; }
+.article-outline { grid-column: 1; grid-row: 1 / 3; min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: #f8fbf9; }
 .outline-heading { padding: 16px 14px; font-weight: 700; color: var(--green-deep); border-bottom: 1px solid var(--line); }
 #articleOutline { overflow-y: auto; overscroll-behavior: contain; padding: 10px 6px; min-height: 0; }
 .outline-empty { padding: 8px; color: var(--muted); font-size: 12px; }
@@ -93,52 +93,34 @@ h1 { margin: 4px 0 0; font-size: 25px; }
 .outline-item { margin: 2px 0; transition: none; }
 .outline-item.outline-current { background: var(--green-soft); color: var(--green-deep); font-weight: 700; box-shadow: inset 3px 0 var(--green); }
 #articleOutline { scroll-behavior: auto; }
-.editing-surface > .rich-editor, .editing-surface > .source-pane { grid-column: 2; grid-row: 1; }
-.editing-surface > .pane-footer { grid-column: 1 / -1; grid-row: 2; }
+.editing-surface > .editor-toolbar { grid-column: 2; grid-row: 1; }
+.editing-surface > .rich-editor, .editing-surface > .source-pane { grid-column: 2; grid-row: 2; }
+.editing-surface > .pane-footer { grid-column: 1 / -1; grid-row: 3; }
 @media (max-width: 1000px) { .editing-surface { grid-template-columns: 160px minmax(0, 1fr); } }
 @media (max-width: 600px) { .editing-surface { grid-template-columns: 112px minmax(0, 1fr); } .outline-heading { padding: 12px 8px; font-size: 12px; } .outline-item { padding-left: calc(4px + var(--outline-depth) * 5px); font-size: 11px; } }
 .rich-editor, .source-pane { min-width: 0; min-height: 0; overflow: hidden; }
-.source-pane { display: none; grid-template-rows: 44px minmax(0, 1fr); }
+/* CodeMirror 需要一个有确定高度的容器，否则内容区会塌成 0 */
+.rich-editor { height: 100%; display: flex; flex-direction: column; background: #fff; }
+.rich-editor .cm-editor { height: 100%; flex: 1 1 auto; min-height: 0; }
+.rich-editor .cm-scroller { overflow: auto; overscroll-behavior: contain; }
+.rich-editor .cm-content { max-width: 1280px; margin: 0 auto; width: 100%; min-height: 100%; padding-bottom: 45vh; }
+.rich-editor .cm-line { padding-left: 0; padding-right: 0; }
+/* 选中态与焦点环统一到站点配色 */
+.rich-editor .cm-editor.cm-focused { outline: none; }
+.rich-editor .cm-selectionBackground,
+.rich-editor .cm-content ::selection { background: rgba(31, 81, 71, .15); }
+.rich-editor .cm-gutters { display: none; }
+.rich-editor .cm-activeLine { background: transparent; }
+.rich-editor .cm-cursor { border-left-color: var(--green, #33544f); }
+.source-pane { display: none; grid-template-rows: minmax(0, 1fr); }
 .source-mode .rich-editor { display: none; }
 .source-mode .source-pane { display: grid; }
-.rich-editor .toastui-editor-defaultUI { height: 100% !important; border: 0; border-radius: 0; }
-.rich-editor .toastui-editor-toolbar { border-bottom-color: var(--line); background: #fbfdfc; }
-.rich-editor .toastui-editor-toolbar-divider { background-color: var(--line); }
-.rich-editor .toastui-editor-main { min-height: 0; }
-.rich-editor .toastui-editor-ww-container { background: #fff; }
-.rich-editor .toastui-editor-contents { width: min(100%, 1280px); max-width: 1280px; box-sizing: border-box; margin: 0 auto; padding: 38px clamp(26px, 4vw, 64px) 100px; color: #263c37; font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif; font-size: 16px; line-height: 2; overflow-wrap: break-word; }
-.rich-editor .toastui-editor-contents h1,
-.rich-editor .toastui-editor-contents h2,
-.rich-editor .toastui-editor-contents h3,
-.rich-editor .toastui-editor-contents h4,
-.rich-editor .toastui-editor-contents h5,
-.rich-editor .toastui-editor-contents h6 { margin: 30px 0 15px; padding: 0; color: var(--green-deep); border-bottom: 0; font-family: inherit; font-weight: 700; line-height: 1.5; }
-.rich-editor .toastui-editor-contents h1 { font-size: 2.25em; }
-.rich-editor .toastui-editor-contents h2 { font-size: 1.875em; }
-.rich-editor .toastui-editor-contents h3 { font-size: 1.5em; }
-.rich-editor .toastui-editor-contents h4 { font-size: 1.25em; }
-.rich-editor .toastui-editor-contents h5 { font-size: 1.125em; }
-.rich-editor .toastui-editor-contents h6 { font-size: 1em; }
-.rich-editor .toastui-editor-contents p { margin: 0 0 20px; line-height: 2; }
-.rich-editor .toastui-editor-contents ul,
-.rich-editor .toastui-editor-contents ol { margin: 0 0 20px; padding-left: 2em; }
-.rich-editor .toastui-editor-contents li { margin: 4px 0; line-height: 2; }
-.rich-editor .toastui-editor-contents pre,
-.rich-editor .toastui-editor-contents .toastui-editor-md-code-block { margin: 0 0 20px; line-height: 1.6; }
-.rich-editor .toastui-editor-contents blockquote { margin: 0 0 20px; padding: 8px 18px; }
-.rich-editor .toastui-editor-contents blockquote p:last-child { margin-bottom: 0; }
-.rich-editor .toastui-editor-contents hr { height: 3px; margin: 40px 0; border: 0; background: repeating-linear-gradient(-45deg, #d8e4e0, #d8e4e0 4px, transparent 4px, transparent 8px); }
-.rich-editor .toastui-editor-contents table { margin: 0 0 20px; }
-.rich-editor .toastui-editor-contents img { display: block; max-width: 100%; height: auto; margin: 0 auto 20px; }
-.rich-editor .toastui-editor-contents blockquote { border-left: 4px solid var(--green); color: #516c65; background: var(--green-soft); }
-.rich-editor .toastui-editor-mode-switch { display: none; }
-.rich-editor .toastui-editor-popup { z-index: 12; }
 .rich-editor .ProseMirror { caret-color: var(--green-deep); }
 .split-pane { display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
 .write-pane, .preview-pane { min-width: 0; min-height: 0; }
 .write-pane { display: grid; grid-template-rows: minmax(0, 1fr) 30px; min-height: 0; overflow: hidden; border-right: 1px solid var(--line); }
 #markdownEditor { display: block; width: 100%; height: 100%; min-height: 0; resize: none; overflow: auto; overscroll-behavior: contain; scroll-padding-block: 22px; padding: 22px 24px; border: 0; outline: 0; color: #24433c; background: #fbfdfc; font: 14px/1.75 "Cascadia Code", Consolas, "Microsoft YaHei", monospace; tab-size: 2; }
-.pane-footer { display: flex; justify-content: space-between; align-items: center; padding: 0 14px; color: var(--muted); background: #f5f8f6; font-size: 10px; }
+.pane-footer { display: flex; justify-content: space-between; align-items: center; padding: 0 14px; color: var(--muted); background: #f5f8f7; font-size: 10px; }
 .preview-pane { position: relative; overflow: hidden; padding: 0; background: #fff; }
 .site-preview { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
 .preview-status { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; color: var(--muted); background: #fff; font-size: 13px; pointer-events: none; }
@@ -249,7 +231,6 @@ dialog label small { display: block; margin-top: 5px; color: var(--muted); font-
   .format-bar::-webkit-scrollbar { display: none; }
   .format-bar button, .image-button { flex: 0 0 34px; }
   #markdownEditor { padding: 17px 15px; font-size: 16px; line-height: 1.65; }
-  .rich-editor .toastui-editor-contents { padding: 24px 18px 80px; font-size: 16px; }
   .previewDocument { padding: 18px; }
   dialog form { padding: 22px 18px; }
   .markdown-help-content { grid-template-columns: 1fr; padding: 18px; }
@@ -260,7 +241,6 @@ dialog label small { display: block; margin-top: 5px; color: var(--muted); font-
 }
 
 /* Scroll past the last line without inserting blank paragraphs into Markdown. */
-.rich-editor .toastui-editor-ww-container .toastui-editor-contents,
 #markdownEditor {
   padding-bottom: 45vh;
   padding-bottom: 45dvh;
@@ -271,7 +251,7 @@ body::before {
   position: fixed;
   inset: 0 0 auto 0;
   height: 3px;
-  background: linear-gradient(90deg, #1f5147, #6b998d);
+  background: linear-gradient(90deg, #33544f, #6a8d8c);
   z-index: 999;
 }
 
@@ -320,4 +300,79 @@ a.settings-button {
   display: inline-flex;
   align-items: center;
   text-decoration: none;
+}
+
+
+/* ---------------------------------------------------------------- 编辑器工具栏 */
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  background: #f7faf8;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.editor-toolbar::-webkit-scrollbar { display: none; }
+
+.editor-toolbar button {
+  flex: 0 0 auto;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #2f4f47;
+  background: transparent;
+  font: 600 12.5px/1 "Segoe UI", "Microsoft YaHei", sans-serif;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+
+.editor-toolbar button:hover {
+  background: #e8f2ed;
+  border-color: #d5e6dd;
+}
+
+.editor-toolbar button:active {
+  background: #dbeae3;
+}
+
+.editor-toolbar .image-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #2f4f47;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.editor-toolbar .image-button:hover {
+  background: #e8f2ed;
+  border-color: #d5e6dd;
+}
+
+.editor-toolbar .image-button input { display: none; }
+
+.editor-toolbar .format-hint {
+  margin-left: auto;
+  padding-left: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .editor-toolbar { padding: 0 8px; }
+  .editor-toolbar .format-hint { display: none; }
 }

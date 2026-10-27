@@ -157,6 +157,87 @@ function isPrivateTitle(title) {
   return PRIVATE_DOCUMENT_TITLES.has(key(title));
 }
 
+/**
+ * 同步隐私规则与当前导出：
+ * 1. 文档只是被移动/改名时，按文件名把规则迁移到新路径，避免私密文档意外公开；
+ * 2. 文件确实不存在了才删除规则；
+ * 3. 写回前先备份，任何异常都保留原规则。
+ */
+async function prunePrivacyRules(rulesFile, existingRelatives) {
+  if (!rulesFile) return { removed: [], moved: [] };
+  try {
+    await fs.access(rulesFile);
+  } catch {
+    return { removed: [], moved: [] };
+  }
+  let rules;
+  try {
+    rules = JSON.parse(await fs.readFile(rulesFile, 'utf8'));
+  } catch {
+    console.log(`[隐私] 规则文件无法解析，跳过自动清理：${rulesFile}`);
+    return { removed: [], moved: [] };
+  }
+  const configured = Array.isArray(rules.excludedDocuments) ? rules.excludedDocuments : [];
+  if (!configured.length) return { removed: [], moved: [] };
+
+  const normalizeEntry = (value) => String(value).trim().replaceAll('\\', '/').replace(/^\/+/, '');
+  const exists = (entry) => {
+    const primary = normalizeEntry(entry);
+    const hasSuffix = primary.toLowerCase().endsWith('.md');
+    const withSuffix = hasSuffix ? primary : `${primary}.md`;
+    const withoutSuffix = hasSuffix ? primary.slice(0, -3) : primary;
+    return existingRelatives.has(primary)
+      || existingRelatives.has(withSuffix)
+      || existingRelatives.has(withoutSuffix);
+  };
+  const baseNameOf = (entry) => normalizeEntry(entry).split('/').pop().toLowerCase();
+
+  // 文件名索引：用于识别"文档被移动"而不是"被删除"
+  const byBaseName = new Map();
+  for (const relative of existingRelatives) {
+    const base = baseNameOf(relative);
+    if (!byBaseName.has(base)) byBaseName.set(base, []);
+    byBaseName.get(base).push(relative);
+  }
+
+  const next = [];
+  const moved = [];
+  const removed = [];
+  for (const entry of configured) {
+    if (exists(entry)) {
+      next.push(normalizeEntry(entry));
+      continue;
+    }
+    const candidates = byBaseName.get(baseNameOf(entry)) || [];
+    if (candidates.length === 1) {
+      // 唯一同名文件 → 判定为移动，迁移规则而不是删除
+      next.push(candidates[0]);
+      moved.push(`${entry} → ${candidates[0]}`);
+    } else {
+      removed.push(entry);
+    }
+  }
+
+  if (!moved.length && !removed.length) return { removed: [], moved: [] };
+
+  const backup = `${rulesFile}.bak-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+  try {
+    await fs.copyFile(rulesFile, backup);
+  } catch {
+    console.log('[隐私] 规则备份失败，跳过自动清理以免误删');
+    return { removed: [], moved: [] };
+  }
+  rules.excludedDocuments = [...new Set(next)];
+  const temporary = `${rulesFile}.tmp-${process.pid}`;
+  await fs.writeFile(temporary, JSON.stringify(rules, null, 2) + '\n', 'utf8');
+  await fs.rename(temporary, rulesFile);
+
+  if (moved.length) console.log(`[隐私] 已迁移 ${moved.length} 条规则（文档移动）：${moved.join('；')}`);
+  if (removed.length) console.log(`[隐私] 已清理 ${removed.length} 条失效规则：${removed.join('、')}`);
+  console.log(`[隐私] 原始规则已备份：${backup}`);
+  return { removed, moved };
+}
+
 function isPathInside(root, target) {
   const relative = path.relative(root, target);
   return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
@@ -344,6 +425,9 @@ async function main() {
 
   console.log(`[扫描] ${options.sourceDir}`);
   const markdownFiles = await walkFiles(options.sourceDir, (file) => file.toLowerCase().endsWith('.md'));
+  // 隐私规则自愈：剔除已被删除或改名的文档，避免规则长期积累无效条目
+  const existingRelatives = new Set(markdownFiles.map((file) => unixRelative(options.sourceDir, file)));
+  await prunePrivacyRules(options.privacyRulesFile, existingRelatives);
   for (const sourcePath of markdownFiles) {
     const relative = unixRelative(options.sourceDir, sourcePath);
     const sourceText = await fs.readFile(sourcePath, 'utf8');
@@ -630,7 +714,9 @@ async function main() {
         );
         const incomingDocs = uniqueSortedDocuments(incoming.get(doc.relative));
         const isKnowledgeOverview = doc.relative === '学习笔记.md';
-        if (!isKnowledgeOverview && (outgoingDocs.length || incomingDocs.length)) {
+        // 顶层文档（如「岁月史书」「学习笔记」）只保留内容，不追加引用关系区块
+        const isTopLevelDocument = doc.parts.length === 0;
+        if (!isKnowledgeOverview && !isTopLevelDocument && (outgoingDocs.length || incomingDocs.length)) {
           references.push('', '<section class="siyuan-references" aria-label="文档引用">', '', '## 文档关系');
           if (outgoingDocs.length) {
             references.push('', '### 本文引用', ...outgoingDocs.map((item) => `- [${item.title}](${item.url})`));

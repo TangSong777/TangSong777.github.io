@@ -127,37 +127,117 @@
     return `${match[1]} ${match[2]}:${match[3] || '00'}`;
   }
 
+  function sameList(a, b) {
+    if (a.length !== b.length) return false;
+    return a.every((value, index) => value === b[index]);
+  }
+
   function update(markdown, metadata) {
     const document = splitDocument(markdown);
-    const entries = collectEntries(document.lines);
-    const removedIndexes = new Set();
-    for (const entry of entries) {
-      if (!knownKeys.has(entry.key)) continue;
-      for (let index = entry.start; index < entry.end; index += 1) removedIndexes.add(index);
-    }
+    const lines = document.lines.slice();
+    const entries = collectEntries(lines);
+    const byKey = new Map(entries.map((entry) => [entry.key, entry]));
+    const startOf = new Map(entries.map((entry) => [entry.start, entry]));
+    const original = read(markdown);
 
-    const remaining = document.lines.filter((line, index) => !removedIndexes.has(index));
-    while (remaining.length && !remaining[0].trim()) remaining.shift();
-    while (remaining.length && !remaining.at(-1).trim()) remaining.pop();
+    const title = String(metadata.title || '').trim();
+    const dateLocal = String(metadata.date || '').trim();
+    const updatedLocal = String(metadata.updated || '').trim();
+    const categories = cleanList(metadata.categories);
+    const tags = cleanList(metadata.tags);
+    const description = String(metadata.description || '').trim();
 
-    const date = fromDateTimeLocal(metadata.date);
-    if (!String(metadata.title || '').trim()) throw new Error('文章标题不能为空。');
+    const date = fromDateTimeLocal(dateLocal);
+    if (!title) throw new Error('文章标题不能为空。');
     if (!date) throw new Error('请选择有效的发布时间。');
 
-    const fields = [
-      `title: ${yamlString(String(metadata.title).trim())}`,
-      `date: ${date}`,
-    ];
-    const updated = fromDateTimeLocal(metadata.updated);
-    if (updated) fields.push(`updated: ${updated}`);
-    fields.push(`categories: ${yamlList(cleanList(metadata.categories))}`);
-    fields.push(`tags: ${yamlList(cleanList(metadata.tags))}`);
-    fields.push(`description: ${yamlString(String(metadata.description || '').trim())}`);
-    if (remaining.length) fields.push('', ...remaining);
+    /**
+     * 字段是否被用户改动过。
+     * 原文没有该字段时一律视为「改动」，这样新填的值才能写进去。
+     */
+    function changed(key) {
+      if (!byKey.has(key)) return true;
+      switch (key) {
+        case 'title': return original.title !== title;
+        case 'date': return original.date !== dateLocal;
+        case 'updated': return original.updated !== updatedLocal;
+        case 'categories': return !sameList(original.categories, categories);
+        case 'tags': return !sameList(original.tags, tags);
+        case 'description': return original.description !== description;
+        default: return true;
+      }
+    }
+
+    /** 该字段这次需要写出的行；返回 null 表示不写 */
+    function serialized(key) {
+      switch (key) {
+        case 'title': return [`title: ${yamlString(title)}`];
+        case 'date': return [`date: ${date}`];
+        case 'updated': return updatedLocal ? [`updated: ${fromDateTimeLocal(updatedLocal)}`] : null;
+        case 'categories': return [`categories: ${yamlList(categories)}`];
+        case 'tags': return [`tags: ${yamlList(tags)}`];
+        case 'description': return description ? [`description: ${yamlString(description)}`] : null;
+        default: return null;
+      }
+    }
+
+    /** 该字段在原文没有时要不要新建 */
+    function shouldCreate(key) {
+      switch (key) {
+        case 'title':
+        case 'date': return true;
+        case 'categories': return categories.length > 0;
+        case 'tags': return tags.length > 0;
+        case 'description': return description.length > 0;
+        case 'updated': return updatedLocal.length > 0;
+        default: return false;
+      }
+    }
+
+    const output = [];
+    const written = new Set();
+    let index = 0;
+
+    while (index < lines.length) {
+      const entry = startOf.get(index);
+      if (!entry) {
+        output.push(lines[index]);
+        index += 1;
+        continue;
+      }
+
+      const block = lines.slice(entry.start, entry.end);
+
+      if (!knownKeys.has(entry.key)) {
+        output.push(...block);            // 未知字段：原样、原位
+      } else if (!changed(entry.key)) {
+        output.push(...block);            // 没改：原样、原位（引号与 null 写法都保住）
+        written.add(entry.key);
+      } else {
+        const next = serialized(entry.key);
+        if (next) {
+          output.push(...next);           // 真的改了：重新序列化
+          written.add(entry.key);
+        }
+        // next 为 null 表示用户清空了这个可选字段 → 整块删掉
+      }
+
+      index = entry.end;
+    }
+
+    for (const key of knownKeys) {
+      if (written.has(key) || byKey.has(key)) continue;
+      if (!shouldCreate(key)) continue;
+      const next = serialized(key);
+      if (next) output.push(...next);
+    }
+
+    while (output.length && !output[0].trim()) output.shift();
+    while (output.length && !output.at(-1).trim()) output.pop();
 
     const separator = document.newline;
     const bodyPrefix = document.hasFrontMatter ? separator : `${separator}${separator}`;
-    return `---${separator}${fields.join(separator)}${separator}---${bodyPrefix}${document.body}`;
+    return `---${separator}${output.join(separator)}${separator}---${bodyPrefix}${document.body}`;
   }
 
   global.ArticleMetadata = Object.freeze({ splitDocument, read, update, toDateTimeLocal, currentLocalDateTime, fromDateTimeLocal });

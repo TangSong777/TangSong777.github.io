@@ -11,7 +11,7 @@
     "article:studio": "node ./tools/article-studio/server.mjs",
     "article:studio:no-open": "node ./tools/article-studio/server.mjs --no-open",
     "article:studio:mobile": "node ./tools/article-studio/server.mjs --network --no-open",
-    "article:studio:bundle": "esbuild ./tools/article-studio/vendor-entry.js --bundle --format=iife --platform=browser --target=es2020 --outfile=./tools/article-studio/public/vendor/toastui-editor.bundle.js",
+    "article:studio:bundle": "esbuild ./tools/article-studio/cm-vendor-entry.js --bundle --format=iife --platform=browser --target=es2020 --outfile=./tools/article-studio/public/vendor/codemirror.bundle.js",
     "article:studio:test": "node --test ./tools/article-studio/server.test.mjs",
     "test": "node --test ./tools/tests/publisher.test.mjs ./tools/article-studio/server.test.mjs ./tools/article-studio/metadata.test.mjs ./tools/fan-control/fan-control.test.mjs",
     "siyuan:check": "node ./tools/run-siyuan.mjs check",
@@ -20,7 +20,8 @@
     "siyuan:export": "node ./tools/export-siyuan-notebook.mjs",
     "siyuan:sync": "node ./tools/sync-siyuan-s3.mjs",
     "siyuan:preview-publish": "node ./tools/publish-siyuan-notes.mjs --preview",
-    "siyuan:publish": "node ./tools/publish-siyuan-notes.mjs --publish"
+    "siyuan:publish": "node ./tools/publish-siyuan-notes.mjs --publish",
+    "studio:test": "node --test ./tools/article-studio/tests/*.test.mjs"
   },
   "engines": {
     "node": ">=20.19.0"
@@ -29,6 +30,16 @@
     "version": "8.1.2"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.12",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/highlight": "^1.2.5",
     "@toast-ui/editor": "^3.2.2",
     "hexo": "^8.0.0",
     "hexo-generator-archive": "^2.0.0",
