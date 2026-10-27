@@ -9,6 +9,7 @@
  * 本进程不写入任何硬件或系统状态：状态页纯采集，终端能力等同于一次 SSH 登录。
  */
 import { createServer } from 'node:http';
+import { brotliCompressSync, gzipSync, constants as zlibConstants } from 'node:zlib';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
@@ -204,19 +205,67 @@ const MIME = {
   '.json': 'application/json; charset=utf-8',
 };
 
-async function serveStatic(res, pathname) {
+/* ---------------------------------------------------------- 静态资源压缩与缓存
+   app.js 51 KB + styles.css 31 KB + xterm 相关脚本，原来既不压缩也只缓存 300 秒。
+   文本资源按 Accept-Encoding 走 brotli/gzip；带 ?v= 的走一年 immutable；
+   HTML 仍 no-store。 */
+
+const COMPRESSIBLE = new Set(['.js', '.css', '.html', '.json', '.svg', '.txt', '.map', '.webmanifest']);
+const compressCache = new Map();
+
+function pickEncoding(req) {
+  const header = String(req.headers['accept-encoding'] || '');
+  if (/\bbr\b/.test(header)) return 'br';
+  if (/\bgzip\b/.test(header)) return 'gzip';
+  return '';
+}
+
+function encodeStaticBody(cacheKey, body, encoding) {
+  const key = cacheKey + '|' + encoding;
+  const cached = compressCache.get(key);
+  if (cached) return cached;
+  const encoded = encoding === 'br'
+    ? brotliCompressSync(body, { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } })
+    : gzipSync(body, { level: 6 });
+  if (compressCache.size > 120) compressCache.clear();
+  compressCache.set(key, encoded);
+  return encoded;
+}
+
+async function serveStatic(req, res, pathname, search = '') {
   const relative = normalize(decodeURIComponent(pathname)).replace(/^([/\\])+/, '');
   const target = resolve(publicDir, relative === '' ? 'index.html' : relative);
   if (!target.startsWith(publicDir + sep) && target !== publicDir) return fail(res, 403, '禁止访问。');
   try {
     const info = await stat(target);
     if (!info.isFile()) return fail(res, 404, '未找到。');
-    const body = await readFile(target);
-    res.writeHead(200, {
+    let body = await readFile(target);
+    const ext = extname(target).toLowerCase();
+    const isHtml = ext === '.html';
+    const versioned = !isHtml && (/[?&]v=/.test(search) || /^\/(js|css|vendor)\//.test(pathname));
+    const cacheControl = isHtml ? 'no-store' : (versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=300');
+    const etag = 'W/"' + info.size.toString(16) + '-' + Math.round(info.mtimeMs).toString(16) + '"';
+    const headers = {
       ...securityHeaders,
-      'Content-Type': MIME[extname(target).toLowerCase()] || 'application/octet-stream',
-      'Cache-Control': extname(target) === '.html' ? 'no-store' : 'public, max-age=300',
-    });
+      'Content-Type': MIME[ext] || 'application/octet-stream',
+      'Cache-Control': cacheControl,
+      ETag: etag,
+      Vary: 'Accept-Encoding',
+    };
+    if (req.headers['if-none-match'] === etag) {
+      res.writeHead(304, headers);
+      res.end();
+      return true;
+    }
+    if (COMPRESSIBLE.has(ext) && body.length > 1024) {
+      const encoding = pickEncoding(req);
+      if (encoding) {
+        body = encodeStaticBody(target + ':' + Math.round(info.mtimeMs), body, encoding);
+        headers['Content-Encoding'] = encoding;
+      }
+    }
+    headers['Content-Length'] = body.length;
+    res.writeHead(200, headers);
     res.end(body);
     return true;
   } catch {
@@ -612,8 +661,8 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' || req.method === 'HEAD') {
-      if (pathname === '/') return serveStatic(res, '/index.html');
-      return serveStatic(res, pathname);
+      if (pathname === '/') return serveStatic(req, res, '/index.html', url.search);
+      return serveStatic(req, res, pathname, url.search);
     }
 
     return fail(res, 405, '不支持的请求方法。');

@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { brotliCompressSync, gzipSync, constants as zlibConstants } from 'node:zlib';
 import { readFile, writeFile, mkdir, readdir, stat, rename, unlink, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
@@ -1381,6 +1382,70 @@ const mimeTypes = {
   '.avif': 'image/avif',
 };
 
+/* ---------------------------------------------------------- 静态资源压缩与缓存
+   编辑器启动一次要拉 vendor/codemirror.bundle.js（562 KB）+ app.js 61 KB
+   + typora-live-preview.js 33 KB + styles.css 33 KB，合计约 690 KB。
+   原来这里对所有响应一律 no-store、也不压缩 —— 每次打开都要原样重下 690 KB。
+   现在：文本资源按 Accept-Encoding 走 brotli/gzip，带 ?v= 指纹的走一年 immutable
+   缓存，HTML 仍 no-store（避免拿到旧页面结构）。 */
+
+const COMPRESSIBLE = new Set(['.js', '.css', '.html', '.json', '.svg', '.txt', '.map', '.webmanifest']);
+const compressCache = new Map();
+
+function pickEncoding(req) {
+  const header = String(req.headers['accept-encoding'] || '');
+  if (/\bbr\b/.test(header)) return 'br';
+  if (/\bgzip\b/.test(header)) return 'gzip';
+  return '';
+}
+
+function encodeStaticBody(cacheKey, body, encoding) {
+  const key = cacheKey + '|' + encoding;
+  const cached = compressCache.get(key);
+  if (cached) return cached;
+  const encoded = encoding === 'br'
+    ? brotliCompressSync(body, { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } })
+    : gzipSync(body, { level: 6 });
+  if (compressCache.size > 120) compressCache.clear();
+  compressCache.set(key, encoded);
+  return encoded;
+}
+
+async function sendStatic(req, res, url, target, contentType) {
+  const info = await stat(target);
+  const etag = 'W/"' + info.size.toString(16) + '-' + Math.round(info.mtimeMs).toString(16) + '"';
+  const isHtml = contentType.startsWith('text/html');
+  const versioned = isHtml
+    ? false
+    : (/[?&]v=/.test(url.search) || /^\/(vendor|js)\//.test(url.pathname));
+  const headers = {
+    'Cache-Control': isHtml ? 'no-store' : (versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=300'),
+    ETag: etag,
+    Vary: 'Accept-Encoding',
+  };
+  if (req.headers['if-none-match'] === etag) {
+    res.writeHead(304, {
+      'Cache-Control': headers['Cache-Control'],
+      ETag: etag,
+      Vary: 'Accept-Encoding',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    res.end();
+    return true;
+  }
+  let body = await readFile(target);
+  const ext = extname(target).toLowerCase();
+  if (COMPRESSIBLE.has(ext) && body.length > 1024) {
+    const encoding = pickEncoding(req);
+    if (encoding) {
+      body = encodeStaticBody(target + ':' + Math.round(info.mtimeMs), body, encoding);
+      headers['Content-Encoding'] = encoding;
+    }
+  }
+  headers['Content-Length'] = body.length;
+  return send(res, 200, body, contentType, headers);
+}
+
 async function routeStatic(req, res, url) {
   let target;
   const vendorFiles = {
@@ -1398,7 +1463,7 @@ async function routeStatic(req, res, url) {
     target = resolveInside(publicDir, pathname);
   }
   if (!existsSync(target) || !(await stat(target)).isFile()) return false;
-  return send(res, 200, await readFile(target), mimeTypes[extname(target).toLowerCase()] || 'application/octet-stream');
+  return sendStatic(req, res, url, target, mimeTypes[extname(target).toLowerCase()] || 'application/octet-stream');
 }
 
 const server = createServer(async (req, res) => {
