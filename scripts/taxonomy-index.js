@@ -37,13 +37,25 @@ hexo.extend.filter.register('after_render:html', (str, data) => {
   const root = hexo.config.root || '/';
   const all = hexo.locals.get(kind);
 
+  const esc = (s) =>
+    String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
   const items = all
     .toArray()
-    .map((item) => ({
-      name: item.name,
-      path: item.path,
-      count: (item.posts && item.posts.length) || item.count || 0,
-    }));
+    .map((item) => {
+      const posts = item.posts ? item.posts.toArray() : [];
+      posts.sort((a, b) => b.date - a.date);
+      return {
+        name: item.name,
+        path: item.path,
+        count: posts.length || item.count || 0,
+        posts: posts.slice(0, 2).map((p) => p.title),
+      };
+    });
 
   if (!items.length) return str;
 
@@ -55,7 +67,12 @@ hexo.extend.filter.register('after_render:html', (str, data) => {
     .map((item) => {
       const tier = item.count >= 3 ? ' is-major' : item.count === 2 ? ' is-mid' : '';
       const href = `${root}${String(item.path || '').replace(/^\/+/, '')}`;
-      return `<a class="tag-index-item${tier}" href="${href}">${item.name}<sup>${item.count}</sup></a>`;
+      const shown = item.posts.filter(Boolean);
+      const more = item.count - shown.length;
+      const postLine = shown.length
+        ? `<span class="tii-posts">${shown.map(esc).join(' · ')}${more > 0 ? ` 等 ${item.count} 篇` : ''}</span>`
+        : `<span class="tii-posts tii-empty">暂无文章</span>`;
+      return `<a class="tag-index-item${tier}" href="${href}"><span class="tii-head">${esc(item.name)}<sup>${item.count}</sup></span>${postLine}</a>`;
     })
     .join('');
 

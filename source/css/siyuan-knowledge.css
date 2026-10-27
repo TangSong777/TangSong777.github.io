@@ -3403,3 +3403,65 @@ body.siyuan-mode .post-body ul li > p > a:hover {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+/* ==== Round 31：标签 / 分类总览页，每个胶囊带上它下面最新的文章标题 ====
+   只有 3 个标签时整页只剩三颗药丸和大片空白，读者看不到「这个主题里有什么」。
+   胶囊改成两行小卡片：上行是名字 + 计数，下行是最新文章标题（最多两条 + 「等 N 篇」）。 */
+.tag-index-grid { align-items: stretch; gap: 12px; }
+.tag-index .tag-index-item {
+  align-items: flex-start;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 340px;
+  padding: 10px 15px 11px;
+  text-align: left;
+}
+.tag-index .tag-index-item .tii-head {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.tag-index .tag-index-item .tii-posts {
+  color: var(--muted-2);
+  display: block;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tag-index .tag-index-item .tii-posts.tii-empty { opacity: .7; }
+.tag-index .tag-index-item:hover .tii-posts { color: var(--green); }
+/* ==== Round 31b：三颗胶囊撑不满一行，改成等宽网格；计数从「上标」改成基线小徽章 ==== */
+.tag-index .tag-index-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+}
+.tag-index .tag-index-item { max-width: none; width: auto; }
+.tag-index .tag-index-item .tii-head sup {
+  background: rgba(255, 255, 255, .72);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.5;
+  opacity: .82;
+  padding: 0 6px;
+  vertical-align: baseline;
+}
+/* ==== Round 31c：总览页的「换个维度看」链接与页面正文挤在一起 ====
+   分类页正文自带一句说明，紧贴在「按标签浏览 →」下面，读起来像同一条消息。
+   给正文加一条分隔线（标签页没有正文，不会出现这条线）。 */
+.tag-index .tag-index-foot { margin: 16px 0 0; }
+.tag-index + .post-body {
+  border-top: 1px solid var(--sy-line);
+  margin-top: 18px;
+  padding-top: 16px;
+}
