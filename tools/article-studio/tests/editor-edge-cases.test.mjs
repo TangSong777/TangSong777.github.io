@@ -105,4 +105,4 @@ all = check('链接里的图片语法', () => {
 
 console.log();
 console.log(all ? '全部通过' : '有失败项');
-process.exit(all ? 0 : 1);
+process.exitCode = all ? 0 : 1;

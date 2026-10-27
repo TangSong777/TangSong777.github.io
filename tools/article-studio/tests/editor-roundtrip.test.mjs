@@ -82,4 +82,4 @@ if (failures.length) {
   }
 }
 
-process.exit(fail === 0 ? 0 : 1);
+process.exitCode = fail === 0 ? 0 : 1;

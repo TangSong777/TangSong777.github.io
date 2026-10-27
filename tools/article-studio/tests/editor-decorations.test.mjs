@@ -194,4 +194,4 @@ ok = assert('代码块有逐行底板', (idleKinds['line:cm-md-codeblock'] || 0)
 ok = assert('活动行的隐藏装饰变少', (activeKinds['replace'] || 0) < (idleKinds['replace'] || 0)) && ok;
 
 console.log('\n结果:', ok ? '全部通过' : '有失败项');
-process.exit(ok ? 0 : 1);
+process.exitCode = ok ? 0 : 1;
