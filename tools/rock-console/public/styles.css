@@ -70,7 +70,13 @@ html, body { height: 100%; }
 
 body {
   margin: 0;
-  background: var(--canvas);
+  background:
+    radial-gradient(ellipse 1350px 720px at 92% -6%, rgba(217, 131, 36, .20), transparent 58%),
+    radial-gradient(ellipse 1050px 640px at -4% 102%, rgba(194, 91, 126, .16), transparent 56%),
+    radial-gradient(ellipse 900px 520px at 50% 46%, rgba(106, 141, 140, .08), transparent 72%),
+    linear-gradient(180deg, #f8fcfb 0%, var(--canvas) 42%, #edf4f2 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--ink);
   font-size: 14px;
   line-height: 1.5;
@@ -93,8 +99,10 @@ small { font-size: 12px; }
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(1200px 600px at 50% -10%, var(--green-soft) 0%, transparent 60%),
-    var(--canvas);
+    radial-gradient(ellipse 1300px 700px at 88% -4%, rgba(217, 131, 36, .22), transparent 58%),
+    radial-gradient(ellipse 1000px 620px at 2% 102%, rgba(194, 91, 126, .17), transparent 56%),
+    radial-gradient(ellipse 800px 500px at 50% 50%, rgba(106, 141, 140, .08), transparent 72%),
+    linear-gradient(180deg, #f8fcfb 0%, var(--canvas) 44%, #edf4f2 100%);
 }
 
 .login-card {
@@ -937,4 +945,17 @@ small { font-size: 12px; }
 @media (max-width: 720px) {
   .seg-table { font-size: 12px; }
   .seg-table th, .seg-table td { padding: 7px 8px; }
+}
+
+/* 标志元素：与 blogs.yanghanlin.cn、article-studio 共用的顶部品牌渐变条 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    var(--green-deep) 0%, var(--green-deep) 22%,
+    var(--green-raw) 46%, var(--green-raw) 58%,
+    #d98324 76%, #c25b7e 100%);
+  z-index: 999;
 }

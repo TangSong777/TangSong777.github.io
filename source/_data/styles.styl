@@ -55,11 +55,28 @@
   --radius: 16px;
 
   /* 岁月史书 / 知识库沿用的别名 */
+  /* 撞色：方案 B（青橙）—— 只用于装饰位，正文与背景不变 */
+  --pop-amber: #d98324;
+  --pop-amber-deep: #a9621a;
+  --pop-amber-soft: #fdf1e0;
+  --pop-amber-line: #edc989;
+  --pop-rose: #c25b7e;
+  --pop-rose-deep: #a8425f;
+  --pop-rose-soft: #fbeaf0;
+  --pop-rose-line: #efc3d3;
+  --pop-coral: #e2705a;
   --knowledge-accent: var(--green);
 }
 
 body {
   letter-spacing: .01em;
+  background:
+    radial-gradient(ellipse 1350px 720px at 92% -6%, rgba(217, 131, 36, .20), transparent 58%),
+    radial-gradient(ellipse 1050px 640px at -4% 102%, rgba(194, 91, 126, .16), transparent 56%),
+    radial-gradient(ellipse 900px 520px at 50% 46%, rgba(106, 141, 140, .08), transparent 72%),
+    linear-gradient(180deg, #f8fcfb 0%, var(--canvas) 42%, #edf4f2 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 // Use the same comfortable reading width as Article Studio on large screens.
@@ -70,13 +87,13 @@ body {
 
 // Keep published article typography aligned with Article Studio's WYSIWYG canvas.
 .post-body {
-  color: #1c2b2a;
+  color: var(--ink);
   font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif;
   font-size: 16px;
   line-height: 1.85;
 
   h1, h2, h3, h4, h5, h6 {
-    color: #33544f;
+    color: var(--green-deep);
     line-height: 1.4;
     margin: 28px 0 14px;
     padding: 0;
@@ -88,7 +105,7 @@ body {
   h3 { font-size: 1.3em; }
   h4 { font-size: 1.15em; }
   h5 { font-size: 1.05em; }
-  h6 { font-size: 1em; color: #5d6d6b; }
+  h6 { font-size: 1em; color: var(--muted); }
 
   p {
     line-height: 1.85;
@@ -105,9 +122,9 @@ body {
   }
 
   blockquote {
-    background: #eef4f3;
-    border-left-color: #4d7572;
-    color: #53706d;
+    background: var(--green-wash);
+    border-left-color: var(--pop-amber);
+    color: var(--green-deep);
     border-radius: 0 8px 8px 0;
     padding: 10px 18px;
 
@@ -117,7 +134,7 @@ body {
   }
 
   hr {
-    background-image: repeating-linear-gradient(-45deg, #d8e5e3, #d8e5e3 4px, transparent 4px, transparent 8px);
+    background-image: repeating-linear-gradient(-45deg, var(--line), var(--line) 4px, transparent 4px, transparent 8px);
   }
 }
 
@@ -135,7 +152,7 @@ body {
 // ─────────────────────────────────────────────────────────────────────────
 // 统一视觉规范：与 editor.yanghanlin.cn、server.yanghanlin.cn 共用
 //   主色 #4d7572 / 深绿 #33544f / 浅绿 #e6efee
-//   画布 #f2f7f6 / 纸面 #ffffff / 墨色 #1c2b2a / 次要 #6b807e
+//   画布 #f2f7f6 / 纸面 #ffffff / 墨色 #1c2b2a / 次要 var(--muted)
 //   字体 Inter, "Segoe UI", "Microsoft YaHei"
 //   标志元素：渐变绿圆角方块 + 单字（学 / 文 / 板）
 // ─────────────────────────────────────────────────────────────────────────
@@ -158,7 +175,7 @@ body {
     --content-bg-color: #1a2423;
     --link-color: #8fb8b5;
     --link-hover-color: #b7d5d2;
-    --brand-color: #e8f1f0;
+    --brand-color: var(--green-deep);
     --theme-color: #4d7572;
     --btn-default-bg: #4d7572;
     --border-color: #243130;
@@ -188,11 +205,13 @@ textarea {
 }
 
 a:hover {
-  color: #33544f;
+  color: var(--green-deep);
 }
 
 .site-brand-container {
-  background: linear-gradient(135deg, #33544f, #6a8d8c);
+  background:
+    radial-gradient(circle at 92% 18%, rgba(217, 131, 36, .34), transparent 44%),
+    linear-gradient(135deg, var(--green-deep) 0%, var(--green-raw) 62%, var(--pop-amber-deep) 100%);
 }
 
 // 品牌标记：与工作台「文」、面板「板」同款渐变方块
@@ -209,7 +228,7 @@ a:hover {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  color: #ffffff;
+  color: var(--paper);
   background: rgba(255, 255, 255, .16);
   border: 1px solid rgba(255, 255, 255, .42);
   font-size: 15px;
@@ -234,7 +253,7 @@ a:hover {
 }
 
 ::selection {
-  background: rgba(47, 111, 97, .18);
+  background: rgba(217, 131, 36, .24);
 }
 /* 标志元素：与 blogs.yanghanlin.cn、server.yanghanlin.cn 共用的顶部品牌渐变条 */
 body::before {
@@ -242,7 +261,9 @@ body::before {
   position: fixed;
   inset: 0 0 auto 0;
   height: 3px;
-  background: linear-gradient(90deg, #33544f, #6a8d8c);
+  background: linear-gradient(90deg,
+    var(--green-deep) 0%, var(--green-deep) 22%,
+    var(--green-raw) 46%, var(--pop-amber) 74%, var(--pop-rose) 100%);
   z-index: 999;
 }
 
@@ -265,7 +286,7 @@ body::before {
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .12em;
-  color: #4d7572;
+  color: var(--green);
 }
 
 .sidebar-tags {
@@ -278,8 +299,8 @@ body::before {
   display: inline-block;
   padding: 3px 10px;
   border-radius: 999px;
-  background: #e6efee;
-  color: #33544f;
+  background: var(--green-soft);
+  color: var(--green-deep);
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
@@ -287,8 +308,8 @@ body::before {
 }
 
 .sidebar-tag:hover {
-  background: #4d7572;
-  color: #ffffff;
+  background: var(--green);
+  color: var(--paper);
 }
 
 .sidebar-tag sup,
@@ -305,17 +326,17 @@ body::before {
 }
 
 .sidebar-archive {
-  color: #6b807e;
+  color: var(--muted);
   font-size: 13px;
   text-decoration: none;
 }
 
 .sidebar-archive:hover {
-  color: #4d7572;
+  color: var(--green);
 }
 
 .sidebar-empty {
-  color: #6b807e;
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -324,5 +345,22 @@ body::before {
   --highlight-background: #f3f6f4;
   --highlight-foreground: #444444;
   --highlight-gutter-foreground: #8d9b97;
-  --highlight-gutter-background: #eef2f1;
+  --highlight-gutter-background: var(--green-wash);
+}
+
+// ── 撞色（方案 B）：侧栏小标题的下划线与卡片左侧色条 ──
+.sidebar-widget h3 {
+  position: relative;
+  padding-bottom: 7px;
+}
+
+.sidebar-widget h3::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 26px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--pop-amber), var(--pop-rose));
 }
