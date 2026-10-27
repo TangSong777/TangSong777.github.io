@@ -2446,6 +2446,11 @@ body.archive-mode .posts-collapse .post-content .collection-year::before {
   bottom: 4px;
   content: "";
   display: block;
+  /* NexT 那条是「一个 8×8 的圆点」：height/width: 8px + border-radius: 50% + margin-top: -4px。
+     只改 top/bottom 不改 height，绝对定位会以 height 为准、bottom 被忽略，
+     于是渐变条只有 8px 高，在 52px 高的年份块顶上看着像个橙色小逗号。
+     height: auto 让 top/bottom 真正生效。 */
+  height: auto;
   left: 0;
   margin: 0;
   position: absolute;
@@ -2870,4 +2875,44 @@ body.siyuan-mode .post-body ol,
 body.siyuan-mode .post-body li,
 body.siyuan-mode .post-body p {
   text-align: left;
+}
+
+/* ==== Round 21：正文列太窄 ==== */
+/* 三处 main-inner 的上限写的是 calc(100vw - 680px)，那 680 是「侧栏 320 + 两侧留白」的老账；
+   第 20 轮已经给 .main 加了 padding-right: 320px 让位侧栏，再减一次 680 就减重了 ——
+   1280 视口下正文只剩 600px 宽、每行约 28 个汉字，读起来一直在折行。
+   这里把上限放开到可用区域，再用 post-block 的 max-width 把行宽收回舒适区间。 */
+@media (min-width: 992px) {
+  body.blog-post-mode .main-inner,
+  body.archive-mode .main-inner,
+  body.siyuan-mode .main-inner {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* 正文卡片：box-sizing 改成 border-box，否则 max-width 只约束内容盒，
+     再加 54px 左右内边距就溢出成 908px 宽。780 - 108 = 672px 行宽，约 41 个汉字。 */
+  body.blog-post-mode .post-block,
+  body.archive-mode .post-block {
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 780px;
+  }
+
+  /* 笔记页列表更密，稍微窄一点更聚拢 */
+  body.siyuan-mode .post-block {
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 740px;
+  }
+}
+
+/* ==== Round 21b：文章页顶栏也换成纯绿带 ==== */
+/* 那条 radial 暖斑是按元素自身宽度算的：首页整页宽时是「右上角的光」，
+   到文章页 / 笔记页这种只有一千出头宽的带子上就变成一块黄斑。
+   archive-mode 与 siyuan-mode 之前已经换过，blog-post-mode 漏了。 */
+body.blog-post-mode .site-brand-container {
+  background: linear-gradient(120deg, var(--green-deep) 0%, var(--green) 55%, var(--green-raw) 100%);
 }
