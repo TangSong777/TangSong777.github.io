@@ -307,9 +307,28 @@ body::before {
   transition: background .15s ease, color .15s ease;
 }
 
+/* 撞色：标签胶囊三色轮换，打破清一色青绿 */
+.sidebar-tags .sidebar-tag:nth-child(3n+2) {
+  background: var(--pop-amber-soft);
+  color: var(--pop-amber-deep);
+}
+
+.sidebar-tags .sidebar-tag:nth-child(3n) {
+  background: var(--pop-rose-soft);
+  color: var(--pop-rose-deep);
+}
+
 .sidebar-tag:hover {
   background: var(--green);
   color: var(--paper);
+}
+
+.sidebar-tags .sidebar-tag:nth-child(3n+2):hover {
+  background: var(--pop-amber);
+}
+
+.sidebar-tags .sidebar-tag:nth-child(3n):hover {
+  background: var(--pop-rose);
 }
 
 .sidebar-tag sup,
