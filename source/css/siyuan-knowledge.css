@@ -1418,3 +1418,26 @@ body.archive-mode .collection-year-count {
   background: var(--pop-amber-soft);
   color: var(--pop-amber-deep);
 }
+
+/* ---------- 顶部导航：让导航项「指哪亮哪」 ---------- */
+/* NexT 原样：.menu-item a 没有颜色（继承灰）。实测 DOM 里 <a> 上没有 menu-item-active 类，
+   所以「当前页下划线」这条规则在静态站里永远不会命中 —— 下面保留它作 future-proof，
+   真正的反馈放在 :hover 上。 */
+.site-nav .menu-item a {
+  border-bottom: 2px solid transparent;
+  color: var(--green);
+  font-weight: 600;
+  padding-bottom: 4px;
+  transition: border-color .18s ease, color .18s ease;
+}
+
+.site-nav .menu-item a:hover {
+  border-bottom-color: var(--pop-amber);
+  color: var(--green-deep);
+}
+
+.site-nav .menu .menu-item a.menu-item-active {
+  border-bottom: 2px solid var(--pop-amber);
+  color: var(--green-deep);
+  font-weight: 750;
+}
