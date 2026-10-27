@@ -3289,3 +3289,37 @@ body.siyuan-mode .sidebar-nav { border-bottom-color: var(--sy-line); }
 .sidebar .sidebar-inner .sidebar-tags {
   justify-content: flex-start;
 }
+
+/* ==== Round 27：笔记页正文被左侧目录树压住了 ====
+
+   .siyuan-tree-panel 是 position: fixed; left: 0; width: 300px; height: 100vh，
+   它不参与文档流，所以正文必须自己让开 300px。
+
+   第 20 轮给 .main 加 padding-right: 320 让位右侧目录，
+   第 21 轮又把 .main-inner 的 max-width 放开到 100% ——
+   两个改动叠在一起，正文从 x=333（树的右边）滑到 x=173（树的下面），
+   左侧列表树直接盖在正文上，透过半透明的树面板能看到正文文字。
+
+   这里补上左侧留白：笔记页（body.siyuan-mode）在宽屏下让开目录树。 */
+@media (min-width: 992px) {
+  body.siyuan-mode .main {
+    /* 300 = 目录树宽度，再加 16 给卡片留一条呼吸缝，否则卡片贴着树的投影 */
+    padding-left: 316px;
+  }
+
+  /* 让开两端之后可用宽度变小，正文卡片按可用区域居中即可，
+     不要再用固定 740 —— 1280 视口下可用 660，固定 740 会贴边。 */
+  body.siyuan-mode .post-block {
+    max-width: 100%;
+  }
+}
+
+/* ==== Round 27b：笔记页的面包屑还是居中的 ====
+
+   「学习笔记 / 其他笔记」这行由 NexT 输出在 .post-header 下面，
+   继承了主题的居中排布；而标题、列表、正文全是左对齐，这行夹在中间像个多余的副标题。
+   左对齐后与标题同轴。 */
+body.siyuan-mode .main-inner > .breadcrumb,
+body.siyuan-mode .post-block .breadcrumb {
+  text-align: left;
+}
