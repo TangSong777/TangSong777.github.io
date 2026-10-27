@@ -491,6 +491,27 @@ body.embed-mode .workspace { grid-template-columns: minmax(0, 1fr); height: calc
 body.embed-mode .editor-shell { padding: 12px; }
 body.embed-mode .editor-view { border-radius: 12px; }
 
+/* ── embed 模式的布局补丁（2026-10-28） ────────────────────────────
+   症状：管理中心内嵌编辑器时，工具栏按钮竖着排成一列，编辑区只剩窄窄一条。
+   原因：.editing-surface 是「210px 固定大纲列 + minmax(0,1fr)」两列网格。
+        在 iframe 里可用宽度不够时，第一列吃掉几乎全部空间，第二列被压到
+        只有几十像素 —— 工具栏里的按钮 flex 布局就一个一行堆下去。
+   做法：embed 里大纲没空间也没必要，隐藏；编辑面改成单列；工具栏明令不换行。 */
+body.embed-mode .article-outline { display: none; }
+body.embed-mode .editing-surface {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 44px minmax(0, 1fr) 30px;
+}
+body.embed-mode .editing-surface > .editor-toolbar,
+body.embed-mode .editing-surface > .rich-editor,
+body.embed-mode .editing-surface > .source-pane,
+body.embed-mode .editing-surface > .pane-footer { grid-column: 1; }
+body.embed-mode .editor-toolbar { flex-wrap: nowrap; }
+
+/* 工具栏本身也要防竖排：横向可滚动，按钮永不换行。 */
+.editor-toolbar { flex-wrap: nowrap; min-width: 0; }
+
+
 /* ============ 多色相：工具栏按功能分组 ============ */
 /* 五个功能组各给一个色相，扫一眼就知道这排按钮负责什么。
    全部取自 :root，不引入新颜色。 */
