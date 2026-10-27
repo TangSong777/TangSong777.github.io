@@ -3174,3 +3174,118 @@ body.archive-mode .sidebar-inner {
 /* 白底之后，页签下方那条分隔线要与卡片边框区分开，压淡一点 */
 body.blog-post-mode .sidebar-nav,
 body.siyuan-mode .sidebar-nav { border-bottom-color: var(--sy-line); }
+
+/* ==== Round 26：侧栏「标签 / 分类 / 归档」的计数不该像脚注 ====
+
+   现状（放大截图逐行量）：每行是「工具 + <sup>1</sup>」，
+   NexT 把计数当上标排在文字右上方、字号 9.5–10px、颜色饱和，
+   于是整列右端参差不齐，而且那个小数字读起来像脚注标记。
+
+   改成：计数是「行尾的小数字」——与文字同基线、等宽数字、
+   低对比度；归档行让计数真正靠到右边缘，右端就齐了。
+   ---- */
+
+/* 标签：一排左对齐的胶囊，改成 flex 才能稳定换行与对齐 */
+.sidebar .sidebar-inner .sidebar-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  text-align: left;
+}
+
+.sidebar .sidebar-inner a.sidebar-tag {
+  align-items: baseline;
+  background: var(--green-wash);
+  border: 1px solid var(--green-line);
+  border-radius: 999px;
+  color: var(--green-deep);
+  display: inline-flex;
+  font-size: 12px;
+  gap: 6px;
+  line-height: 1.5;
+  padding: 3px 10px;
+  text-decoration: none;
+  transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.sidebar .sidebar-inner a.sidebar-tag:hover {
+  background: var(--green-soft);
+  border-color: var(--green);
+  transform: translateY(-1px);
+}
+
+/* 归档行：文字在左、计数在右，中间留白由 space-between 撑开 */
+.sidebar .sidebar-inner .sidebar-archives {
+  text-align: left;
+}
+
+.sidebar .sidebar-inner a.sidebar-archive {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* 三处共用的计数样式：同基线、等宽数字、低对比，
+   不再是「上标小字」那种脚注感。 */
+.sidebar .sidebar-inner a.sidebar-tag sup,
+.sidebar .sidebar-inner a.sidebar-category sup,
+.sidebar .sidebar-inner a.sidebar-archive sup {
+  background: rgba(255, 255, 255, .62);
+  border-radius: 999px;
+  color: inherit;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+  opacity: .78;
+  padding: 0 5px;
+  vertical-align: baseline;
+}
+
+/* 分类胶囊沿用琥珀系，但计数同款处理 */
+.sidebar .sidebar-inner a.sidebar-category {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.sidebar .sidebar-inner a.sidebar-category sup {
+  background: rgba(255, 255, 255, .55);
+  color: var(--pop-amber-deep);
+  font-size: 10.5px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ==== Round 26b：侧栏小标题右侧的「全部 →」 ====
+
+   它是工具链接，不是正文链接：NexT 给所有 <a> 加了底边框，
+   于是「全部 →」下面拖一条线，比小标题本身还显眼。
+   去掉线、压小一号、默认低调，hover 才亮。 */
+.sidebar-widget h3 .sidebar-widget-more {
+  border-bottom: 0;
+  color: var(--muted-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-decoration: none;
+  transition: color .15s ease;
+  vertical-align: .18em;
+}
+
+.sidebar-widget h3 .sidebar-widget-more:hover {
+  color: var(--pop-amber-deep);
+}
+
+/* ==== Round 26c：标签胶囊是居中的，不是左对齐的 ====
+
+   main.css:2787 的 .sidebar-tags 已经写了 display:flex + justify-content:center，
+   我们后来只补了 display/flex-wrap/gap/text-align，
+   **text-align 对 flex 容器无效** —— 换行后的第二排仍然居中，
+   于是「工具 输入法」在左、「小项目」浮在中间，看着像没对齐。
+   主轴对齐要用 justify-content。 */
+.sidebar .sidebar-inner .sidebar-tags {
+  justify-content: flex-start;
+}
