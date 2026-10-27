@@ -938,7 +938,11 @@ body.siyuan-tree-open { overflow: hidden !important; }
   body.blog-post-mode .post-block { border-radius: 14px; padding: 30px 22px; }
   body.siyuan-mode .post-block { border-radius: 0; padding: 28px 20px; }
   .post-body .table-container { border-radius: 9px; margin-left: 0; margin-right: 0; }
-  .post-body .table-container > table { font-size: 13px; min-width: 560px; }
+  /* 原来这里写死 min-width: 560px —— 手机上一张两列表也要 560 px，
+     于是每张表都只能横向滚动。改成 min-width: 0，让表格自己收缩；
+     中文本身可以在任意字之间断行，绝大多数表都能落进屏幕宽度，
+     真正列数很多的表仍然会撑开，这时由 .table-container 的 overflow-x 接管。 */
+  .post-body .table-container > table { font-size: 13px; min-width: 0; }
   .post-body .table-container th,
   .post-body .table-container td { padding: 9px 11px; }
   .siyuan-hero { border-radius: 14px; padding: 30px 24px; }
@@ -1823,4 +1827,105 @@ body.siyuan-mode .post-body table caption {
   font-size: 12px;
   padding: 0 0 8px;
   text-align: left;
+}
+
+/* ==== 窄屏精修：标题孤字、表格滚动、浮动按钮留白（round 8）==== */
+
+/* 中文标题在窄屏上经常把最后一个字甩到第二行（「学习、记录与持续构 / 建」）。
+   text-wrap: balance 让浏览器把两行长度摊匀，比手动断行可靠；
+   不认识这个属性的浏览器会忽略，退化成原来的换行。 */
+.blog-home-hero h1,
+.siyuan-hero h1,
+.post-body h1,
+.post-body h2,
+.post-body h3,
+.post-body h4 {
+  text-wrap: balance;
+}
+
+/* 正文段落用 pretty：避免最后一行只剩一两个字 */
+.post-body p,
+.siyuan-hero p,
+.blog-home-hero p {
+  text-wrap: pretty;
+}
+
+/* 窄屏下左侧浮动按钮（.siyuan-tree-toggle，fixed bottom 22 left 18，48×48）
+   会压住正文最后几行，给卡片留出底部空间。只在按钮出现的断点生效。 */
+@media (max-width: 1100px) {
+  body.siyuan-mode .post-block,
+  body.blog-post-mode .post-block {
+    padding-bottom: 78px;
+  }
+}
+
+/* 表格容器在这一层滚动，表格自己保持 max-content 宽度 */
+.post-body .table-container > table {
+  margin: 0;
+}
+
+/* ==== 窄屏表格：能塞下就塞下，塞不下才横滚（round 8）==== */
+
+.post-body .table-container th,
+.post-body .table-container td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ==== 窄屏第三轮：标题左对齐、手机顶栏渐变、浮动按钮换边（round 8）==== */
+
+/* 标题不该两端对齐。
+   实测 430px 下 h2 是 25.6px 字号、333px 宽，`text-align: justify` 遇上
+   `text-wrap: balance` 会把标题掰成两行，再用两端对齐把第一行拉满 ——
+   「一、Path 对象与路径基础」被撑成「一、 Path  对」加下一行，字距大得离谱。
+   正文用两端对齐是中文排版的常规做法，但标题永远该齐左。 */
+body.blog-post-mode .post-body h1,
+body.blog-post-mode .post-body h2,
+body.blog-post-mode .post-body h3,
+body.blog-post-mode .post-body h4,
+body.blog-post-mode .post-body h5,
+body.blog-post-mode .post-body h6,
+body.siyuan-mode .post-body h1,
+body.siyuan-mode .post-body h2,
+body.siyuan-mode .post-body h3,
+body.siyuan-mode .post-body h4,
+body.siyuan-mode .post-body h5,
+body.siyuan-mode .post-body h6 {
+  text-align: left;
+}
+
+/* 窄屏顶栏：整条渐变在 430px 上只有 60% 落在可视区，
+   135deg 斜切的琥珀段会在右边堆成一块土黄色，看着像褪色。
+   手机上一律收成纯青绿三段。 */
+@media (max-width: 768px) {
+  .site-brand-container {
+    background: linear-gradient(120deg, var(--green-deep) 0%, var(--green) 55%, var(--green-raw) 100%);
+  }
+}
+
+/* 笔记页的目录开关是 position: fixed 的圆钮，桌面上放左下（挨着目录面板）合理，
+   手机上目录是抽屉，圆钮压着正文首行很难看 —— 挪到右下角，让开左侧的阅读起点。 */
+@media (max-width: 768px) {
+  .siyuan-tree-toggle {
+    left: auto;
+    right: 16px;
+  }
+}
+
+/* ==== 标题不做 balance（round 8 收尾）==== */
+
+/* `text-wrap: balance` 在中文长标题上会做两件事：把标题掰成等长的两行，
+   然后 Chrome 在行内补白把短行填满 —— 视觉上就是「一、　Path　对」这种大空档。
+   英文标题掰行好看，中文标题掰行只会变丑，且标题本来就短，不值当。
+   实测 430px 下「一、Path 对象与路径基础」正是被它掰成两行再补白的。 */
+body.blog-post-mode .post-body h1,
+body.blog-post-mode .post-body h2,
+body.blog-post-mode .post-body h3,
+body.blog-post-mode .post-body h4,
+body.siyuan-mode .post-body h1,
+body.siyuan-mode .post-body h2,
+body.siyuan-mode .post-body h3,
+body.siyuan-mode .post-body h4 {
+  text-wrap: normal;
+  text-wrap: wrap;
 }
