@@ -648,6 +648,17 @@
           }
 
 
+          /* ---- 表格整块 ----
+             光标不在表内时，整块由 tablePreview（EditorView.decorations.compute）
+             替换成真表格。这里必须让路：同一段文字上既有 line 装饰又有 block replace
+             时，CodeMirror 会丢掉块级替换，表现就是表格退回源码。
+             光标进了表格才走下面那套「竖线弱化 + 表头加粗」的源码美化。 */
+          if (name === 'Table') {
+            var tableSelection = state.selection.main;
+            if (!(tableSelection.from <= node.to && tableSelection.to >= node.from)) return false;
+            return true;
+          }
+
           /* ---- 表格：竖线弱化成网格线，表头加粗，对齐行再淡一档 ---- */
           if (name === 'TableDelimiter') {
             var delimText = state.doc.sliceString(node.from, node.to);

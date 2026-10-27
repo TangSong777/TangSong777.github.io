@@ -103,7 +103,7 @@ h1 { margin: 4px 0 0; font-size: 25px; }
 .rich-editor { height: 100%; display: flex; flex-direction: column; background: #fff; }
 .rich-editor .cm-editor { height: 100%; flex: 1 1 auto; min-height: 0; }
 .rich-editor .cm-scroller { overflow: auto; overscroll-behavior: contain; }
-.rich-editor .cm-content { max-width: 1280px; margin: 0 auto; width: 100%; min-height: 100%; padding-bottom: 45vh; }
+.rich-editor .cm-content { max-width: 1280px; margin: 0 auto; width: 100%; min-height: 100%; padding-bottom: 45vh; overflow-wrap: anywhere; word-break: break-word; }
 .rich-editor .cm-line { padding-left: 0; padding-right: 0; }
 /* 选中态与焦点环统一到站点配色 */
 .rich-editor .cm-editor.cm-focused { outline: none; }
