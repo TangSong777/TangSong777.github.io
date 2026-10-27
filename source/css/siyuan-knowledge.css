@@ -1860,8 +1860,7 @@ body.siyuan-mode .post-body table caption {
 /* 窄屏下左侧浮动按钮（.siyuan-tree-toggle，fixed bottom 22 left 18，48×48）
    会压住正文最后几行，给卡片留出底部空间。只在按钮出现的断点生效。 */
 @media (max-width: 1100px) {
-  body.siyuan-mode .post-block,
-  body.blog-post-mode .post-block {
+  body.siyuan-mode .post-block {
     padding-bottom: 78px;
   }
 }
@@ -3615,5 +3614,20 @@ body.archive-mode .posts-collapse .post-content > article .post-header {
   .siyuan-tree-header {
     border-bottom: 1px solid var(--sy-line);
     background: rgba(255, 255, 255, .55);
+  }
+}
+
+/* ==== Round 36：文章页手机端的尾巴太秃 ====
+   1) 78px 的底部内边距本来是给「笔记页左下角那颗浮动目录按钮」留位的，
+      文章页没有那颗按钮，白多出一大截空白 —— 恢复成和桌面一致的 42px。
+   2) 右下角「↑ 100%」是 fixed 的，滚到页面最底会正好压在页脚文字上；
+      给页脚补一段底部内边距，按钮就浮在空白上而不是字上。 */
+@media (max-width: 1100px) {
+  body.blog-post-mode .post-block {
+    padding-bottom: 42px;
+  }
+
+  .footer-inner {
+    padding-bottom: 58px;
   }
 }
