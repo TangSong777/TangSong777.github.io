@@ -1,12 +1,12 @@
 :root {
-  --sy-bg: #f4f7f6;
+  --sy-bg: var(--canvas);
   --sy-panel: rgba(250, 252, 249, .96);
-  --sy-ink: #28332f;
-  --sy-muted: #708078;
-  --sy-line: #dce5df;
-  --sy-accent: #5f8f82;
-  --sy-accent-soft: #e2eee9;
-  --sy-warm: #dca46f;
+  --sy-ink: var(--ink);
+  --sy-muted: var(--muted);
+  --sy-line: var(--line);
+  --sy-accent: var(--green-raw);
+  --sy-accent-soft: var(--green-soft);
+  --sy-warm: var(--amber-line);
   --sy-shadow: 0 18px 50px rgba(38, 63, 55, .15);
 }
 
