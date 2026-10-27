@@ -1,0 +1,46 @@
+[Unit]
+Description=Rock 5B+ status dashboard and web terminal (user service, loopback only)
+Documentation=file:/srv/blog/repo/tools/rock-console/README.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=__CONFIG_FILE__
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node __APP_DIR__/server.mjs --no-open
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=15s
+KillMode=mixed
+
+# 用户级 systemd 不支持 ProtectSystem / ProtectHome 等需要特权的能力，
+# 因此这里只保留用户管理器可用的加固项。
+# 需要更完整的沙箱（系统目录只读）时改用系统级安装：
+#   sudo bash install-rock-console.sh
+#
+# 注意：不要在这里加 ProtectClock。实测它会让用户级服务在
+# 「Failed at step CAPABILITIES」处失败（status=218）——用户管理器
+# 没有能力执行相应的 capability 降权。
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=false
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectProc=invisible
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+
+# 不要启用 MemoryDenyWriteExecute，V8 的 JIT 需要可写可执行内存。
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rock-console
+
+[Install]
+WantedBy=default.target

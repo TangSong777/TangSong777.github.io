@@ -1,0 +1,11 @@
+[Unit]
+Description=每 2 秒刷新 rknpu 真实利用率
+
+[Timer]
+OnBootSec=5s
+OnUnitActiveSec=2s
+AccuracySec=500ms
+Unit=rock-console-npu.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,8 @@
+[Unit]
+Description=导出 rknpu 真实利用率给 rock-console
+Documentation=file:/srv/blog/repo/tools/rock-console/README.md
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/srv/blog/repo/tools/rock-console/npu-load-export.sh

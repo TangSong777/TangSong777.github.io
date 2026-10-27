@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Rock 5B+ 控制台</title>
+<link rel="icon" type="image/jpeg" href="/avatar.jpg?v=1">
+<link rel="apple-touch-icon" href="/avatar.jpg?v=1">
+<link rel="stylesheet" href="/vendor/xterm.bundle.css">
+<link rel="stylesheet" href="/styles.css?v=44">
+</head>
+<body>
+
+<!-- 登录视图 -->
+<section id="login-view" class="login-shell" hidden>
+  <form id="login-form" class="login-card" autocomplete="off">
+    <div class="login-brand">
+      <span class="brand-mark">板</span>
+      <div><strong>Rock 5B+ 控制台</strong><small>状态 · 终端</small></div>
+    </div>
+    <h1>需要密码</h1>
+    <p class="muted">输入访问密码后即可查看开发板实时状态，并打开一个可交互终端。</p>
+    <label for="password">访问密码</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+    <label for="totp" id="totp-label" hidden>动态验证码</label>
+    <input id="totp" name="totp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="验证器 App 里的 6 位数字" hidden>
+    <button type="submit" id="login-button">登录</button>
+    <p id="login-message" class="message" role="alert"></p>
+    <p class="muted small">连续多次失败会临时锁定来源地址。</p>
+  </form>
+</section>
+
+<!-- 控制台视图 -->
+<section id="console-view" hidden>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">板</span>
+      <div class="brand-text">
+        <strong id="host-name">Rock 5B+ 控制台</strong>
+        <small id="host-detail">正在连接…</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span class="live-state">
+        <span class="dot" id="connection-dot" data-state="connecting"></span>
+        <span id="updated-at">连接中</span>
+      </span>
+      <a class="ghost" href="https://manager.yanghanlin.cn" rel="noopener">管理中心</a>
+      <button type="button" id="refresh-button" class="ghost">立即刷新</button>
+      <button type="button" id="logout-button" class="ghost">退出登录</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <nav class="nav" aria-label="分区导航">
+        <button type="button" class="nav-item active" data-target="section-overview"><span class="nav-dot"></span>概览</button>
+        <button type="button" class="nav-item" data-target="section-system"><span class="nav-dot"></span>系统</button>
+        <button type="button" class="nav-item" data-target="section-network"><span class="nav-dot"></span>网络</button>
+        <button type="button" class="nav-item" data-target="section-services"><span class="nav-dot"></span>服务</button>
+        <button type="button" class="nav-item" data-target="section-logs"><span class="nav-dot"></span>日志</button>
+        <button type="button" class="nav-item" data-target="section-terminal"><span class="nav-dot"></span>终端</button>
+      </nav>
+      <div class="sidebar-foot">
+        <p class="sidebar-label">采集间隔</p>
+        <p class="sidebar-value" id="sidebar-interval">--</p>
+      </div>
+    </aside>
+
+    <main class="content">
+
+      <!-- 概览 -->
+      <section id="section-overview" class="section">
+        <header class="section-head">
+          <h1>概览</h1>
+          <p class="section-desc">关键指标，每秒刷新</p>
+        </header>
+
+        <div class="metrics">
+          <article class="card metric-card" id="card-cpu">
+            <div class="metric-head">
+              <span class="metric-label">CPU 占用</span>
+              <span class="metric-value"><span id="cpu-total">--</span><small>%</small></span>
+            </div>
+            <div class="bar"><span class="bar-fill" id="cpu-bar"></span></div>
+            <div class="cores" id="cpu-cores"></div>
+            <dl class="facts" id="cpu-facts"></dl>
+          </article>
+
+          <article class="card metric-card">
+            <div class="metric-head">
+              <span class="metric-label">内存</span>
+              <span class="metric-value"><span id="mem-used">--</span><small>%</small></span>
+            </div>
+            <div class="bar"><span class="bar-fill" id="mem-bar"></span></div>
+            <dl class="facts" id="mem-facts"></dl>
+          </article>
+
+          <article class="card metric-card">
+            <div class="metric-head">
+              <span class="metric-label">磁盘</span>
+              <span class="metric-value"><span id="disk-used">--</span><small>%</small></span>
+            </div>
+            <div class="bar"><span class="bar-fill" id="disk-bar"></span></div>
+            <dl class="facts" id="disk-facts"></dl>
+          </article>
+
+          <article class="card metric-card">
+            <div class="metric-head">
+              <span class="metric-label">温度</span>
+              <span class="metric-value"><span id="thermal-max">--</span><small>°C</small></span>
+            </div>
+            <dl class="facts" id="thermal-facts"></dl>
+          </article>
+        </div>
+      </section>
+
+      <!-- 系统 -->
+      <section id="section-system" class="section">
+        <header class="section-head">
+          <h1>系统</h1>
+          <p class="section-desc">运行时长、风扇、协处理器</p>
+        </header>
+        <div class="panels">
+          <article class="card">
+            <h2>系统信息</h2>
+            <dl class="facts" id="system-facts"></dl>
+          </article>
+          <article class="card">
+            <h2>风扇与供电</h2>
+            <dl class="facts" id="fan-facts"></dl>
+          </article>
+          <article class="card">
+            <h2>NPU / GPU / 内存控制器</h2>
+            <dl class="facts" id="devfreq-facts"></dl>
+          </article>
+        </div>
+      </section>
+
+      <!-- 网络 -->
+      <section id="section-network" class="section">
+        <header class="section-head">
+          <h1>网络</h1>
+          <p class="section-desc">网卡地址与吞吐、远程串流状态</p>
+        </header>
+        <article class="card net-card">
+          <div class="net-table-wrap">
+            <table class="net-table">
+              <thead>
+                <tr>
+                  <th>网卡</th>
+                  <th>IPv4</th>
+                  <th>IPv6</th>
+                  <th>下行</th>
+                  <th>上行</th>
+                </tr>
+              </thead>
+              <tbody id="net-tbody"></tbody>
+            </table>
+          </div>
+          <p class="net-note" id="net-note" hidden></p>
+        </article>
+      </section>
+
+      <!-- 服务 -->
+      <section id="section-services" class="section">
+        <header class="section-head">
+          <h1>服务</h1>
+          <p class="section-desc">systemd 单元状态、资源占用与定时计划</p>
+        </header>
+        <article class="card stream-card" id="stream-card">
+          <div class="card-head">
+            <h2>远程串流</h2>
+            <span class="badge" id="stream-state" data-state="inactive">未运行</span>
+          </div>
+          <dl class="facts facts-cols" id="stream-facts"></dl>
+          <div class="seg-block" id="seg-block" hidden>
+            <h3 class="seg-heading">今日时段</h3>
+            <table class="seg-table">
+              <thead>
+                <tr>
+                  <th>时间段</th>
+                  <th>会话数</th>
+                  <th>串流时长</th>
+                  <th>断联</th>
+                  <th>丢帧</th>
+                </tr>
+              </thead>
+              <tbody id="seg-rows"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card services">
+          <table>
+            <thead><tr><th>单元</th><th>状态</th><th>内存</th><th>定时</th><th>上次运行</th><th>下次执行</th><th></th></tr></thead>
+            <tbody id="service-rows"></tbody>
+          </table>
+        </article>
+      </section>
+
+      <!-- 日志 -->
+      <section id="section-logs" class="section">
+        <header class="section-head">
+          <h1>日志</h1>
+          <p class="section-desc">选择单元查看最近的活动记录</p>
+        </header>
+        <article class="card logs">
+            <div class="card-head">
+              <h2>服务活动</h2>
+              <div class="log-actions">
+                <select id="log-unit" aria-label="选择服务"></select>
+                <select id="log-lines" aria-label="条数">
+                  <option value="40">最近 40 条</option>
+                  <option value="100">最近 100 条</option>
+                  <option value="200">最近 200 条</option>
+                </select>
+                <button type="button" id="log-refresh" class="ghost">刷新</button>
+                <button type="button" id="log-clear" class="ghost">清屏</button>
+                <label class="toggle"><input type="checkbox" id="log-auto"> 自动</label>
+              </div>
+            </div>
+            <div class="activity-head">
+              <span class="badge" id="activity-state" data-state="unknown">未知</span>
+              <span class="muted small" id="activity-enabled"></span>
+              <span class="muted small" id="activity-stats"></span>
+            </div>
+            <input id="log-filter" type="search" class="log-filter" placeholder="按关键字过滤活动">
+          <ol id="activity-list" class="activity-list">
+            <li class="activity-empty">未选择服务。在上方下拉框里选一个服务即可查看活动。</li>
+          </ol>
+        </article>
+      </section>
+
+      <!-- 终端 -->
+      <section id="section-terminal" class="section">
+        <header class="section-head">
+          <h1>终端</h1>
+          <p class="section-desc">以服务账号身份运行</p>
+        </header>
+        <article class="card terminal-card">
+          <div class="terminal-toolbar">
+            <div class="terminal-actions">
+              <span class="badge" id="terminal-mode">未连接</span>
+              <span class="rtt" id="terminal-rtt" hidden>RTT --</span>
+              <button type="button" id="terminal-connect" class="ghost">新建会话</button>
+              <button type="button" id="terminal-readonly" class="ghost" title="只读会话仅显示输出，不接受键盘输入">只读模式</button>
+              <button type="button" id="terminal-local" class="ghost active" title="本地输入：按键先在本地显示，回车时整行发送">本地输入</button>
+              <button type="button" id="terminal-clear" class="ghost">清屏</button>
+              <button type="button" id="terminal-font-dec" class="ghost" title="缩小字号">A−</button>
+              <button type="button" id="terminal-font-inc" class="ghost" title="放大字号">A+</button>
+              <button type="button" id="terminal-fullscreen" class="ghost" title="全屏（Esc 退出）">全屏</button>
+              <button type="button" id="terminal-close" class="ghost danger">断开</button>
+            </div>
+          </div>
+          <p class="muted small terminal-hint">
+            终端以服务账号（radxa）身份运行，权限与一次 SSH 登录相同：不能执行 sudo，但可以读写该账号的文件。
+            键盘输入会实时发送到开发板。
+          </p>
+          <div id="terminal-host" class="terminal-host"></div>
+        </article>
+      </section>
+
+    </main>
+  </div>
+</section>
+
+<script src="/vendor/xterm.bundle.js"></script>
+<script src="/app.js?v=44"></script>
+</body>
+</html>
