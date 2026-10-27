@@ -512,6 +512,14 @@
         grid.appendChild(card);
       });
       postBody.insertBefore(grid, postBody.firstChild);
+
+      // hero 里已经有 <h1>页面名</h1>，页面上方那个居中的同名大标题纯属重复。
+      // 只在文字完全一致时才收起来，避免误伤有独立标题的页面。
+      var ownTitle = document.querySelector('.post-block > .post-header .post-title');
+      if (ownTitle && ownTitle.textContent.trim() === String(root.title || '').trim()) {
+        var ownHeader = ownTitle.closest('.post-header');
+        if (ownHeader) ownHeader.style.display = 'none';
+      }
       postBody.insertBefore(hero, grid);
     }
   }
