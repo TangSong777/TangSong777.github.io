@@ -43,8 +43,8 @@ hexo.extend.filter.register('after_render:html', (str) => {
 
   const block = [
     '<div class="sidebar-widgets">',
-    `<div class="sidebar-widget"><h3>标签</h3><div class="sidebar-tags">${tagHtml}</div></div>`,
-    `<div class="sidebar-widget"><h3>归档</h3><div class="sidebar-archives">${archiveHtml}</div></div>`,
+    `<div class="sidebar-widget"><h3>标签<a class="sidebar-widget-more" href="${join('tags/')}">全部 →</a></h3><div class="sidebar-tags">${tagHtml}</div></div>`,
+    `<div class="sidebar-widget"><h3>归档<a class="sidebar-widget-more" href="${join('archives/')}">全部 →</a></h3><div class="sidebar-archives">${archiveHtml}</div></div>`,
     '</div>',
   ].join('');
 

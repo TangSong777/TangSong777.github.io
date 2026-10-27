@@ -2130,6 +2130,12 @@ body.archive-mode .collection-title .collection-header {
 .sidebar .site-author-image {
   border: 3px solid #e6efee;
   box-shadow: 0 6px 18px rgba(28, 64, 55, .10);
+  /* NexT 只给 max-width: 96px，竖长构图会拉成两百多像素高的椭圆，
+     把「标签 / 归档」一路挤下去，这里裁成正方形圆头像。 */
+  height: 88px;
+  object-fit: cover;
+  object-position: center top;
+  width: 88px;
 }
 
 /* ==== 顶栏带被右侧固定侧栏截断（round 12）==== */
@@ -2187,6 +2193,10 @@ body.archive-mode .collection-title small {
 
 /* 标签页 / 分类页也是右侧固定侧栏压住顶栏带，同样需要右端渐隐。 */
 body.archive-mode .site-brand-container {
+  /* 标签 / 分类 / 归档页的带子只有约 965px 宽，默认那条
+     radial-gradient(circle at 92% 18%, rgba(217,131,36,.34), transparent 44%)
+     的圆心 x≈888，会变成一块黄褐色斑。这里换成纯绿系渐变。 */
+  background: linear-gradient(120deg, var(--green-deep) 0%, var(--green) 55%, var(--green-raw) 100%);
   -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 46px), transparent 100%);
   mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 46px), transparent 100%);
 }
@@ -2348,3 +2358,70 @@ body.siyuan-mode .sidebar-inner .sidebar-archive sup{
 body.siyuan-mode .sidebar-inner .sidebar-tag{
   color: var(--green-deep);
 }
+
+/* ==== Round 14：标签总览页 + 侧栏「全部」入口 ==== */
+
+.sidebar-widget h3 .sidebar-widget-more {
+  color: var(--green);
+  float: right;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-decoration: none;
+  transition: color .15s ease;
+}
+
+.sidebar-widget h3 .sidebar-widget-more:hover { color: var(--pop-amber-deep); }
+
+.tag-index-lead {
+  color: var(--sy-muted);
+  font-size: 13.5px;
+  margin: 0 0 18px;
+}
+
+.tag-index-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 三档权重用底色与描边区分，不用字号缩放：云图那种大小不一最难读。 */
+.tag-index-item {
+  align-items: baseline;
+  background: var(--paper, #fff);
+  border: 1px solid var(--sy-line);
+  border-radius: 999px;
+  color: var(--green-deep);
+  display: inline-flex;
+  font-size: 13.5px;
+  font-weight: 600;
+  gap: 6px;
+  padding: 7px 15px;
+  text-decoration: none;
+  transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.tag-index-item sup {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tag-index-item:hover {
+  background: var(--green-soft);
+  border-color: var(--green-line);
+  transform: translateY(-1px);
+}
+
+.tag-index-item.is-mid {
+  border-color: var(--green-line);
+  color: var(--green);
+}
+
+.tag-index-item.is-major {
+  background: var(--green-soft);
+  border-color: var(--green-line);
+  color: var(--green-deep);
+}
+
+.tag-index-item.is-major sup { color: var(--green); }
