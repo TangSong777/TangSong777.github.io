@@ -524,3 +524,26 @@
     }
   }
 })();
+
+/* 笔记正文里每条链接前有一个 📄。没装 emoji 字体的系统（板子实测 emoji 字体数 = 0）
+   会把它渲染成豆腐块 □，看着像排版坏了。这里把字符剥掉、给 li 打标记，
+   由 CSS 画一个小文档图标，Windows / Linux 一致。 */
+(function () {
+  'use strict';
+  function decorateDocLinks() {
+    var items = document.querySelectorAll('.post-body li');
+    for (var i = 0; i < items.length; i++) {
+      var li = items[i];
+      var first = li.firstChild;
+      if (first && first.nodeType === 3 && first.nodeValue.replace(/\s/g, '').charAt(0) === '\uD83D') {
+        li.className = (li.className ? li.className + ' ' : '') + 'doc-link';
+        first.nodeValue = first.nodeValue.replace(/^[\s\uD83D\uDCC4]+/, '');
+      }
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', decorateDocLinks);
+  } else {
+    decorateDocLinks();
+  }
+})();
