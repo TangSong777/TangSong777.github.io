@@ -270,6 +270,24 @@
   window.addEventListener('pagehide', saveTreeScrollPosition);
   restoreTreeScrollPosition();
 
+  /* 打开一篇深层笔记时，目录树里「我在哪」要自己亮出来。
+     树本身会记住上次的滚动位置（sessionStorage），那个位置是「上一条我读的笔记」，
+     不一定是当前这篇 —— 于是恢复完再看一眼：当前节点若不在可视区内，滚到中间。
+     只动 .siyuan-tree-scroll 自己的 scrollTop，不牵动整页。 */
+  function revealCurrentInTree() {
+    var current = panel.querySelector('.siyuan-tree-link.is-current');
+    if (!current) return;
+    var box = treeScroll.getBoundingClientRect();
+    var link = current.getBoundingClientRect();
+    if (!box.height) return;
+    if (link.top >= box.top + 4 && link.bottom <= box.bottom - 4) return;
+    treeScroll.scrollTop += (link.top - box.top) - (box.height - link.height) / 2;
+    saveTreeScrollPosition();
+  }
+  window.requestAnimationFrame(function () {
+    window.requestAnimationFrame(revealCurrentInTree);
+  });
+
   var toggle = document.createElement('button');
   toggle.className = 'siyuan-tree-toggle';
   toggle.type = 'button';
