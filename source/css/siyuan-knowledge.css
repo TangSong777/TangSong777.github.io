@@ -3016,3 +3016,93 @@ body.blog-post-mode .post-meta-container [title] {
   border-bottom: 0;
   text-decoration: none;
 }
+
+
+/* ==== Round 22：首页顶栏统一纯绿 / 手机底色还原 / 首页卡片收宽 ==== */
+
+/* 1) 首页顶栏右端那块橙黄。
+   第 21 轮把 siyuan-mode / archive-mode / blog-post-mode 都换成了纯绿带，
+   唯独首页（blog-home-mode）还留着这条 radial：
+     radial-gradient(circle at 92% 18%, rgba(217,131,36,.34), transparent 44%)
+   在 1280 宽的带子上，圆心落在 x≈1178、alpha 又是 .34，结果右端是一片
+   从 #967E54 到 #B0712B 的橙褐色（像素采样值），看着像贴了块脏布。
+   四个 mode 统一成同一条渐绿带，暖色让给 hero 卡自己右上角那层光。 */
+body.blog-home-mode .site-brand-container {
+  background: linear-gradient(120deg, var(--green-deep) 0%, var(--green) 55%, var(--green-raw) 100%);
+}
+
+/* 2) 手机上整页底色发米黄。
+   body 上那两层暖色光斑（琥珀 .13 / 玫红 .10）是按视口尺寸铺的，
+   1280 宽时只在两侧留一点暖意，430 宽时几乎盖满，青底被染成 #EEE7D9。
+   手机上还原成干净的浅青画布，暖色只在 hero 自己的渐变里出现。 */
+@media (max-width: 768px) {
+  body.blog-home-mode,
+  body.blog-post-mode,
+  body.archive-mode,
+  body.siyuan-mode {
+    background: var(--canvas);
+    background-attachment: scroll;
+    background-image: none;
+  }
+}
+
+/* 3) 首页卡片跟正文一样要收行宽。
+   第 21 轮把 main-inner 放开到 100%（不再被侧栏宽度白扣一次），
+   首页 hero 跟着铺满到 1210px，1280 的屏上左右只剩 45px，
+   里面的标题却只有 650px 宽 —— 卡片远大于内容。
+   首页没有右侧固定侧栏（.sidebar 在 blog-home-mode 里 display:none），
+   所以这里不用让位，直接给一个居中上限即可。 */
+@media (min-width: 1280px) {
+  /* 首页的 hero 与下方「文章 + 右侧卡片」是 .main-inner 的两个并列子元素
+     （siyuan-knowledge.js 里 homeMain.replaceChildren(hero, layout)），
+     所以约束要成对给，否则宽屏上 hero 铺满、卡片却停在 1040，左边缘对不齐。 */
+  body.blog-home-mode .main-inner.index > .blog-home-hero,
+  body.blog-home-mode .main-inner.index > .blog-home-layout {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 1200px;
+  }
+}
+
+/* 4) 手机上的卡片撞色条贴着圆角边缘，两端直角看着像没对齐。
+   改成卡内一段独立胶囊（左边距 8px、上下各 22px、3px 圆角）。 */
+@media (max-width: 768px) {
+  /* 选择器必须补 .main-inner.post，否则输给 1314 行那条同等声明（0,3,1 > 0,2,1），
+     left 仍是 0，撞色条紧贴卡片圆角边缘，两端直角看着像没对齐。 */
+  body.blog-post-mode .main-inner.post .post-block::before {
+    border-radius: 3px;
+    bottom: 22px;
+    left: 8px;
+    top: 22px;
+  }
+}
+
+
+/* ==== Round 22b：暖色光斑缩小到「角落里的一点暖意」 ==== */
+
+/* 原来那两层光斑是写死的 1350×720 / 1050×640 椭圆，圆心还放在 92% -6%：
+   1280 宽的屏上，琥珀那一层从右上角一直铺到正文顶部，导航栏底色被染成
+   米黄；430 宽的手机上直接把整屏盖住（已在 Round 22 里单独关掉）。
+   设计意图是「角落一点暖意」，所以改成固定像素、半径收小、alpha 降一档。 */
+body.blog-home-mode,
+body.blog-post-mode,
+body.archive-mode {
+  background:
+    radial-gradient(ellipse 760px 460px at 96% -14%, rgba(217, 131, 36, .20), transparent 64%),
+    radial-gradient(ellipse 620px 420px at -8% 104%, rgba(194, 91, 126, .14), transparent 62%),
+    radial-gradient(ellipse 900px 520px at 50% 46%, rgba(106, 141, 140, .09), transparent 72%),
+    linear-gradient(180deg, var(--canvas-top) 0%, var(--canvas) 42%, var(--canvas-bottom) 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* hero 卡自己那两层光斑是 `circle … transparent 50%`，半径按元素尺寸算，
+   1200×380 的卡上 50% 就是 600px，暖色铺满右半边，绿→土黄的过渡像一块斜着的沙色。
+   给显式半径（420px / 360px）后才只是右上角一团光。 */
+body.blog-home-mode .blog-home-hero {
+  background:
+    radial-gradient(circle 420px at 86% 6%, rgba(217, 131, 36, .26), transparent 100%),
+    radial-gradient(circle 360px at 8% 98%, rgba(194, 91, 126, .18), transparent 100%),
+    linear-gradient(120deg, rgba(28, 68, 59, .96), rgba(85, 133, 119, .92)),
+    var(--green-deep);
+}
