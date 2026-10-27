@@ -407,6 +407,19 @@ a.settings-button {
   transition: background .12s, border-color .12s;
 }
 
+.editor-toolbar .toolbar-icon {
+  display: block;
+  pointer-events: none;
+}
+
+/* 有 SVG 的按钮里不要再留文字基线的高度差 */
+.editor-toolbar button:has(.toolbar-icon),
+.editor-toolbar .image-button:has(.toolbar-icon) {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+}
+
 .editor-toolbar button:hover {
   background: var(--green-soft);
   border-color: var(--green-line);
