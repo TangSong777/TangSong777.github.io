@@ -1669,3 +1669,121 @@ body.siyuan-mode .site-brand-container {
 body.siyuan-mode .site-brand-container .site-subtitle {
   color: rgba(255, 255, 255, .8) !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   学习笔记站：左侧树与右侧目录
+   实测（同源 iframe 读计算样式）：
+     a.siyuan-tree-link   border-bottom: 1px solid rgb(153,153,153)  radius: 7px
+     a.siyuan-tree-home   border-bottom: 1px solid rgb(153,153,153)
+   那个 #999 不是我们的变量，是 NexT 给所有 <a> 加的默认下边框。
+   我们这边的 .siyuan-tree-link 只写了 border-radius、没清 border，
+   于是圆角套在那条底边上，每条目录下面都拖着一条「杯型」弧线，看着像输入框。
+   同一份测量还发现右侧目录的 .post-toc .nav-link 仍带着
+   border-bottom: 1px solid rgb(135,218,255)（浅蓝）——
+   文章页那批规则的作用域是 body.blog-post-mode，/siyuan/ 页面命中不到。
+   ───────────────────────────────────────────────────────────────────────── */
+body.siyuan-mode .siyuan-tree-link,
+body.siyuan-mode .siyuan-tree-home,
+body.siyuan-mode .post-toc .nav-link {
+  border: 0;
+}
+
+/* NexT 的 a 规则优先级压过了 .siyuan-tree-link 自己的 color，
+   实测树里的文字是 #999 灰，而不是我们设的次级墨色。 */
+body.siyuan-mode .siyuan-tree-link {
+  color: var(--muted);
+}
+
+body.siyuan-mode .siyuan-tree-link:hover {
+  background: var(--green-wash);
+  color: var(--green-deep);
+}
+
+body.siyuan-mode .siyuan-tree-link.is-current {
+  background: var(--green-soft);
+  box-shadow: inset 3px 0 0 var(--green);
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+/* 树的层级引导线：原来只有一根淡直线，父子关系靠缩进猜。
+   收窄并调淡，避免和目录项抢注意力。 */
+body.siyuan-mode .siyuan-tree ul {
+  border-left: 1px solid var(--sy-line);
+  margin-left: 14px;
+  padding-left: 8px;
+}
+
+/* 右侧目录卡片：与文章页同一套视觉（胶囊页签 + 圆点 + 书签条） */
+body.siyuan-mode .sidebar-inner.sidebar-toc-active .sidebar-nav-toc,
+body.siyuan-mode .sidebar-inner.sidebar-overview-active .sidebar-nav-overview {
+  background: var(--green-soft);
+  border-color: var(--green-line);
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+body.siyuan-mode .post-toc .nav-link {
+  border-radius: 7px;
+  padding: 5px 8px;
+}
+
+body.siyuan-mode .post-toc .nav-link:hover {
+  background: var(--green-wash);
+  color: var(--green-deep);
+}
+
+body.siyuan-mode .post-toc .nav-link.active {
+  background: linear-gradient(90deg, var(--green-soft), rgba(230, 239, 238, .26));
+  border-radius: 0 7px 7px 0;
+  box-shadow: inset 3px 0 0 var(--green);
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+/* 通用 .post-block::before 是博客文章的「橙 → 玫红」撞色条，用来强调时间线里的新文章。
+   学习笔记站的卡片是「文档」，用暖色撞条会和整站的青绿系打架，换成同色系。 */
+body.siyuan-mode .post-block::before {
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-raw) 58%, var(--green-soft) 100%);
+}
+
+/* 侧栏的「标签」「归档」链接带着 NexT 的 border-bottom: 1px solid（未指定颜色，
+   于是取 currentColor = 默认文字色 #555）。在浅色卡片里这条线又深又直，
+   每个标签、每行归档都像被框进一个输入框。
+   实测：a.sidebar-tag 与 a.sidebar-archive 都是 T0 R0 B1 L0 color=rgb(85,85,85)，
+   而 main.css / siyuan-knowledge.css / styles.styl 里都搜不到 #555 ——
+   它是 currentColor 带出来的，不是谁写死的颜色。 */
+body.siyuan-mode .sidebar-inner .sidebar-tag,
+body.siyuan-mode .sidebar-inner .sidebar-archive,
+body.blog-post-mode .sidebar-inner .sidebar-tag,
+body.blog-post-mode .sidebar-inner .sidebar-archive {
+  border-bottom: 0;
+}
+
+/* 归档行改用间距分组，配色回到我们的次级墨色 */
+body.siyuan-mode .sidebar-inner .sidebar-archive,
+body.blog-post-mode .sidebar-inner .sidebar-archive {
+  color: var(--muted);
+  display: block;
+  padding: 7px 2px;
+  transition: color .15s ease, padding-left .15s ease;
+}
+
+body.siyuan-mode .sidebar-inner .sidebar-archive:hover,
+body.blog-post-mode .sidebar-inner .sidebar-archive:hover {
+  color: var(--green-deep);
+  padding-left: 6px;
+}
+
+body.siyuan-mode .sidebar-inner .sidebar-archive sup,
+body.blog-post-mode .sidebar-inner .sidebar-archive sup {
+  color: var(--green);
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+/* 标签胶囊：去掉那条线后补一档内描边，仍能和背景分开 */
+body.siyuan-mode .sidebar-inner .sidebar-tag,
+body.blog-post-mode .sidebar-inner .sidebar-tag {
+  color: var(--green-deep);
+}
