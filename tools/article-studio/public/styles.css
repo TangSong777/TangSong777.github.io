@@ -21,6 +21,15 @@
   --green-soft: #e6efee;     /* 青雾：浅底、行内代码底 */
   --green-line: #d5e6dd;     /* 青边框 */
   --green-wash: #eef4f3;     /* 引用底 */
+  /* ── 撞色 琥珀 / 玫红（方案 B）─────────────── */
+  --pop-amber: #d98324; --pop-amber-deep: #a9621a; --pop-amber-dark: #8a5c1a;
+  --pop-amber-soft: #fdf1e0; --pop-amber-line: #edc989;
+  --pop-rose: #c25b7e; --pop-rose-deep: #a8425f;
+  --pop-rose-soft: #fbeaf0; --pop-rose-line: #efc3d3;
+  --pop-coral: #e2705a;
+  /* ── 画布渐变端点 ─────────────────────────── */
+  --canvas-top: #f8fcfb; --canvas-bottom: #edf4f2;
+  --topbar-mid: #3f6156;
 
   /* ── 辅助 赭（暖） ──────────────────────────── */
   --amber: #a56213;          /* 强调 / 警告 */
@@ -63,7 +72,7 @@ body {
     radial-gradient(ellipse 1350px 720px at 92% -6%, rgba(217, 131, 36, .20), transparent 58%),
     radial-gradient(ellipse 1050px 640px at -4% 102%, rgba(194, 91, 126, .16), transparent 56%),
     radial-gradient(ellipse 900px 520px at 50% 46%, rgba(106, 141, 140, .08), transparent 72%),
-    linear-gradient(180deg, #f8fcfb 0%, var(--canvas) 42%, #edf4f2 100%);
+    linear-gradient(180deg, var(--canvas-top) 0%, var(--canvas) 42%, var(--canvas-bottom) 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
   overflow: hidden;
@@ -316,7 +325,7 @@ body::before {
   background: linear-gradient(90deg,
     var(--green-deep) 0%, var(--green-deep) 22%,
     var(--green-raw) 46%, var(--green-raw) 58%,
-    #d98324 76%, #c25b7e 100%);
+    var(--pop-amber) 76%, var(--pop-rose) 100%);
   z-index: 999;
 }
 

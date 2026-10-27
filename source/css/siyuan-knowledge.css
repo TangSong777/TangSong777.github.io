@@ -1,5 +1,7 @@
 :root {
   --sy-bg: var(--canvas);
+  --canvas-top: #f8fcfb;
+  --canvas-bottom: #edf4f2;
   --sy-panel: rgba(250, 252, 249, .96);
   --sy-ink: var(--ink);
   --sy-muted: var(--muted);
@@ -45,7 +47,7 @@ body.archive-mode {
     radial-gradient(ellipse 1350px 720px at 92% -6%, rgba(217, 131, 36, .22), transparent 58%),
     radial-gradient(ellipse 1050px 640px at -4% 102%, rgba(194, 91, 126, .18), transparent 56%),
     radial-gradient(ellipse 900px 520px at 50% 46%, rgba(106, 141, 140, .09), transparent 72%),
-    linear-gradient(180deg, #f8fcfb 0%, var(--canvas) 42%, #edf4f2 100%);
+    linear-gradient(180deg, var(--canvas-top) 0%, var(--canvas) 42%, var(--canvas-bottom) 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
@@ -56,7 +58,7 @@ body.blog-home-mode {
     radial-gradient(ellipse 1350px 720px at 92% -6%, rgba(217, 131, 36, .22), transparent 58%),
     radial-gradient(ellipse 1050px 640px at -4% 102%, rgba(194, 91, 126, .18), transparent 56%),
     radial-gradient(ellipse 900px 520px at 50% 46%, rgba(106, 141, 140, .09), transparent 72%),
-    linear-gradient(180deg, #f8fcfb 0%, var(--canvas) 42%, #edf4f2 100%);
+    linear-gradient(180deg, var(--canvas-top) 0%, var(--canvas) 42%, var(--canvas-bottom) 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
@@ -67,7 +69,7 @@ body.blog-post-mode {
     radial-gradient(ellipse 1350px 720px at 92% -6%, rgba(217, 131, 36, .22), transparent 58%),
     radial-gradient(ellipse 1050px 640px at -4% 102%, rgba(194, 91, 126, .18), transparent 56%),
     radial-gradient(ellipse 900px 520px at 50% 46%, rgba(106, 141, 140, .09), transparent 72%),
-    linear-gradient(180deg, #f8fcfb 0%, var(--canvas) 42%, #edf4f2 100%);
+    linear-gradient(180deg, var(--canvas-top) 0%, var(--canvas) 42%, var(--canvas-bottom) 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
 }

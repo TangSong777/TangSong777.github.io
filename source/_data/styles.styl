@@ -11,6 +11,9 @@
   --line-strong: #c3d0ca;
   --paper: #ffffff;
   --canvas: #f2f7f6;
+  --canvas-top: #f8fcfb; --canvas-bottom: #edf4f2;
+  /* ── 代码块（与 Article Studio 编辑器一致）── */
+  --code-bg: #f3f6f4; --code-fg: #444444;
   --surface: #fafcfb;
   --surface-hover: #f3f8f6;
   --neutral-soft: #f0f2f1;
@@ -74,7 +77,7 @@ body {
     radial-gradient(ellipse 1350px 720px at 92% -6%, rgba(217, 131, 36, .20), transparent 58%),
     radial-gradient(ellipse 1050px 640px at -4% 102%, rgba(194, 91, 126, .16), transparent 56%),
     radial-gradient(ellipse 900px 520px at 50% 46%, rgba(106, 141, 140, .08), transparent 72%),
-    linear-gradient(180deg, #f8fcfb 0%, var(--canvas) 42%, #edf4f2 100%);
+    linear-gradient(180deg, var(--canvas-top) 0%, var(--canvas) 42%, var(--canvas-bottom) 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
@@ -158,15 +161,15 @@ body {
 // ─────────────────────────────────────────────────────────────────────────
 
 :root {
-  --body-bg-color: #f2f7f6;
-  --content-bg-color: #ffffff;
-  --link-color: #4d7572;
-  --link-hover-color: #33544f;
-  --brand-color: #ffffff;
-  --theme-color: #4d7572;
-  --btn-default-bg: #4d7572;
-  --btn-default-color: #ffffff;
-  --border-color: #d8e5e3;
+  --body-bg-color: var(--canvas);
+  --content-bg-color: var(--paper);
+  --link-color: var(--green);
+  --link-hover-color: var(--green-deep);
+  --brand-color: var(--paper);
+  --theme-color: var(--green);
+  --btn-default-bg: var(--green);
+  --btn-default-color: var(--on-accent);
+  --border-color: var(--line);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -176,8 +179,8 @@ body {
     --link-color: #8fb8b5;
     --link-hover-color: #b7d5d2;
     --brand-color: var(--green-deep);
-    --theme-color: #4d7572;
-    --btn-default-bg: #4d7572;
+    --theme-color: var(--green);
+    --btn-default-bg: var(--green);
     --border-color: #243130;
   }
 }
@@ -361,9 +364,9 @@ body::before {
 
 /* 代码块底色与 Article Studio 的 .cm-md-codeblock 对齐，保证所见即所得 */
 :root {
-  --highlight-background: #f3f6f4;
-  --highlight-foreground: #444444;
-  --highlight-gutter-foreground: #8d9b97;
+  --highlight-background: var(--code-bg);
+  --highlight-foreground: var(--code-fg);
+  --highlight-gutter-foreground: var(--muted-2);
   --highlight-gutter-background: var(--green-wash);
 }
 
