@@ -243,6 +243,31 @@ a:hover { text-decoration: underline; }
 }
 .privacy-tree .privacy-item.has-children > span { font-weight: 600; }
 
+/* 原生复选框是 Chrome 的蓝色 #0075ff，在整套烟雨青界面里是唯一一个「别人的颜色」。
+   accent-color 一行覆盖全部，不用自己画。 */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--green);
+  cursor: pointer;
+  height: 15px;
+  width: 15px;
+}
+
+/* 树的缩进线：虚线在密集列表里显得毛糙，改细实线；目录项再压深一号 */
+.privacy-tree ul {
+  border-left: 1px solid var(--line);
+}
+
+.privacy-tree .privacy-item.has-children > span {
+  color: var(--green-deep);
+}
+
+/* 文档行（没有子节点）用次级墨色，和目录行拉开层次 */
+.privacy-tree .privacy-item:not(.has-children) {
+  color: var(--ink);
+  font-size: 13.5px;
+}
+
 /* 侧边栏分组（学习笔记 / 岁月史书） */
 .side-group { margin-top: 4px; }
 .side-group-title {
