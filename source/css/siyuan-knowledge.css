@@ -3323,3 +3323,42 @@ body.siyuan-mode .main-inner > .breadcrumb,
 body.siyuan-mode .post-block .breadcrumb {
   text-align: left;
 }
+
+/* ==== Round 28：标题区到正文之间空了 60px ====
+
+   同源 iframe 连采两次（900ms / 2400ms）数据一致：
+     .post-block          top=167  h=2334  pt=42 pb=42
+     .post-header         top=210  bot=270 h=60   margin-bottom: 60px
+     .post-title          top=210  bot=242
+     .post-meta-container top=252  bot=270
+     .breadcrumb          top=252  bot=270
+     .post-body           top=330  bot=2454
+   标题区底边 270、正文顶边 330 —— 中间那 60px 全是 .post-header 的 margin-bottom，
+   NexT Muse 为「标题 + 大图」的版式留的。我们的笔记页标题下面是面包屑，正文紧接着是列表，
+   60px 看起来像漏排了一段。 */
+
+body.siyuan-mode .post-block > .post-header {
+  margin-bottom: 14px;
+}
+
+/* 文章页标题下有一条撞色短线（bottom: -14px），留 30px 让它不贴着正文 */
+body.blog-post-mode .post-block > .post-header {
+  margin-bottom: 30px;
+}
+
+/* ==== Round 28b：笔记目录里每行链接都带下划线，读起来像待办清单 ====
+
+   笔记目录页（/siyuan/其他笔记/ 这类）正文本体就是一串链接，每行都画一条下划线，
+   整页看起来像划了横线。文章页保留（正文里的链接需要显眼），笔记页改成
+   「默认只靠颜色 + hover 时出现下划线」。 */
+body.siyuan-mode .post-body ul li > a,
+body.siyuan-mode .post-body ul li > p > a {
+  border-bottom: 0;
+  text-decoration: none;
+}
+
+body.siyuan-mode .post-body ul li > a:hover,
+body.siyuan-mode .post-body ul li > p > a:hover {
+  border-bottom: 1px solid rgba(95, 143, 130, .38);
+  color: var(--green-deep);
+}
