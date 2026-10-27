@@ -4,7 +4,14 @@
   if (!data || !Array.isArray(data.documents)) return;
 
   function normalize(path) {
-    try { path = decodeURI(path); } catch (_) {}
+    // Round 35b：这里原来用 decodeURI，它对「保留字符」的百分号编码不做解码 ——
+    // `/siyuan/其他笔记/Rock5B%2B/串流方案/` 里的 %2B（加号）会原样留着，
+    // 而树数据里的 url 写的是真的 `+`，两者永远不相等：
+    //   当前页 → /siyuan/其他笔记/Rock5B%2B/串流方案
+    //   树节点 → /siyuan/其他笔记/Rock5B+/串流方案
+    // 结果是所有路径含 `+` 的笔记都没有 is-current 高亮，revealCurrentInTree()
+    // 也永远找不到「当前项」。必须用 decodeURIComponent。
+    try { path = decodeURIComponent(path); } catch (_) {}
     return (path.replace(/index\.html$/, '').replace(/\/+$/, '') || '/');
   }
 
@@ -303,6 +310,14 @@
     document.body.classList.toggle('siyuan-tree-open', open);
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? '关闭学习笔记目录' : '打开学习笔记目录');
+    // Round 35：窄屏下面板平时是 display: none，页面初始化那次 revealCurrentInTree()
+    // 量到的高度是 0 就直接返回了；抽屉打开后必须再定位一次，
+    // 否则手机用户看到的永远是目录最顶端，得自己滚半天找「我在哪」。
+    if (open) {
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(revealCurrentInTree);
+      });
+    }
   }
   toggle.setAttribute('aria-expanded', 'false');
   toggle.addEventListener('click', function () { setPanelOpen(!panel.classList.contains('is-open')); });

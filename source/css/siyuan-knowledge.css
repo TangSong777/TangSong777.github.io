@@ -3600,3 +3600,20 @@ body.archive-mode .posts-collapse .post-content > article .post-header {
     mask-image: none;
   }
 }
+/* ==== Round 35：手机上的笔记抽屉 ====
+   面板贴左边缘、直角、和遮罩之间只隔一条 1px 线，像页面被切开而不是「抽屉滑出」。
+   窄屏给右缘圆角 + 更深的投影，并把宽度收成 min(84vw, 320px)，
+   让右边留一条遮罩，读者知道「点外面能关」。
+   头部（品牌 + 副标题 + 搜索）加一条底线与极淡底色，和下面会滚动的列表分层。 */
+@media (max-width: 1100px) {
+  .siyuan-tree-panel {
+    border-radius: 0 18px 18px 0;
+    box-shadow: 18px 0 48px rgba(24, 44, 38, .18);
+    width: min(84vw, 320px);
+  }
+
+  .siyuan-tree-header {
+    border-bottom: 1px solid var(--sy-line);
+    background: rgba(255, 255, 255, .55);
+  }
+}
