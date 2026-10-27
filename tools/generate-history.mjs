@@ -213,6 +213,54 @@ try {
       .trim();
   }
 
+
+    /* 去掉正文开头重复的标题（round 10）*/
+
+  // 84 篇文档里有 77 篇，正文第一行标题和页面标题是同一句话：
+  // 模板在 card 头部已经渲染了 <h1>标题</h1>，正文再由 marked 吐一次，于是同一个名字出现两遍。
+  // 注意正文开头并不是标题，前面还有一段元信息引用块，所以不能只比对第一行，
+  // 要从 <div class="doc-body"> 之后往后找第一个文字与标题完全一致的 h1/h2 再摘掉。
+  function normalizeText(html) {
+    return String(html || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  hexo.extend.filter.register('after_render:html', function (str, data) {
+    const pagePath = String((data && data.path) || '');
+    if (!pagePath.startsWith('siyuan/')) return str;
+
+    const head = /<header class="doc-head">[\s\S]*?<h1[^>]*>([\s\S]*?)<\/h1>/.exec(str);
+    if (!head) return str;
+    const title = normalizeText(head[1]);
+    if (!title) return str;
+
+    const bodyAt = str.indexOf('<div class="doc-body"');
+    if (bodyAt < 0) return str;
+
+    const head_ = str.slice(0, bodyAt);
+    let tail = str.slice(bodyAt);
+    const re = /<h([12])[^>]*>([\s\S]*?)<\/h\1>/g;
+    let m;
+    let removed = false;
+    while ((m = re.exec(tail))) {
+      if (normalizeText(m[2]) === title) {
+        tail = tail.slice(0, m.index) + tail.slice(m.index + m[0].length);
+        removed = true;
+        break;
+      }
+    }
+    if (!removed) return str;
+    return head_ + tail;
+  });
+
   hexo.extend.filter.register('after_generate', function () {
     const pages = hexo.locals.get('pages').toArray()
       .filter((entry) => String(entry.path || '').startsWith('siyuan/'));
