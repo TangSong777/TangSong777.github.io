@@ -1271,3 +1271,132 @@ body.blog-home-mode .blog-home-feed .post-title::before {
   transform: translateY(-2px);
   width: 4px;
 }
+
+/* ─────────────────────────────────────────────
+   文章页 / 归档页的撞色细节
+   原则不变：撞色只上装饰面（竖条、边框、徽章），不上正文文字与阅读底色。
+   ───────────────────────────────────────────── */
+
+/* 文章卡片：左侧青→琥珀竖条，与首页的橙→玫红形成同一套语言 */
+body.blog-post-mode .main-inner.post .post-block {
+  position: relative;
+}
+
+body.blog-post-mode .main-inner.post .post-block::before {
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-raw) 34%, var(--pop-amber) 100%);
+  border-radius: 0 3px 3px 0;
+  bottom: 26px;
+  content: "";
+  left: 0;
+  position: absolute;
+  top: 26px;
+  width: 4px;
+  z-index: 1;
+}
+
+/* 文章标题下方：青→琥珀→玫红三段分隔线，替代 NexT 的单调灰线 */
+body.blog-post-mode .main-inner.post .post-eof,
+body.blog-post-mode .main-inner.post .post-header {
+  position: relative;
+}
+
+body.blog-post-mode .main-inner.post .post-header::after {
+  background: linear-gradient(90deg, var(--green) 0%, var(--green-raw) 30%, var(--pop-amber) 68%, var(--pop-rose) 100%);
+  border-radius: 2px;
+  bottom: -14px;
+  content: "";
+  height: 3px;
+  left: 0;
+  opacity: .55;
+  position: absolute;
+  width: 72px;
+}
+
+/* 正文表格：圆角外框 + 撞色表头底线，让表格像「一块」而不是散开的线 */
+body.blog-post-mode .post-body table {
+  border: 1px solid var(--sy-line);
+  border-collapse: separate;
+  border-radius: 12px;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+body.blog-post-mode .post-body thead th {
+  background: var(--green-wash);
+  border-bottom: 2px solid var(--pop-amber-line);
+  color: var(--sy-ink);
+}
+
+body.blog-post-mode .post-body tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+body.blog-post-mode .post-body table caption {
+  caption-side: top;
+  color: var(--sy-muted);
+  font-size: 12px;
+  padding: 0 0 8px;
+  text-align: left;
+}
+
+/* 引用块：补一条琥珀左端，与青色主体形成撞色 */
+body.blog-post-mode .post-body blockquote {
+  border-left-color: var(--pop-amber);
+  border-left-width: 3px;
+  box-shadow: inset 3px 0 0 var(--green-line);
+}
+
+/* 归档页：年份标题竖线改成青→琥珀渐变 */
+body.archive-mode .collection-year {
+  border-left: 0;
+  position: relative;
+}
+
+body.archive-mode .collection-year::before {
+  background: linear-gradient(180deg, var(--green) 0%, var(--pop-amber) 100%);
+  border-radius: 2px;
+  bottom: 2px;
+  content: "";
+  left: 0;
+  position: absolute;
+  top: 2px;
+  width: 3px;
+}
+
+body.archive-mode .collection-year {
+  padding-left: 16px;
+}
+
+/* 归档页文章小卡片：hover 时左侧浮出撞色条 */
+body.archive-mode .posts-collapse article {
+  position: relative;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+body.archive-mode .posts-collapse article::before {
+  background: linear-gradient(180deg, var(--pop-amber), var(--pop-rose));
+  border-radius: 0 2px 2px 0;
+  bottom: 6px;
+  content: "";
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  top: 6px;
+  transition: opacity .18s ease;
+  width: 3px;
+  z-index: 2;
+}
+
+body.archive-mode .posts-collapse article:hover {
+  transform: translateX(2px);
+}
+
+body.archive-mode .posts-collapse article:hover::before {
+  opacity: 1;
+}
+
+/* 归档页年份徽章：套数用琥珀底，和「今年」区分开 */
+body.archive-mode .collection-year-count {
+  background: var(--pop-amber-soft);
+  color: var(--pop-amber-deep);
+}
