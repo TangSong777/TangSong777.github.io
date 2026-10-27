@@ -989,3 +989,100 @@ body::before {
     var(--pop-amber) 76%, var(--pop-rose) 100%);
   z-index: 999;
 }
+
+/* ============ 多色相：组件分色 ============ */
+/* 原则：色相只用来「区分」，不用来「装饰」。同一类组件各给一个色相，
+   让扫一眼就能靠颜色定位，而不是靠读文字。
+   全部色相来自 :root，不引入新颜色。 */
+
+/* ── 四个指标卡：青 / 黛蓝 / 琥珀 / 绛红 ───────────────────── */
+.metrics > .metric-card { position: relative; padding-left: 17px; }
+.metrics > .metric-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 15px;
+  bottom: 15px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--mc, var(--green));
+}
+.metrics > .metric-card:nth-child(1) { --mc: var(--green); }
+.metrics > .metric-card:nth-child(2) { --mc: var(--info); }
+.metrics > .metric-card:nth-child(3) { --mc: var(--amber); }
+.metrics > .metric-card:nth-child(4) { --mc: var(--bad); }
+
+.metrics > .metric-card .metric-value { color: var(--mc, var(--ink)); }
+.metrics > .metric-card .metric-label { color: var(--mc, var(--muted)); opacity: .82; }
+.metrics > .metric-card .bar { background: color-mix(in srgb, var(--mc) 13%, transparent); }
+.metrics > .metric-card .bar-fill { background: var(--mc, var(--green)); }
+/* 告警级别要压过卡片色相，否则「红了」看不出来 */
+.metrics > .metric-card .bar-fill[data-level="warn"] { background: var(--amber); }
+.metrics > .metric-card .bar-fill[data-level="bad"] { background: var(--bad); }
+
+/* ── 六个分区标题：竖线各一色 ─────────────────────────────── */
+#section-overview .section-head h1 { border-left-color: var(--green); }
+#section-system   .section-head h1 { border-left-color: var(--info); }
+#section-network  .section-head h1 { border-left-color: var(--ok); }
+#section-services .section-head h1 { border-left-color: var(--amber); }
+#section-logs     .section-head h1 { border-left-color: var(--muted); }
+#section-terminal .section-head h1 { border-left-color: var(--bad); }
+
+/* ── 侧栏导航点：与分区同色，一眼对应 ─────────────────────── */
+.nav-item[data-target="section-overview"] .nav-dot { background: var(--green); }
+.nav-item[data-target="section-system"]   .nav-dot { background: var(--info); }
+.nav-item[data-target="section-network"]  .nav-dot { background: var(--ok); }
+.nav-item[data-target="section-services"] .nav-dot { background: var(--amber); }
+.nav-item[data-target="section-logs"]     .nav-dot { background: var(--muted); }
+.nav-item[data-target="section-terminal"] .nav-dot { background: var(--bad); }
+.nav-item[data-target="section-overview"].active { color: var(--green-deep); }
+.nav-item[data-target="section-system"].active   { color: var(--info); }
+.nav-item[data-target="section-network"].active  { color: var(--ok); }
+.nav-item[data-target="section-services"].active { color: var(--amber); }
+.nav-item[data-target="section-logs"].active     { color: var(--muted); }
+.nav-item[data-target="section-terminal"].active { color: var(--bad); }
+
+/* ── 徽章补两个缺失状态（原来是灰/绿/红，没有琥珀）───────── */
+.badge[data-state="connecting"] { background: var(--amber-soft); color: var(--amber-deep); }
+.badge[data-state="warn"]       { background: var(--amber-soft); color: var(--amber-deep); }
+.badge[data-state="ok"]         { background: var(--ok-soft);    color: var(--ok-deep); }
+
+/* ============ 多色相：第二期 ============ */
+
+/* ── 系统区三张卡：青 / 琥珀 / 黛蓝 ───────────────────────── */
+#section-system .panels > .card { position: relative; padding-left: 23px; }
+#section-system .panels > .card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 16px;
+  bottom: 16px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--cc, var(--green));
+}
+#section-system .panels > .card:nth-child(1) { --cc: var(--green); }
+#section-system .panels > .card:nth-child(2) { --cc: var(--amber); }
+#section-system .panels > .card:nth-child(3) { --cc: var(--info); }
+#section-system .panels > .card > h2 { color: var(--cc, var(--ink)); }
+
+/* ── 网络表：网卡类型一色，上下行两色 ─────────────────────── */
+.iface-kind { font-weight: 700; }
+.iface-kind-wired    { color: var(--green); }
+.iface-kind-wireless { color: var(--info); }
+.iface-kind-zerotier { color: var(--ok); }
+.iface-kind-other    { color: var(--muted); }
+
+.rate-down { color: var(--green-deep); }
+.rate-up   { color: var(--amber); }
+
+/* ── 服务表：按状态给左边框上色 ───────────────────────────── */
+.services tbody tr[data-state="active"] { box-shadow: inset 3px 0 0 var(--green-raw); }
+.services tbody tr[data-state="failed"] { box-shadow: inset 3px 0 0 var(--bad); }
+.services tbody tr[data-state="inactive"],
+.services tbody tr[data-state="unknown"] { box-shadow: inset 3px 0 0 var(--line-strong); }
+
+/* ── 串流面板：运行/未运行的区别色 ────────────────────────── */
+#stream-state[data-state="active"]   { background: var(--ok-soft);   color: var(--ok-deep); }
+#activity-state[data-state="warn"]   { background: var(--amber-soft); color: var(--amber-deep); }
+#activity-state[data-state="active"] { background: var(--green-soft); color: var(--green-deep); }

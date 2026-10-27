@@ -477,3 +477,53 @@ body.embed-mode .panel-backdrop { display: none; }
 body.embed-mode .workspace { grid-template-columns: minmax(0, 1fr); height: calc(100vh - 52px); }
 body.embed-mode .editor-shell { padding: 12px; }
 body.embed-mode .editor-view { border-radius: 12px; }
+
+/* ============ 多色相：工具栏按功能分组 ============ */
+/* 五个功能组各给一个色相，扫一眼就知道这排按钮负责什么。
+   全部取自 :root，不引入新颜色。 */
+
+/* 文本格式：青 */
+.editor-toolbar button[data-wrap="**"],
+.editor-toolbar button[data-wrap="*"],
+.editor-toolbar button[data-wrap="~~"] { color: var(--green); }
+
+/* 标题层级：黛蓝 */
+.editor-toolbar button[data-prefix="# "],
+.editor-toolbar button[data-prefix="## "] { color: var(--info); }
+
+/* 块级结构：苔绿 */
+.editor-toolbar button[data-prefix="> "],
+.editor-toolbar button[data-prefix="- "],
+.editor-toolbar button[data-prefix="1. "] { color: var(--ok); }
+
+/* 代码相关：琥珀 */
+.editor-toolbar button[data-wrap="`"],
+.editor-toolbar button[data-action="codeblock"] { color: var(--amber); }
+
+/* 插入类：玫红 */
+.editor-toolbar button[data-action="link"],
+.editor-toolbar button[data-action="divider"],
+.editor-toolbar .image-button { color: var(--pop-rose); }
+
+/* 每组之间加一道细分隔，强化分组感（第一个与最后一个不加） */
+.editor-toolbar button[data-prefix="# "],
+.editor-toolbar button[data-prefix="> "],
+.editor-toolbar button[data-wrap="`"],
+.editor-toolbar button[data-action="link"] {
+  margin-left: 9px;
+  padding-left: 13px;
+  position: relative;
+}
+.editor-toolbar button[data-prefix="# "]::before,
+.editor-toolbar button[data-prefix="> "]::before,
+.editor-toolbar button[data-wrap="`"]::before,
+.editor-toolbar button[data-action="link"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1px;
+  height: 15px;
+  transform: translateY(-50%);
+  background: var(--line);
+}

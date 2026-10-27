@@ -649,7 +649,7 @@ function renderNetwork(status) {
     name.className = 'iface-name';
     name.textContent = item.name;
     const kind = document.createElement('div');
-    kind.className = 'iface-kind';
+    kind.className = 'iface-kind iface-kind-' + (item.kind || 'other');
     kind.textContent = NET_KIND_LABELS[item.kind] || item.kind || '其他';
     nameCell.append(name, kind);
 
