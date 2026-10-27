@@ -8,6 +8,11 @@
   if (document.querySelector('.main-inner.post') && path.indexOf('/siyuan') < 0) {
     document.body.classList.add('blog-post-mode');
   }
+  // 学习笔记站：造型与博客文章页不同（三栏、树形目录、独立侧栏），
+  // 对应的 55 条规则一直写在 siyuan-knowledge.css 里，但从没被激活过。
+  if (/^\/siyuan(?:\/|$)/.test(path)) {
+    document.body.classList.add('siyuan-mode');
+  }
 
   var main = document.querySelector('main, .main');
   if (main && !main.id) main.id = 'main-content';

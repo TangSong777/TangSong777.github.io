@@ -1653,3 +1653,19 @@ body.blog-post-mode .post-toc .nav-level-2 > .nav-link.active::before {
   background: var(--green);
   box-shadow: 0 0 0 3px rgba(106, 141, 140, .18);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   学习笔记站顶栏
+   .site-brand-container 在首页是整页宽，135deg 的「深青 → 烟雨青 → 棕橙」
+   三段渐变铺得开、过渡自然。可学习笔记站的内容区只有 ~585px，
+   同一条渐变被压进这么窄的容器，右侧三分之一会突然变成一块黄褐色，
+   像贴了张旧牛皮纸。这里换成同色系两段，并把琥珀光斑去掉。
+   ───────────────────────────────────────────────────────────────────────── */
+body.siyuan-mode .site-brand-container {
+  background: linear-gradient(120deg, var(--green-deep) 0%, var(--green) 58%, var(--green-raw) 100%);
+  border-radius: 0 0 14px 14px;
+}
+
+body.siyuan-mode .site-brand-container .site-subtitle {
+  color: rgba(255, 255, 255, .8) !important;
+}
