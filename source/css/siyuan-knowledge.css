@@ -1511,3 +1511,145 @@ body.blog-post-mode .post-nav-item a {
 body.blog-post-mode .post-nav-item:hover a {
   color: var(--green-deep);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   文章页右侧目录卡片（2026-10-28）
+   ───────────────────────────────────────────────────────────────────────
+   文章页之前只有 4 条目录规则，而学习笔记站（siyuan-mode）有 20 多条 ——
+   同样是「文章目录 / 站点概览」两栏，右栏看起来却像两套东西。
+   这里把同一套排版语言搬过来，并补上「正在读哪一节」的视觉反馈。
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* 两个切换页签做成胶囊：选中态实心，一眼看出当前在哪个面板 */
+body.blog-post-mode .sidebar-nav {
+  border-bottom: 1px solid var(--sy-line);
+  display: flex;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0 0 12px;
+}
+
+body.blog-post-mode .sidebar-nav li {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--sy-muted);
+  cursor: pointer;
+  flex: 1;
+  font-size: 12.5px;
+  letter-spacing: .02em;
+  padding: 6px 10px;
+  text-align: center;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+
+body.blog-post-mode .sidebar-nav li:hover {
+  background: var(--green-wash);
+  color: var(--green);
+}
+
+/* NexT 的选中状态挂在 .sidebar-inner 上（sidebar-toc-active / sidebar-overview-active），
+   不在 li 上 —— 所以早先写的 .sidebar-nav-active 规则永远匹配不到。 */
+body.blog-post-mode .sidebar-inner.sidebar-toc-active .sidebar-nav-toc,
+body.blog-post-mode .sidebar-inner.sidebar-overview-active .sidebar-nav-overview {
+  background: var(--green-soft);
+  border-color: var(--green-line);
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+/* 目录很长时在卡片内部滚动，别把整页撑高 */
+body.blog-post-mode .sidebar-panel-container {
+  max-height: calc(100vh - 230px);
+  overscroll-behavior: contain;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* 原来左右是 0，目录项贴着卡片边缘；留 12px 与上方页签对齐 */
+  padding: 16px 12px 24px;
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+body.blog-post-mode .sidebar-panel-container::-webkit-scrollbar { width: 6px; }
+body.blog-post-mode .sidebar-panel-container::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 6px;
+}
+body.blog-post-mode .sidebar-panel-container::-webkit-scrollbar-track { background: transparent; }
+
+body.blog-post-mode .post-toc { padding: 2px 0 16px; }
+body.blog-post-mode .post-toc .nav { list-style: none; margin: 0; padding: 0; }
+body.blog-post-mode .post-toc .nav-item { margin: 1px 0; }
+
+/* 二级缩进用一条细竖线表达归属，比单纯缩进更容易看出谁属于谁 */
+body.blog-post-mode .post-toc .nav-child {
+  border-left: 1px solid var(--sy-line);
+  margin: 2px 0 4px 10px;
+  padding-left: 8px;
+}
+
+body.blog-post-mode .post-toc .nav-link {
+  /* NexT 给 .post-toc .nav-link 留了一条 border-bottom（浅蓝 rgb(135,218,255)），
+     不清掉的话每个目录项看起来都像一个输入框。 */
+  border: 0;
+  border-radius: 7px;
+  color: var(--muted);
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.55;
+  overflow: hidden;
+  padding: 5px 8px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  transition: background-color .15s ease, color .15s ease;
+  white-space: nowrap;
+}
+
+/* 一级条目重一点，扫目录时先看到主干 */
+body.blog-post-mode .post-toc .nav-level-2 > .nav-link {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+body.blog-post-mode .post-toc .nav-level-3 > .nav-link { font-size: 12.5px; }
+
+body.blog-post-mode .post-toc .nav-link:hover {
+  background: var(--green-wash);
+  color: var(--green);
+}
+
+/* 正在读的那一节：左侧 3px 青条 + 浅绿底 + 深绿加粗。
+   NexT 的 scrollspy 会给当前章节的 .nav-item 挂 .active。 */
+body.blog-post-mode .post-toc .nav-link.active,
+body.blog-post-mode .post-toc .active > .nav-link {
+  /* 左边直角、右边圆角 —— 看起来像插了一枚书签，而不是一个圆角气泡 */
+  background: linear-gradient(90deg, var(--green-soft), rgba(230, 239, 238, .26));
+  border-radius: 0 7px 7px 0;
+  box-shadow: inset 3px 0 0 var(--green);
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+/* 一级目录项前面加一枚小圆点：给每一行一个视觉落点，
+   不然一列小字在宽卡片里像飘着。 */
+body.blog-post-mode .post-toc .nav-level-2 > .nav-link::before {
+  background: var(--line-strong);
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  height: 4px;
+  margin-right: 8px;
+  transition: background-color .15s ease;
+  vertical-align: middle;
+  width: 4px;
+}
+
+body.blog-post-mode .post-toc .nav-level-2 > .nav-link:hover::before {
+  background: var(--green);
+}
+
+body.blog-post-mode .post-toc .nav-level-2.active > .nav-link::before,
+body.blog-post-mode .post-toc .nav-level-2 > .nav-link.active::before {
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(106, 141, 140, .18);
+}
