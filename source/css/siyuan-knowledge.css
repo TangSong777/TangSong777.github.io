@@ -3579,3 +3579,24 @@ body.archive-mode .posts-collapse .post-content > article .post-header {
   margin: 0;
   padding: 10px 4px 10px 6px;
 }
+/* ==== Round 34：窄屏上「回到顶部」压在笔记树按钮身上 ====
+   量出来的坐标（415 宽视口）：
+     .siyuan-tree-toggle  351,365  48x48
+     .back-to-top         332,379  63x26  bottom: 30px
+   两者在 x 351..395 / y 379..405 上重叠，滚动之后圆按钮上半截被 ↑ 挡住，
+   点哪个都说不准。把回到顶部抬到树按钮上方（48 + 16 间距），右缘对齐。
+   同断点顺手去掉顶栏右端的 46px 渐隐：那是给桌面「右侧固定侧栏贴边」用的，
+   手机上带子本来就铺满，46px 在 430 宽里占一成多，看着像被削掉一块。 */
+@media (max-width: 1100px) {
+  body.siyuan-mode .back-to-top {
+    bottom: 86px;
+    right: 16px;
+  }
+
+  body.siyuan-mode .site-brand-container,
+  body.blog-post-mode .site-brand-container,
+  body.archive-mode .site-brand-container {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
