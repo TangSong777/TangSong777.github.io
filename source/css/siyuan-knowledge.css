@@ -2765,3 +2765,109 @@ body.archive-mode .posts-collapse .post-content::before {
     display: none;
   }
 }
+
+/* ==== Round 19：笔记目录页的列表排版、引用区块、emoji 回退 ==== */
+
+/* siyuan 导出的是嵌套列表：<ul><li><p>🖥 命令行</p><ul><li>🔐 SSH专项</li>…</ul></li></ul>
+   NexT 每层默认 padding-left: 2em，li 里又套一层 <p> 带下边距，
+   于是四层缩进叠起来，列表被推到屏幕右半边。 */
+body.siyuan-mode .post-body ul,
+body.siyuan-mode .post-body ol {
+  margin: 6px 0;
+  padding-left: 1.15em;
+}
+
+body.siyuan-mode .post-body li {
+  margin: 3px 0;
+}
+
+body.siyuan-mode .post-body li > p {
+  margin: 0;
+}
+
+/* 二级以下的子列表挂一条极淡竖线交代层级，比纯缩进好读 */
+body.siyuan-mode .post-body li > ul,
+body.siyuan-mode .post-body li > ol {
+  border-left: 1px solid var(--sy-line);
+  margin-left: 2px;
+  padding-left: 12px;
+}
+
+/* 标题靠左：目录页标题居中而列表靠左，像两篇不同的文档拼在一起 */
+body.siyuan-mode .post-header {
+  text-align: left;
+}
+
+/* 站点没有任何 emoji 字体时会渲染成方块（板子上就是这个现象），
+   把系统 emoji 字体补进字体栈，有没有字体交给操作系统决定，至少不会全变豆腐。 */
+body.siyuan-mode .post-body {
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Apple Color Emoji",
+    "Segoe UI Emoji", "Noto Color Emoji", system-ui, -apple-system, sans-serif;
+}
+
+/* 「文档关系 / 本文引用 / 反向引用」是 siyuan 自动生成的元信息块，
+   它在正文最末尾，本该像脚注而不是一章内容 —— 压小、变灰、加一条分隔线。 */
+body.siyuan-mode .post-body .siyuan-references {
+  border-top: 1px solid var(--sy-line);
+  margin-top: 34px;
+  padding-top: 16px;
+}
+
+body.siyuan-mode .siyuan-references h2,
+body.siyuan-mode .siyuan-references h3 {
+  border: 0;
+  color: var(--muted-2);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .14em;
+  margin: 14px 0 6px;
+  text-transform: uppercase;
+}
+
+body.siyuan-mode .siyuan-references h2::before,
+body.siyuan-mode .siyuan-references h3::before {
+  display: none;
+}
+
+body.siyuan-mode .siyuan-references ul {
+  margin: 0;
+  padding-left: 0;
+}
+
+body.siyuan-mode .siyuan-references li {
+  list-style: none;
+  margin: 2px 0;
+}
+
+body.siyuan-mode .siyuan-references a {
+  border-bottom: 0;
+  color: var(--green);
+  font-size: 13px;
+}
+
+body.siyuan-mode .siyuan-references a:hover {
+  color: var(--green-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ==== Round 20：主内容列别跟固定侧栏抢中间 ==== */
+/* NexT 的 .main-inner 是「在整页宽里居中」的，但我们的侧栏是 position: fixed 贴右边，
+   于是正文列居中在 1280 里、右侧 320 被侧栏占掉 —— 左边留 340、右边留 20，看着整块偏到墙上。
+   给 .main 加一个等于侧栏宽度的右内边距，正文就在「侧栏以外的区域」里居中。 */
+@media (min-width: 992px) {
+  body.sidebar-active .main {
+    padding-right: 320px;
+  }
+}
+
+/* ==== Round 20：笔记页正文左对齐 ==== */
+/* justify 在中文里本来只是把行尾补齐，但混着英文标识符与 emoji 时会把空格拉得很开
+   （和第 15d 轮归档页那句说明是同一类问题）。笔记页以短行列表为主，左对齐更稳。 */
+body.siyuan-mode .post-body,
+body.siyuan-mode .post-body ul,
+body.siyuan-mode .post-body ol,
+body.siyuan-mode .post-body li,
+body.siyuan-mode .post-body p {
+  text-align: left;
+}

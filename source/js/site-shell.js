@@ -23,4 +23,30 @@
     skip.textContent = '跳到正文';
     document.body.insertBefore(skip, document.body.firstChild);
   }
+
+/* siyuan 的「文档关系」区块里，「本文引用」在没有引用时仍然输出标题 + 空列表，
+   正文白白多一行小标题、右侧目录也多一个点不动的锚点。
+   这里把空分组连同目录里对应的那一条一起去掉。 */
+(function () {
+  var wrap = document.querySelector('.siyuan-references');
+  if (!wrap) return;
+
+  Array.prototype.forEach.call(wrap.querySelectorAll('h3'), function (head) {
+    var list = head.nextElementSibling;
+    if (!list || list.tagName !== 'UL') return;
+    if (list.children.length > 0) return;
+
+    var id = head.id;
+    head.parentNode.removeChild(head);
+    list.parentNode.removeChild(list);
+
+    if (!id) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.post-toc a[href]'), function (link) {
+      if (link.getAttribute('href') !== '#' + encodeURIComponent(id)) return;
+      var item = link.closest('li');
+      if (item) item.parentNode.removeChild(item);
+    });
+  });
+})();
+
 })();
