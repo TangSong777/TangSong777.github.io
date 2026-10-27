@@ -405,3 +405,92 @@ body::before {
   border-radius: 2px;
   background: linear-gradient(90deg, var(--pop-amber), var(--pop-rose));
 }
+
+/* ============================================================
+   内联 SVG 图标（取代 cdnjs 的 Font Awesome）
+   ------------------------------------------------------------
+   原来全站从 cdnjs 加载 all.min.css + 两个 woff2，共 147 KB、
+   609–668 ms，实测占首页传输量的 38%，而实际只用到 11 个图标。
+   scripts/fontawesome-inline.js 在 after_render:html 阶段把
+   <i class="fa fa-xxx"> 换成内联 <svg>，颜色继承 currentColor，
+   尺寸靠下面的 .fa-icon 系列控制。
+   ============================================================ */
+.fa-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.14em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* flex 容器里不被压扁 */
+  flex: none;
+}
+
+/* fa-fw：固定宽度，用于菜单/侧栏这类需要左对齐的文字 */
+.fa-icon--fw {
+  width: 1.25em;
+}
+
+/* fa-lg：放大一号，用于「回到顶部」那颗 */
+.fa-icon--lg {
+  width: 1.33em;
+  height: 1.33em;
+  vertical-align: -0.18em;
+}
+
+/* ------------------------------------------------------------
+   NexT 原本把这些尺寸/间距写在 .fa 上，图标换成 <svg class="fa-icon">
+   之后那些规则全部失效，这里逐条镜像过来，避免「回到顶部」变大、
+   置顶图钉挤在一起、上下篇箭头贴字等问题。
+   ------------------------------------------------------------ */
+.btn .fa-icon--fw {
+  width: 1.285714285714286em;
+}
+
+/* 回到顶部：原来 .fa { width: 26px; text-align: center } */
+.back-to-top .fa-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: -0.16em;
+  margin-right: 2px;
+}
+
+/* 归档列表里的置顶图钉 */
+.posts-collapse .post-content .post-title .fa-icon {
+  width: 0.875em;
+  height: 0.875em;
+  margin-left: 5px;
+  vertical-align: -0.1em;
+}
+
+/* 正文里标记外链的小图标 */
+.post-body .exturl .fa-icon {
+  width: 0.875em;
+  height: 0.875em;
+  margin-left: 4px;
+  vertical-align: -0.08em;
+}
+
+/* 文章标题旁的置顶图钉 */
+.posts-expand .post-title-link .fa-icon {
+  width: 0.875em;
+  height: 0.875em;
+  margin-left: 5px;
+  vertical-align: -0.1em;
+}
+
+/* 上一篇 / 下一篇的箭头 */
+.post-nav-item .fa-icon {
+  width: 0.75em;
+  height: 0.75em;
+  vertical-align: -0.05em;
+}
+.post-nav-item:first-child .fa-icon {
+  margin-right: 5px;
+}
+.post-nav-item:last-child .fa-icon {
+  margin-left: 5px;
+}
