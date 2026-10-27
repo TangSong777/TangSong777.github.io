@@ -934,6 +934,7 @@ function initializeRichEditor() {
       markdown({ base: markdownLanguage, codeLanguages: codeLanguages || [] }),
       TP.highlight,
       TP.livePreview,
+      TP.tablePreview,
       TP.liveStyles,
       theme,
       keymap.of([

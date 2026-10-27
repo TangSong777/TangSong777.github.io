@@ -96,6 +96,65 @@
     ignoreEvent() { return true; }
   }
 
+  /* -------------------------------------------------------------- 表格块级渲染
+     块级 replace 装饰不能由 ViewPlugin 提供（CodeMirror 会抛
+     "Block decorations may not be specified via plugins"），必须来自 state 派生的
+     facet。所以表格渲染单独用 EditorView.decorations.compute 提供，与行内装饰的
+     livePreview 插件并行存在：光标在表格外时看到真表格，点进表格就变回源码。 */
+  class TableWidget extends WidgetType {
+    constructor(source) {
+      super();
+      this.source = source;
+    }
+
+    eq(other) {
+      return other.source === this.source;
+    }
+
+    toDOM() {
+      var wrap = document.createElement('div');
+      wrap.className = 'cm-md-table-widget';
+
+      var rows = this.source.split('\n').filter(function (line) {
+        return line.trim() !== '';
+      });
+      var cells = rows.map(function (line) {
+        return line.trim().replace(/^\|/, '').replace(/\|$/, '')
+          .split('|').map(function (cell) { return cell.trim(); });
+      });
+
+      var align = [];
+      if (cells.length > 1 && /^[\s:|-]+$/.test(cells[1].join(''))) {
+        align = cells[1].map(function (cell) {
+          if (/^:.*:$/.test(cell)) return 'center';
+          if (/^:/.test(cell)) return 'left';
+          if (/:$/.test(cell)) return 'right';
+          return '';
+        });
+        cells.splice(1, 1);
+      }
+
+      var table = document.createElement('table');
+      cells.forEach(function (row, index) {
+        var tr = document.createElement('tr');
+        row.forEach(function (text, columnIndex) {
+          var cell = document.createElement(index === 0 ? 'th' : 'td');
+          if (align[columnIndex]) cell.style.textAlign = align[columnIndex];
+          cell.textContent = text;
+          tr.appendChild(cell);
+        });
+        table.appendChild(tr);
+      });
+
+      wrap.appendChild(table);
+      return wrap;
+    }
+
+    ignoreEvent() {
+      return false;
+    }
+  }
+
   class BulletWidget extends WidgetType {
     eq() { return true; }
     toDOM() {
@@ -226,6 +285,35 @@
     '.cm-md-tok-type': { color: '#880000' },
     '.cm-md-codeinfo': { color: '#9aa8a6', fontStyle: 'italic' },
     '.cm-md-table-pipe': { color: '#c6d0ce', fontWeight: '300' },
+    '.cm-md-table-widget': {
+      margin: '10px 0 14px 0',
+    },
+    '.cm-md-table-widget table': {
+      borderCollapse: 'collapse',
+      width: '100%',
+      fontSize: '.94em',
+      lineHeight: '1.6',
+      color: '#1c2b2a',
+      border: '1px solid #d8e5e3',
+      borderRadius: '10px',
+      overflow: 'hidden',
+      display: 'table',
+    },
+    '.cm-md-table-widget th': {
+      background: '#eef4f3',
+      color: '#33544f',
+      fontWeight: '700',
+      padding: '9px 12px',
+      borderBottom: '1px solid #d8e5e3',
+      textAlign: 'left',
+    },
+    '.cm-md-table-widget td': {
+      padding: '9px 12px',
+      borderTop: '1px solid #edf2f1',
+    },
+    '.cm-md-table-widget tbody tr:nth-child(even)': {
+      background: '#fafcfb',
+    },
     '.cm-md-table-align': { color: '#d2dcda', fontStyle: 'italic', fontSize: '.82em' },
     '.cm-md-table-head': { fontWeight: '700', color: '#1c2b2a' },
   });
@@ -607,6 +695,41 @@
     };
   }
 
+  /* 表格块级装饰：光标不在表格内时把整块替换成真表格，选区一进去就退回源码。 */
+  function tableBlockStart(doc, tableFrom) {
+    var line = doc.lineAt(tableFrom);
+    while (line.number > 1) {
+      var previous = doc.line(line.number - 1);
+      if (previous.text.trim() !== '') break;
+      line = previous;
+    }
+    return line.from;
+  }
+
+  var tablePreview = EditorView.decorations.compute(['doc', 'selection'], function (state) {
+    var tree = syntaxTree(state);
+    var ranges = state.selection.ranges;
+    var items = [];
+
+    tree.iterate({
+      enter: function (node) {
+        if (node.name !== 'Table') return;
+        for (var index = 0; index < ranges.length; index += 1) {
+          if (ranges[index].from <= node.to && ranges[index].to >= node.from) return false;
+        }
+        items.push(
+          Decoration.replace({
+            widget: new TableWidget(state.doc.sliceString(node.from, node.to)),
+            block: true,
+          }).range(tableBlockStart(state.doc, node.from), node.to),
+        );
+        return false;
+      },
+    });
+
+    return Decoration.set(items);
+  });
+
   var livePreview = ViewPlugin.fromClass(
     class {
       constructor(view) {
@@ -711,5 +834,6 @@
     liveStyles: liveStyles,
     highlight: syntaxHighlighting(markdownHighlight),
     toggleInlineMark: toggleInlineMark,
+    tablePreview: tablePreview,
   };
 })();
