@@ -3362,3 +3362,44 @@ body.siyuan-mode .post-body ul li > p > a:hover {
   border-bottom: 1px solid rgba(95, 143, 130, .38);
   color: var(--green-deep);
 }
+
+/* ==== Round 29：图片点开放大 ====
+   正文图默认 cursor 表示可点，点开铺满视口，再点或 Esc 关闭（脚本在 site-shell.js）。 */
+.post-body img {
+  cursor: zoom-in;
+}
+
+.img-zoom-overlay {
+  align-items: center;
+  animation: img-zoom-in .16s ease-out;
+  background: rgba(9, 20, 18, .88);
+  cursor: zoom-out;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  inset: 0;
+  justify-content: center;
+  padding: 3vh 3vw;
+  position: fixed;
+  z-index: 2000;
+}
+
+.img-zoom-overlay img {
+  border-radius: 10px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .45);
+  max-height: 84vh;
+  max-width: 94vw;
+  object-fit: contain;
+}
+
+.img-zoom-caption {
+  color: rgba(255, 255, 255, .74);
+  font-size: 12.5px;
+  margin: 0;
+  text-align: center;
+}
+
+@keyframes img-zoom-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

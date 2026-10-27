@@ -50,3 +50,65 @@
 })();
 
 })();
+
+/* 图片点开放大（Round 29）
+   笔记页一屏能排十几张截图，正文里的图都按容器宽度缩过，想看清还得缩浏览器。
+   点一下铺满屏，再点任意处或按 Esc 关闭。只处理 .post-body 里的图，
+   头像、logo 之类不动；被 <a> 包住的图（可能是外链）让链接自己响应。 */
+(function () {
+  'use strict';
+  var body = document.querySelector('.post-body');
+  if (!body) return;
+
+  var overlay = null;
+
+  function close() {
+    if (!overlay) return;
+    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    overlay = null;
+    document.removeEventListener('keydown', onKey);
+    document.body.style.removeProperty('overflow');
+  }
+
+  function onKey(event) {
+    if (event.key === 'Escape') close();
+  }
+
+  function open(img) {
+    overlay = document.createElement('div');
+    overlay.className = 'img-zoom-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-label', (img.alt || '图片') + ' 预览');
+    overlay.addEventListener('click', close);
+
+    var big = document.createElement('img');
+    big.src = img.currentSrc || img.src;
+    big.alt = img.alt || '';
+    /* 远端图挂了别留一块黑底空屏 */
+    big.addEventListener('error', close);
+    overlay.appendChild(big);
+
+    /* alt 是 image / 图片 这种占位词时，写出来只会添乱 */
+    var GENERIC_ALT = /^(image|img|图片|picture|photo)$/i;
+    if (img.alt && !GENERIC_ALT.test(img.alt.trim())) {
+      var caption = document.createElement('p');
+      caption.className = 'img-zoom-caption';
+      caption.textContent = img.alt;
+      overlay.appendChild(caption);
+    }
+
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', onKey);
+  }
+
+  body.addEventListener('click', function (event) {
+    var target = event.target;
+    if (!target || target.tagName !== 'IMG') return;
+    if (target.classList.contains('site-author-image')) return;
+    if (target.closest('a')) return;
+    if (target.closest('.img-zoom-overlay')) return;
+    event.preventDefault();
+    open(target);
+  });
+})();
