@@ -3631,3 +3631,70 @@ body.archive-mode .posts-collapse .post-content > article .post-header {
     padding-bottom: 58px;
   }
 }
+
+/* ==== Round 37：标签 / 分类详情页的页面标题只有 13.5px ====
+   归档页那句「嗯..! 目前共计 5 篇日志」和标签页的大标题 <h1 class="collection-header">工具<small>标签</small></h1>
+   是同一个 class。第 15d 轮为了让说明句变小，把 .collection-title .collection-header 压到 13.5px，
+   结果连标签页的页面标题一起压了 —— 而它下面的文章标题是 16px，于是「页面标题比文章标题还小」。
+   靠 :has(small) 区分：带小徽章的是页面标题，没有的是说明句。 */
+body.archive-mode .collection-title .collection-header:has(small) {
+  align-items: baseline;
+  color: var(--green-deep);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 26px;
+  font-weight: 750;
+  gap: 9px;
+  letter-spacing: .01em;
+  line-height: 1.25;
+  margin: 0;
+}
+
+body.archive-mode .collection-title .collection-header:has(small) .post-title-link {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+body.archive-mode .collection-title .collection-header:has(small) small {
+  align-self: center;
+  margin-left: 0;
+}
+
+/* 年份那个「2026」原来是 NexT 的深灰 #555，和全站的烟雨青不是一套；
+   改成次级墨绿，数字用等宽数字，缩进与标题对齐。 */
+body.archive-mode .collection-year {
+  color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+
+/* Round 37b：上面那条 :has(small) 的权重是 (0,3,2)，
+   而第 15d 轮那条「说明句」用的是
+   body.archive-mode .posts-collapse .post-content .collection-title .collection-header，
+   权重 (0,5,1)，压过它 —— 所以 display: flex 生效了、字号却还是 13.5px。
+   这里把选择器补齐到同一层级再加 :has(small)（0,5,2），才真正盖住。 */
+body.archive-mode .posts-collapse .post-content .collection-title .collection-header:has(small) {
+  color: var(--green-deep);
+  font-size: 26px;
+  font-weight: 750;
+  letter-spacing: .01em;
+  line-height: 1.25;
+}
+
+/* Round 37c：小徽章的底色生效了、文字却还是 #bbb ——
+   NexT 那条 .posts-collapse .post-content .collection-title small（0,4,1）
+   压过我们的 body.archive-mode .collection-title small（0,3,1）。补齐层级。 */
+body.archive-mode .posts-collapse .post-content .collection-title small {
+  align-self: center;
+  background: var(--green-soft);
+  border-radius: 999px;
+  color: var(--green);
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  margin-left: 0;
+  padding: 3px 10px;
+  vertical-align: middle;
+}
