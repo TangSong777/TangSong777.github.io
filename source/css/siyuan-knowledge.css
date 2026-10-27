@@ -2956,3 +2956,63 @@ body.blog-post-mode .site-brand-container {
   margin-left: 3px;
   opacity: .8;
 }
+
+
+/* ==== Round 21d：页标题左对齐 ==== */
+/* NexT Muse 把 .post-header / .post-title 居中（那是「一篇大图文章」的版式），
+   而我们的正文、导语、胶囊列表都是左对齐 —— 标题孤零零浮在中间，像没对齐。
+   笔记页 Round 19 已经改过，这里把文章页与归档/标签/分类页补齐。 */
+body.blog-post-mode .post-header,
+body.blog-post-mode .post-header .post-title,
+body.blog-post-mode .post-title,
+body.archive-mode .post-header,
+body.archive-mode .post-header .post-title,
+body.archive-mode .post-title {
+  text-align: left;
+}
+
+
+/* ==== Round 21e：元信息行与标签页留白 ==== */
+/* 标题左对齐了，「发表于 2026-10-25」这行仍是 NexT 的居中 —— 一行居中一行靠左，
+   看着像两个东西掉队。元信息跟着标题站到左边。 */
+body.blog-post-mode .post-meta,
+body.blog-post-mode .post-meta-wrap,
+body.blog-post-mode .post-description {
+  text-align: left;
+}
+
+/* 标签/分类总览页：标题与导语之间空出约 90px，是给「居中大标题」留的呼吸。
+   左对齐之后这块空白就只是空，收紧。 */
+body.archive-mode .post-header {
+  margin-bottom: 8px;
+  padding-bottom: 0;
+}
+
+body.archive-mode .post-header .post-title {
+  margin-bottom: 4px;
+}
+
+body.archive-mode .tag-index-lead {
+  margin-top: 0;
+}
+
+
+/* ==== Round 21f：元信息行其实是 flex 居中 ==== */
+/* 上一版给了 text-align: left，完全没反应 —— 因为 NexT 的 .post-meta 是
+   display: flex + justify-content: center，居中是「摆位」不是「文字对齐」。
+   改 flex 主轴对齐才有效。 */
+body.blog-post-mode .post-meta {
+  justify-content: flex-start;
+}
+
+
+/* ==== Round 21g：元信息日期别画虚线下划线 ==== */
+/* 「发表于 2026-10-25」下面那条点线来自带 title 的元素（浏览器/主题给的 dotted 下划线），
+   在正文里读起来像链接，但点不动。元信息不是链接，去掉。 */
+body.blog-post-mode .post-meta time,
+body.blog-post-mode .post-meta-item,
+body.blog-post-mode .post-meta-item-text,
+body.blog-post-mode .post-meta-container [title] {
+  border-bottom: 0;
+  text-decoration: none;
+}
