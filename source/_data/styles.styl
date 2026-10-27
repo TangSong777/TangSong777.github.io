@@ -393,6 +393,9 @@ body::before {
 .sidebar-widget h3 {
   position: relative;
   padding-bottom: 7px;
+  /* NexT 默认把侧栏小标题居中，而下面那条装饰线是绝对定位在 left: 0 的，
+     居中的字和靠左的线对不上，看着像一根孤零零的红短线。左对齐后线就落在首字下面。 */
+  text-align: left;
 }
 
 .sidebar-widget h3::after {

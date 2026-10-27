@@ -802,7 +802,14 @@ body.siyuan-mode .sidebar-toggle {
 }
 
 .siyuan-hero {
-  background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-raw) 58%, var(--amber) 140%);
+  /* 原来写的是 var(--amber) 140%：琥珀色落在渐变终点之外，只有最角落沾到一点，
+     绿→琥珀的过渡被压成一条硬边，看着像右下角有块黄褐色污渍。
+     收进 100% 并换成低饱和的暖沙色，过渡才连续。 */
+  /* 卡片底色只用绿系；暖色改成右上角一层很淡的琥珀光，
+     和博客首页 hero 是同一套语言，不会在角落里堆出一块沙色。 */
+  background:
+    radial-gradient(circle at 92% 6%, rgba(217, 131, 36, .24), transparent 46%),
+    linear-gradient(135deg, var(--green-deep) 0%, var(--green) 46%, var(--green-raw) 100%);
   border-radius: 20px;
   color: white;
   margin: 0 0 34px;
@@ -2103,4 +2110,43 @@ body.archive-mode .collection-title .collection-header {
   body.siyuan-mode figure.highlight::-webkit-scrollbar-track {
     background: transparent;
   }
+}
+
+/* ==== 侧栏作者区：白字压白底（round 12）==== */
+/* NexT Muse 把 .site-author-name 默认设成 #f5f5f5（原本是给深色作者块用的），
+   而我们的侧栏是白卡片 —— 实测 computed color 就是 rgb(245,245,245)，名字等于隐形。
+   全站统一成墨色与次级墨色，不再按 mode 分别写。 */
+.site-author-name {
+  color: #1c2b2a;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.site-description {
+  color: #5f7573;
+}
+
+.sidebar .site-author-image {
+  border: 3px solid #e6efee;
+  box-shadow: 0 6px 18px rgba(28, 64, 55, .10);
+}
+
+/* ==== 顶栏带被右侧固定侧栏截断（round 12）==== */
+/* .sidebar 是 position: fixed; top: 0，白卡片从 y≈88 开始盖在顶栏带上，
+   于是顶栏带在 x≈946 处出现一道垂直硬边，像渐变换断了。
+   把 header 抬到侧栏之上，顶栏带就横贯整幅；侧栏内容从 y≈130 开始，不会被挡住。 */
+body.siyuan-mode header.header,
+body.blog-post-mode header.header {
+  position: relative;
+  /* NexT 的侧栏是 position: fixed; top: 0; z-index: 20（public/css/main.css:1201），
+     这里必须比它高才盖得住：顶栏带横贯整幅，侧栏从 y≈130 的正文区开始。 */
+  z-index: 21;
+}
+body.siyuan-mode .site-brand-container,
+body.blog-post-mode .site-brand-container {
+  /* 带子右端（x≈946）正好是右侧固定侧栏白卡片的左缘，硬切看着像渐变换断。
+     末 46px 渐隐，溶进卡片。 */
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 46px), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 46px), transparent 100%);
 }
