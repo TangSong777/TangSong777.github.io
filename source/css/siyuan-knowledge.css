@@ -2006,3 +2006,62 @@ body.archive-mode .collection-title .collection-header {
   font-size: 12.8px;
   text-wrap: pretty;
 }
+
+/* ==== 归档页手机版收紧（round 9 合并版）==== */
+
+/* 430px 下量出来的四个问题，全部在这一段解决：
+   1. .post-block 的桌面内边距 44px 52px 54px 在 375px 卡片上左右各吃 52px；
+   2. NexT main.css:1754 的 .posts-collapse .post-content .collection-year
+      写着 margin: 60px 0，三个类（0,3,0）压过二元选择器，年份上下各空 60px；
+   3. 每条记录原来 30px 上边距 + 日期与标题挤在一行，卡片被撑得又高又散；
+   4. 引言块与年份之间缺呼吸，靠 margin 折叠容易失控，这里全部写死小值。 */
+@media (max-width: 768px) {
+  body.archive-mode .post-block {
+    padding: 18px 16px 26px;
+  }
+
+  /* 选择器补到 (0,3,1)，才压得住 NexT 的 .posts-collapse .post-content .collection-year */
+  body.archive-mode .posts-collapse .post-content .collection-title {
+    margin: 0 0 14px;
+    padding: 12px 14px;
+  }
+
+  body.archive-mode .posts-collapse .post-content .collection-year {
+    margin: 0 0 10px;
+  }
+
+  /* 年份那根渐变竖线是按桌面高度画的，收窄后重新贴住文字 */
+  body.archive-mode .posts-collapse .post-content .collection-year::before {
+    bottom: 4px;
+    top: 4px;
+  }
+
+  body.archive-mode .post-content {
+    margin-bottom: 0;
+  }
+
+  body.archive-mode .post-content > article {
+    margin: 0 0 8px;
+  }
+
+  /* 一条记录 = 一张小卡片：日期胶囊在上、标题在下 */
+  body.archive-mode .post-content > article .post-header {
+    align-items: flex-start;
+    background: var(--paper);
+    border: 1px solid var(--sy-line);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 10px 12px;
+  }
+
+  body.archive-mode .post-meta-container {
+    margin: 0;
+  }
+
+  body.archive-mode .post-title {
+    margin: 0;
+  }
+}
