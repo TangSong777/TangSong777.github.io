@@ -11,7 +11,7 @@
     "article:studio": "node ./tools/article-studio/server.mjs",
     "article:studio:no-open": "node ./tools/article-studio/server.mjs --no-open",
     "article:studio:mobile": "node ./tools/article-studio/server.mjs --network --no-open",
-    "article:studio:bundle": "esbuild ./tools/article-studio/cm-vendor-entry.js --bundle --format=iife --platform=browser --target=es2020 --outfile=./tools/article-studio/public/vendor/codemirror.bundle.js",
+    "article:studio:bundle": "esbuild ./tools/article-studio/cm-vendor-entry.js --bundle --format=iife --platform=browser --target=es2020 --minify --outfile=./tools/article-studio/public/vendor/codemirror.bundle.js",
     "article:studio:test": "node --test ./tools/article-studio/server.test.mjs",
     "test": "node --test ./tools/tests/publisher.test.mjs ./tools/article-studio/server.test.mjs ./tools/article-studio/metadata.test.mjs ./tools/fan-control/fan-control.test.mjs",
     "siyuan:check": "node ./tools/run-siyuan.mjs check",
