@@ -41,9 +41,22 @@ hexo.extend.filter.register('after_render:html', (str) => {
     }).join('')
     : '<span class="sidebar-empty">暂无归档</span>';
 
+  const catAll = hexo.locals.get('categories').toArray()
+    .map((cat) => ({
+      name: cat.name,
+      path: cat.path,
+      count: (cat.posts && cat.posts.length) || cat.count || 0,
+    }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-CN'));
+
+  const categoryHtml = catAll.length
+    ? catAll.map((cat) => `<a class="sidebar-category" href="${join(cat.path)}">${cat.name}<sup>${cat.count}</sup></a>`).join('')
+    : '<span class="sidebar-empty">暂无分类</span>';
+
   const block = [
     '<div class="sidebar-widgets">',
     `<div class="sidebar-widget"><h3>标签<a class="sidebar-widget-more" href="${join('tags/')}">全部 →</a></h3><div class="sidebar-tags">${tagHtml}</div></div>`,
+    `<div class="sidebar-widget"><h3>分类<a class="sidebar-widget-more" href="${join('categories/')}">全部 →</a></h3><div class="sidebar-categories">${categoryHtml}</div></div>`,
     `<div class="sidebar-widget"><h3>归档<a class="sidebar-widget-more" href="${join('archives/')}">全部 →</a></h3><div class="sidebar-archives">${archiveHtml}</div></div>`,
     '</div>',
   ].join('');

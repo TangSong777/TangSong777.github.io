@@ -2590,3 +2590,35 @@ body.archive-mode .posts-collapse .post-content .collection-title .collection-he
 body.archive-mode .posts-collapse .post-content::before {
   display: none;
 }
+
+/* ==== Round 16：标签 / 分类总览页的交叉入口 ==== */
+
+.tag-index-foot {
+  color: var(--muted-2);
+  font-size: 12.5px;
+  margin: 14px 0 0;
+}
+
+.tag-index-foot .taxonomy-link {
+  color: var(--green);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tag-index-foot .taxonomy-link:hover {
+  color: var(--green-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* 分类页的角标用琥珀系，标签页用青系 —— 两页一眼能分清，但仍是同一套胶囊 */
+.tag-index.is-categories .tag-index-item.is-major {
+  background: var(--pop-amber-soft);
+  border-color: var(--pop-amber-line);
+  color: var(--pop-amber-deep);
+}
+
+.tag-index.is-categories .tag-index-item.is-major sup {
+  background: var(--pop-amber-line);
+  color: var(--pop-amber-deep);
+}
