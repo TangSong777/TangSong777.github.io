@@ -155,13 +155,47 @@ a:hover { text-decoration: underline; }
 
 .btn { background: none; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); cursor: pointer; font-family: inherit; font-size: 12px; padding: 5px 12px; }
 .btn:hover { border-color: var(--green); color: var(--green); }
-.btn.ok { border-color: var(--green); color: var(--green); }
-.btn.danger:hover { border-color: var(--bad); color: var(--bad); }
+.btn.ok {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--paper);
+}
+
+.btn.ok:hover {
+  background: color-mix(in srgb, var(--ok) 86%, #000);
+  border-color: color-mix(in srgb, var(--ok) 86%, #000);
+}
+.btn.danger {
+  border-color: color-mix(in srgb, var(--bad) 42%, var(--line));
+  color: var(--bad);
+}
+
+.btn.danger:hover {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+  color: var(--bad);
+}
 .btn.primary { background: var(--green); border-color: var(--green); color: var(--paper); }
 .btn.primary:hover { background: var(--green-deep); }
 .btn.block { display: block; padding: 10px; width: 100%; }
 
-.tag { border-radius: 999px; font-size: 11px; padding: 2px 9px; }
+.tag {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 11px;
+  gap: 5px;
+  padding: 2px 9px;
+}
+
+/* 状态不只靠颜色区分：左边一个小圆点，灰度打印或色弱也能分 */
+.tag::before {
+  background: currentColor;
+  border-radius: 50%;
+  content: "";
+  height: 5px;
+  width: 5px;
+}
 .tag.pending { background: var(--amber-soft); color: var(--amber); }
 .tag.approved { background: var(--ok-soft); color: var(--ok); }
 .tag.rejected { background: var(--bad-soft); color: var(--bad); }
