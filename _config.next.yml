@@ -38,7 +38,7 @@ reading_progress:
   start_at: left
   position: top
   reversed: false
-  color: '#2f6f61'
+  color: '#6a8d8c'
   height: 3px
 
 # Disable NexT's page entrance animation so navigation feels immediate.

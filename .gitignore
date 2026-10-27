@@ -11,3 +11,5 @@ siyuan-import-report.txt
 origin/
 /项目说明.md
 /.article-studio-renames.json
+*.bak-*
+*.bak.*
