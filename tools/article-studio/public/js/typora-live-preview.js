@@ -195,9 +195,11 @@
       cursor: 'pointer',
     },
     '.cm-md-quote-line': {
-      borderLeft: '3px solid #4d7572',
+      // 与站点 styles.styl 的 .post-body blockquote 逐项对齐：
+      // 左边框是琥珀（不是烟雨青）、正文色是深青、底色是 --green-wash
+      borderLeft: '3px solid #d98324',
       paddingLeft: '.75em',
-      color: '#53706d',
+      color: '#33544f',
       backgroundColor: '#eef4f3',
     },
     '.cm-md-bullet': {
@@ -753,7 +755,14 @@
         this.atomic = result.atomic;
       }
       update(update) {
-        if (update.docChanged || update.selectionSet || update.viewportChanged) {
+        /* 只在这两种情况下重建：
+             docChanged      —— 内容变了，装饰当然要重算
+             viewportChanged —— 装饰是按 view.visibleRanges 逐段生成的，
+                                滚动到新位置必须补上那一段
+           特意不含 selectionSet：activeLines 恒为空（编辑时不显示源码标记），
+           光标移动不会改变任何装饰的结果。以前每次点选、每次打字都白算一遍
+           整棵语法树，长文档（近 400 行）在快速输入时会攒出可感的卡顿。 */
+        if (update.docChanged || update.viewportChanged) {
           var result = buildDecorations(update.view);
           this.decorations = result.all;
           this.atomic = result.atomic;

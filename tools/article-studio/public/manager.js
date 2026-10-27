@@ -16,7 +16,6 @@
     trashOpen: false,
     groupOpen: { notes: true, history: true },
   };
-  var richEditor = null;
 
   function esc(value) {
     return String(value == null ? '' : value).replace(/[&<>"]/g, function (c) {
@@ -318,26 +317,6 @@
   }
 
   /* ---------------- 编辑器 ---------------- */
-  function mountEditor(content) {
-    var host = document.getElementById('richEditor');
-    if (!host) return;
-    if (richEditor) { try { richEditor.destroy(); } catch (e) {} richEditor = null; }
-    if (!globalThis.toastui || !globalThis.toastui.Editor) {
-      host.innerHTML = '<textarea id="editor-fallback" class="editor" spellcheck="false">' + esc(content) + '</textarea>';
-      return;
-    }
-    richEditor = new globalThis.toastui.Editor({
-      el: host, height: '62vh', initialValue: content || '',
-      initialEditType: 'wysiwyg', previewStyle: 'tab', usageStatistics: false,
-      language: 'zh-CN', autofocus: false,
-    });
-  }
-  function editorContent() {
-    if (richEditor) return richEditor.getMarkdown();
-    var fallback = document.getElementById('editor-fallback');
-    return fallback ? fallback.value : '';
-  }
-
   function render() {
     var views = {
       overview: viewOverview, articles: viewArticles, privacy: viewPrivacy,
@@ -349,7 +328,6 @@
       '<button class="top-btn" data-action="logout">退出</button></div></header>' +
       '<div class="layout">' + sidebar() + '<main class="content">' + (views[state.view] || views.overview)() + '</main></div>' +
       '<div id="toast" class="toast"></div>';
-    if (state.editing) mountEditor(state.editing.content);
     if (state.message) {
       var el = document.getElementById('toast');
       if (el) { el.textContent = state.message; el.classList.add('is-on'); }
@@ -361,12 +339,6 @@
     // 编辑器内嵌在管理中心里（iframe 载入文章工作台），不做整页跳转
     state.editing = { path: path };
     render();
-  }
-
-  function openEditorLegacy(path) {
-    // 旧实现：整页跳到文章工作台，保留作参考
-
-    location.href = '/studio.html?path=' + encodeURIComponent(path);
   }
 
   app.addEventListener('change', function (event) {
@@ -427,34 +399,12 @@
           method: 'POST', headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ slug: slug, title: title }),
         });
-        // 新建后直接进入工作台，在那边写正文
-        location.href = '/studio.html?path=' + encodeURIComponent(created.path);
+        // 新建后同样内嵌打开，不整页跳走（用户要求「不要跳转太多界面」）
+        await openEditor(created.path);
         return;
       }
 
       if (action === 'edit') { await openEditor(target.getAttribute('data-path')); return; }
-
-      if (action === 'save-article') {
-        var content = editorContent();
-        var saved = await api('/api/save', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ path: state.editing.path, content: content }),
-        });
-        state.editing.content = content;
-        toast(saved.message || '已保存');
-        return;
-      }
-
-      if (action === 'publish-article') {
-        var body = editorContent();
-        var published = await api('/api/publish', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ path: state.editing.path, content: body }),
-        });
-        state.editing.content = body;
-        toast(published.message || '已发布');
-        return;
-      }
 
       if (action === 'delete-article') {
         if (!confirm('删除这篇文章及其图片？此操作会立即发布。')) return;

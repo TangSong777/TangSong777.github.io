@@ -40,14 +40,28 @@ export function parseSiteBody(styl) {
   }
   const blockquote = /blockquote\s*\{([^}]*)\}/.exec(body);
   if (blockquote) {
-    const bg = /background:\s*(#[0-9a-fA-F]{6})/.exec(blockquote[1]);
-    const border = /border-left-color:\s*(#[0-9a-fA-F]{6})/.exec(blockquote[1]);
-    if (bg) out.quoteBg = bg[1].toLowerCase();
-    if (border) out.quoteBorder = border[1].toLowerCase();
+    const bg = colorOf(blockquote[1], 'background', styl);
+    const border = colorOf(blockquote[1], 'border-left-color', styl);
+    if (bg) out.quoteBg = bg;
+    if (border) out.quoteBorder = border;
   }
-  const heading = /color:\s*(#[0-9a-fA-F]{6})/.exec(body.slice(body.indexOf('h1, h2, h3')));
-  if (heading) out.headingColor = heading[1].toLowerCase();
+  const heading = colorOf(body.slice(body.indexOf('h1, h2, h3')), 'color', styl);
+  if (heading) out.headingColor = heading;
   return out;
+}
+
+/**
+ * 取某个属性声明的最终颜色，支持 `var(--x)` 回溯。
+ * styles.styl 里早先写的是字面量 #xxxxxx，后来统一改成 CSS 变量（--green-wash 等），
+ * 只认十六进制的正则就解析不到了，会让本测试误报——这里顺着变量表查一层。
+ */
+function colorOf(css, prop, styl) {
+  const hex = new RegExp(prop + ':\\s*(#[0-9a-fA-F]{6})').exec(css);
+  if (hex) return hex[1].toLowerCase();
+  const v = new RegExp(prop + ':\\s*var\\(--([\\w-]+)\\)').exec(css);
+  if (!v) return undefined;
+  const def = new RegExp('--' + v[1] + ':\\s*(#[0-9a-fA-F]{6})').exec(styl);
+  return def ? def[1].toLowerCase() : undefined;
 }
 
 /** 从 CodeMirror baseTheme 里取编辑器侧的同名指标。 */
