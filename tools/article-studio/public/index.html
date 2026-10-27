@@ -95,9 +95,55 @@ a:hover { text-decoration: underline; }
 .card-head h2 { margin: 0; }
 
 .stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-.stat { background: var(--green-soft); border-radius: 10px; padding: 14px 16px; }
-.stat strong { display: block; font-size: 24px; color: var(--green-deep); }
+
+/* 统计卡：五张各一色，颜色只落在左侧 3px 竖条与数字上，底色保持极淡 */
+.stat {
+  --sc: var(--green);
+  --sc-soft: var(--green-soft);
+  background: var(--sc-soft);
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 14px 16px 14px 19px;
+  position: relative;
+}
+.stat::before {
+  background: var(--sc);
+  bottom: 10px;
+  content: "";
+  left: 0;
+  position: absolute;
+  top: 10px;
+  width: 3px;
+}
+.stat:nth-child(1) { --sc: var(--green);      --sc-soft: var(--green-soft); }
+.stat:nth-child(2) { --sc: var(--info);       --sc-soft: var(--info-soft); }
+.stat:nth-child(3) { --sc: var(--ok);         --sc-soft: var(--ok-soft); }
+.stat:nth-child(4) { --sc: var(--amber);      --sc-soft: var(--amber-soft); }
+.stat:nth-child(5) { --sc: var(--bad);        --sc-soft: var(--bad-soft); }
+.stat strong { display: block; font-size: 24px; color: var(--sc); }
 .stat span { color: var(--muted); font-size: 12px; }
+
+/* 列表行：hover 时浮出浅底与左侧撞色条，扫列表时眼睛有落点 */
+.row {
+  border-top: 1px solid var(--line);
+  padding: 11px 0;
+  position: relative;
+  transition: background-color .15s ease, padding-left .15s ease;
+}
+.row::before {
+  background: linear-gradient(180deg, var(--green), var(--green-raw) 55%, var(--pop-amber));
+  border-radius: 0 2px 2px 0;
+  bottom: 6px;
+  content: "";
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  top: 6px;
+  transition: opacity .15s ease;
+  width: 3px;
+}
+.row:hover { background: var(--canvas); padding-left: 12px; }
+.row:hover::before { opacity: 1; }
 
 .row { border-top: 1px solid var(--line); padding: 11px 0; }
 .row:first-of-type { border-top: 0; padding-top: 0; }
