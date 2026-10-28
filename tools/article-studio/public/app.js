@@ -370,7 +370,7 @@ function renderList() {
     <div class="article-row" data-path="${escapeHtml(item.path)}">
     <button class="article-item ${item.path === state.currentPath ? 'active' : ''}" data-path="${escapeHtml(item.path)}" title="右键编辑文章信息">
       <strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(articleMeta(item))}</small>
-    </button><button type="button" class="article-more" aria-label="编辑 ${escapeHtml(item.title)} 的文章信息" title="文章信息">⋯</button></div>`).join('') : '<div class="local-note">没有找到文章。</div>';
+    </button><button type="button" class="article-more" aria-label="编辑 ${escapeHtml(item.title)} 的文章信息" title="文章信息">⋯</button></div>`).join('') : `<div class="list-empty"><p class="list-empty-title">${query ? '没有匹配的文章' : '还没有文章'}</p><p class="list-empty-hint">${query ? '换个关键词试试' : '点右上角的 ＋ 新建一篇'}</p></div>`;
   list.scrollTop = oldScroll;
   document.querySelectorAll('.article-item').forEach((button) => button.addEventListener('click', () => selectArticle(button.dataset.path)));
   list.querySelectorAll('.article-row').forEach((row) => {
