@@ -256,7 +256,7 @@
       '<div class="row-actions">' +
         '<button class="btn" data-action="save-editor">保存</button>' +
         '<button class="btn primary" data-action="publish-editor">上传</button>' +
-        '<button class="btn" data-action="back-to-articles">返回列表</button></div></div>' +
+        '<button class="btn" data-action="back-to-articles">返回概览</button></div></div>' +
       '<div id="studioHost" class="studio-host"></div>' +
       '</section>';
   }
@@ -437,6 +437,7 @@
       // 列表拉不到就照常打开，让工作台自己报错
     }
     state.editing = { path: path };
+    try { localStorage.setItem('manager.last-path', path); } catch (error) {}
     render();
   }
 
@@ -478,6 +479,13 @@
     if (viewButton) {
       state.view = viewButton.getAttribute('data-view');
       state.editing = null;
+      if (state.view === 'articles') {
+        // Round 71：不再显示中间的文章列表卡片，点「文章」直接打开工作台看正文
+        var lastPath = '';
+        try { lastPath = localStorage.getItem('manager.last-path') || ''; } catch (error) {}
+        var article = state.articles.find(function (item) { return item.path === lastPath; }) || state.articles[0];
+        if (article) { await openEditor(article.path); return; }
+      }
       render();
       return;
     }
@@ -493,7 +501,7 @@
         return;
       }
       if (action === 'refresh') { loadAll(); return; }
-      if (action === 'back-to-articles') { state.editing = null; render(); return; }
+      if (action === 'back-to-articles') { state.editing = null; state.view = 'overview'; render(); return; }
       if (action === 'save-editor' || action === 'publish-editor') {
         var frame = document.querySelector('.studio-frame');
         if (!frame || !frame.contentWindow) return toast('工作台还没加载完');
