@@ -501,6 +501,10 @@ async function deleteArticle() {
     });
     removeDraft(path);
     clearAutoSaveTimer();
+    // 通知管理中心母页面：文章没了，回到列表并刷新。Round 45
+    if (window.parent && window.parent !== window) {
+      try { window.parent.postMessage({ type: 'rock-studio:article-deleted', path: path }, '*'); } catch (error) { /* 跨域时忽略 */ }
+    }
     state.currentPath = '';
     state.content = '';
     state.dirty = false;
@@ -1203,7 +1207,10 @@ async function init() {
       try {
         await selectArticle(deepLink);
       } catch (error) {
-        toast(`打开文章失败：${error.message}`, true);
+        // 文章可能刚被删掉，先把列表刷成真实状态，再说人话。Round 45
+        const gone = /不存在/.test(error.message || '');
+        toast(gone ? '这篇文章已经不在了（可能刚被删除），列表已刷新。' : `打开文章失败：${error.message}`, true);
+        await loadArticles().catch(() => {});
       }
     }
   } catch (error) {

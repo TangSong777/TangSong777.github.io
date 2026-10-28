@@ -335,11 +335,40 @@
   }
 
   /* ---------------- 交互 ---------------- */
-  function openEditor(path) {
-    // 编辑器内嵌在管理中心里（iframe 载入文章工作台），不做整页跳转
+  async function openEditor(path) {
+    // 编辑器内嵌在管理中心里（iframe 载入文章工作台），不做整页跳转。
+    // 先取一次最新列表：文章可能刚在工作台里（或另一个标签页）被删掉、改名，
+    // 这时候直接挂 iframe 只会看到一个「文章不存在」的空编辑器。
+    // Round 45
+    try {
+      var latest = await api('/api/articles');
+      state.articles = latest.articles || [];
+      var alive = state.articles.some(function (item) { return item.path === path; });
+      if (!alive) {
+        state.editing = null;
+        render();
+        toast('这篇文章已经不在了（可能刚被删除或改名），列表已刷新。');
+        return;
+      }
+    } catch (error) {
+      // 列表拉不到就照常打开，让工作台自己报错
+    }
     state.editing = { path: path };
     render();
   }
+
+  // 工作台（iframe）里删掉文章后，母页面要跟着回列表并刷新，不然列表还留着死条目。
+  // Round 45
+  window.addEventListener('message', function (event) {
+    var data = event.data;
+    if (!data || data.type !== 'rock-studio:article-deleted') return;
+    state.editing = null;
+    api('/api/articles').then(function (latest) {
+      state.articles = latest.articles || [];
+      render();
+      toast('已删除，列表已刷新。');
+    }).catch(function () { render(); });
+  });
 
   app.addEventListener('change', function (event) {
     var box = event.target.closest('input[type="checkbox"]');
