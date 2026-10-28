@@ -3716,3 +3716,21 @@ body.archive-mode .main {
   box-sizing: border-box;
   max-width: 100%;
 }
+
+/* ==== Round 39：笔记页在超宽屏上正文拉得太宽 ====
+   1920 视口下 .main-inner 是 1269px（316 树 + 320 栏之外全给正文），
+   16px 字号一行七十多个字，读起来要来回扫；而文章页那侧封在 780。
+   这里给笔记页也设一条上限并居中，1280 以下完全不受影响。
+   （实测：1920 下 block 由 316..1585 收到 500..1400，1280 下仍是 644 宽不动） */
+@media (min-width: 1400px) {
+  /* Round 21 那条是 max-width: 100% !important、width: 100% !important，
+     不加 !important 压不过它（实测内层仍是 1269 宽）。 */
+  body.siyuan-mode .main-inner {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    max-width: 900px !important;
+  }
+  body.siyuan-mode .post-block {
+    max-width: 100%;
+  }
+}
