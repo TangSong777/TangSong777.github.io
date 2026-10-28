@@ -618,7 +618,7 @@ export function readMoonlightEvents() {
   }));
 
   // 按时间段聚合（相邻会话间隔 5 分钟内视为同一次使用）
-  result.segments = buildTimeSegments(sessions, 5);
+  result.segments = buildTimeSegments(sessions, 45);
 
   return result;
 }

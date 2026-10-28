@@ -1673,7 +1673,12 @@ $('#deleteArticleButton').addEventListener('click', deleteArticle);
 document.querySelectorAll('[data-now-target]').forEach((button) => button.addEventListener('click', () => {
   $(`#${button.dataset.nowTarget}`).value = articleMetadata.currentLocalDateTime();
 }));
-$('#renameButton').addEventListener('click', openRenameDialog);
+const renameButton = $('#renameButton');
+if (renameButton) renameButton.addEventListener('click', openRenameDialog);
+$('#openRenameFromMetadata').addEventListener('click', () => {
+  $('#metadataDialog').close();
+  openRenameDialog();
+});
 $('#renameForm').addEventListener('submit', renameArticle);
 $('#cancelRename').addEventListener('click', () => $('#renameDialog').close());
 $('#publishForm').addEventListener('submit', publishArticle);

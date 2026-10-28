@@ -1107,3 +1107,52 @@ body::before {
       var(--canvas);
   }
 }
+
+/* 时段时间线 */
+.seg-timeline {
+  margin: 6px 0 16px;
+}
+.seg-track {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: #e3eeea;
+}
+.seg-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--green-deep), var(--green-raw));
+  cursor: default;
+}
+.seg-bar::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: 140%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #223331;
+  color: #f4fbf8;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 20;
+  box-shadow: 0 6px 18px rgba(18, 45, 40, 0.22);
+}
+.seg-bar:hover::after {
+  opacity: 1;
+}
+.seg-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6b7f7b;
+}

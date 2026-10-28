@@ -373,6 +373,8 @@ h1 { margin: 3px 0 0; font-size: 23px; letter-spacing: -.01em; color: var(--gree
 .write-pane { display: grid; grid-template-rows: minmax(0, 1fr) 30px; min-height: 0; overflow: hidden; border-right: 1px solid var(--line); }
 #markdownEditor { display: block; width: 100%; height: 100%; min-height: 0; resize: none; overflow: auto; overscroll-behavior: contain; scroll-padding-block: 22px; padding: 22px 24px; border: 0; outline: 0; color: var(--green-dark); background: var(--surface); font: 14px/1.75 "Cascadia Code", Consolas, "Microsoft YaHei", monospace; tab-size: 2; }
 .pane-footer { display: flex; justify-content: space-between; align-items: center; padding: 0 14px; color: var(--muted); background: var(--surface-hover); font-size: 10px; }
+.footer-link { border: 0; padding: 0; background: none; color: var(--muted); font: inherit; font-size: 10px; cursor: pointer; letter-spacing: .04em; }
+.footer-link:hover, .footer-link:focus-visible { color: var(--green); }
 .preview-pane { position: relative; overflow: hidden; padding: 0; background:  var(--paper); }
 .site-preview { display: block; width: 100%; height: 100%; border: 0; background:  var(--paper); }
 .preview-status { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; color: var(--muted); background:  var(--paper); font-size: 13px; pointer-events: none; }
@@ -678,15 +680,14 @@ body.embed-mode .editor-view { border-radius: 12px; }
         在 iframe 里可用宽度不够时，第一列吃掉几乎全部空间，第二列被压到
         只有几十像素 —— 工具栏里的按钮 flex 布局就一个一行堆下去。
    做法：embed 里大纲没空间也没必要，隐藏；编辑面改成单列；工具栏明令不换行。 */
-body.embed-mode .article-outline { display: none; }
-body.embed-mode .editing-surface {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: 44px minmax(0, 1fr) 30px;
+/* Round 67：embed 里保留大纲列（管理中心 iframe 足够宽）；只有窄 iframe 才藏大纲单列。 */
+@media (max-width: 900px) {
+  body.embed-mode .article-outline { display: none; }
+  body.embed-mode .editing-surface { grid-template-columns: minmax(0, 1fr); }
+  body.embed-mode .editing-surface > .editor-toolbar,
+  body.embed-mode .editing-surface > .rich-editor,
+  body.embed-mode .editing-surface > .source-pane { grid-column: 1; }
 }
-body.embed-mode .editing-surface > .editor-toolbar,
-body.embed-mode .editing-surface > .rich-editor,
-body.embed-mode .editing-surface > .source-pane,
-body.embed-mode .editing-surface > .pane-footer { grid-column: 1; }
 body.embed-mode .editor-toolbar { flex-wrap: nowrap; }
 
 /* 工具栏本身也要防竖排：横向可滚动，按钮永不换行。 */

@@ -456,7 +456,51 @@ function renderStream(status) {
 }
 
 /**
+ * 渲染时段时间线：把每个时段画在一条横轴上，悬浮显示明细。
+ */
+function renderTimeline(segments) {
+  const host = $('seg-timeline');
+  if (!host) return;
+  const list = segments.filter((seg) => Number.isFinite(seg.startMs) && Number.isFinite(seg.endMs));
+  if (list.length === 0) {
+    host.hidden = true;
+    host.replaceChildren();
+    return;
+  }
+  host.hidden = false;
+  const start = Math.min(...list.map((seg) => seg.startMs));
+  const end = Math.max(...list.map((seg) => seg.endMs));
+  const span = Math.max(1, end - start);
+  const track = document.createElement('div');
+  track.className = 'seg-track';
+  for (const seg of list) {
+    const bar = document.createElement('span');
+    bar.className = 'seg-bar';
+    const left = ((seg.startMs - start) / span) * 100;
+    const width = ((seg.endMs - seg.startMs) / span) * 100;
+    bar.style.left = `${left.toFixed(2)}%`;
+    bar.style.width = `${Math.max(0.35, width).toFixed(2)}%`;
+    const startText = fmtClock(seg.startMs);
+    const endText = fmtClock(seg.endMs).split(' ').pop();
+    const parts = [`${seg.sessionCount} 段`, fmtDuration(seg.streamSeconds)];
+    if (seg.disconnects > 0) parts.push(`断联 ${seg.disconnects} 次`);
+    if (Number.isFinite(seg.droppedFrames) && seg.droppedFrames > 0) parts.push(`丢帧 ${seg.droppedFrames}`);
+    bar.dataset.tip = `${startText}–${endText}\n${parts.join(' · ')}`;
+    track.append(bar);
+  }
+  const scale = document.createElement('div');
+  scale.className = 'seg-scale';
+  const scaleStart = document.createElement('span');
+  scaleStart.textContent = fmtClock(start);
+  const scaleEnd = document.createElement('span');
+  scaleEnd.textContent = fmtClock(end);
+  scale.append(scaleStart, scaleEnd);
+  host.replaceChildren(track, scale);
+}
+
+/**
  * 渲染「今日时段」表格：每行一个时间段，从早到晚排列。
+
  * 列固定为：时间段 / 会话数 / 串流时长 / 断联 / 丢帧
  */
 function renderSegments(segments) {
@@ -476,6 +520,7 @@ function renderSegments(segments) {
 
   block.hidden = false;
   tbody.replaceChildren();
+  renderTimeline(segments);
 
   const cell = (text, className) => {
     const td = document.createElement('td');
