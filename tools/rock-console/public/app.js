@@ -208,6 +208,7 @@ async function api(path, options = {}) {
 /* -------------------------------------------------------------- 视图 */
 
 function showLogin(message = '') {
+  document.getElementById('boot')?.remove();
   $('login-view').hidden = false;
   $('console-view').hidden = true;
   $('login-message').textContent = message;
@@ -221,6 +222,7 @@ function showLogin(message = '') {
 }
 
 function showConsole() {
+  document.getElementById('boot')?.remove();
   $('login-view').hidden = true;
   $('console-view').hidden = false;
   startStream();
