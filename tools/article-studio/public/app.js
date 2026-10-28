@@ -210,6 +210,27 @@ function titleFromContent(content, fallback) {
   return match ? match[1].trim().replace(/^['"]|['"]$/g, '') : fallback.replace(/\.md$/i, '');
 }
 
+/* 底部状态栏：显示当前光标所在行列 */
+function updateCursorPosition() {
+  const label = $('#cursorPosition');
+  if (!label) return;
+  const cm = editor._cm;
+  if (cm && cm.hasFocus) {
+    const pos = cm.state.selection.main.head;
+    const line = cm.state.doc.lineAt(pos);
+    label.textContent = `行 ${line.number} · 列 ${pos - line.from + 1}`;
+    return;
+  }
+  if (document.activeElement === sourceEditor) {
+    const before = sourceEditor.value.slice(0, sourceEditor.selectionStart || 0);
+    const line = before.split('\n').length;
+    const col = before.length - before.lastIndexOf('\n');
+    label.textContent = `行 ${line} · 列 ${col}`;
+    return;
+  }
+  label.textContent = editorMode === 'wysiwyg' ? '所见即所得' : 'Markdown 源码';
+}
+
 let previewCache = { value: null, text: '' };
 
 function renderPreview(options = {}) {
@@ -219,7 +240,7 @@ function renderPreview(options = {}) {
   if (content !== previewCache.value) {
     const raw = stripFrontMatter(content);
     const chars = raw.replace(/\s/g, '').length;
-    $('#wordCount').textContent = `${chars} 字`;
+    $('#wordCount').textContent = `${chars.toLocaleString('zh-CN')} 字`;
     $('#documentTitle').textContent = titleFromContent(content, state.currentPath);
     previewCache = { value: content, text: null };
   }
@@ -1599,6 +1620,7 @@ $('#publishButton').addEventListener('click', openPublishDialog);
 $('#metadataButton').addEventListener('click', openMetadataDialog);
 $('#metadataForm').addEventListener('submit', updateArticleMetadata);
 $('#cancelMetadata').addEventListener('click', () => $('#metadataDialog').close());
+document.addEventListener('selectionchange', updateCursorPosition);
 $('#deleteArticleButton').addEventListener('click', deleteArticle);
 // Close only when a primary-button gesture starts and ends on the backdrop.
 // Dragging a selection out of an input must not dismiss the form.
