@@ -1091,3 +1091,32 @@ body.embed-mode .loading-bar { top: 54px; }
 
 /* Round 66: iframe 内不再显示旧顶栏，保存/上传由管理中心卡片头统一触发 */
 body.embed-mode .topbar { display: none; }
+/* ══ Round 68：双栏模式（所见即所得 + 源码 同时显示，可交换左右） ══ */
+.editing-surface.split-mode { grid-template-columns: 210px minmax(0, 1fr) minmax(0, 1fr); }
+.editing-surface.split-mode > .rich-editor { grid-column: 2; display: flex; }
+.editing-surface.split-mode > .source-pane { grid-column: 3; display: grid; }
+.editing-surface.split-mode > .editor-toolbar { grid-column: 2 / 4; }
+body.split-swapped .editing-surface.split-mode > .rich-editor { grid-column: 3; }
+body.split-swapped .editing-surface.split-mode > .source-pane { grid-column: 2; }
+body.outline-hidden .editing-surface.split-mode { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+body.outline-hidden .editing-surface.split-mode > .rich-editor { grid-column: 1; }
+body.outline-hidden .editing-surface.split-mode > .source-pane { grid-column: 2; }
+body.outline-hidden .editing-surface.split-mode > .editor-toolbar { grid-column: 1 / 3; }
+body.outline-hidden.split-swapped .editing-surface.split-mode > .rich-editor { grid-column: 2; }
+body.outline-hidden.split-swapped .editing-surface.split-mode > .source-pane { grid-column: 1; }
+body.embed-mode .editing-surface.split-mode { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+body.embed-mode .editing-surface.split-mode > .rich-editor { grid-column: 1; }
+body.embed-mode .editing-surface.split-mode > .source-pane { grid-column: 2; }
+body.embed-mode .editing-surface.split-mode > .editor-toolbar { grid-column: 1 / 3; }
+body.embed-mode.split-swapped .editing-surface.split-mode > .rich-editor { grid-column: 2; }
+body.embed-mode.split-swapped .editing-surface.split-mode > .source-pane { grid-column: 1; }
+.swap-button { border: 1px solid var(--line); background: var(--surface); color: var(--green-deep); border-radius: 9px; padding: 4px 9px; font-size: 14px; line-height: 1; cursor: pointer; }
+.swap-button:hover { border-color: var(--green); color: var(--green); }
+.swap-button[hidden] { display: none; }
+@media (max-width: 900px) {
+  .editing-surface.split-mode { grid-template-columns: minmax(0, 1fr); }
+  .editing-surface.split-mode > .rich-editor { grid-column: 1; }
+  .editing-surface.split-mode > .source-pane { display: none; }
+  .editing-surface.split-mode > .editor-toolbar { grid-column: 1; }
+}
+

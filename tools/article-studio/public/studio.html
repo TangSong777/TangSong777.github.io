@@ -6,7 +6,7 @@
   <title>文章工作台 · YangHanLin</title>
   <link rel="icon" type="image/jpeg" href="/site-preview/images/avatar.jpg?v=80260905">
   <link rel="apple-touch-icon" href="/site-preview/images/avatar.jpg?v=80260905">
-  <link rel="stylesheet" href="/styles.css?v=50">
+  <link rel="stylesheet" href="/styles.css?v=51">
 </head>
 <body>
   <header class="topbar">
@@ -56,7 +56,9 @@
             <div class="view-tabs" role="tablist">
               <button class="view-tab active" data-view="wysiwyg">所见即所得</button>
               <button class="view-tab" data-view="source">源码</button>
+              <button class="view-tab" data-view="split">双栏</button>
             </div>
+            <button id="swapPanes" class="rename-button swap-button" type="button" title="交换左右面板" hidden>⇄</button>
           </div>
         </div>
         <div id="editingSurface" class="editing-surface wysiwyg-mode">
@@ -251,7 +253,7 @@
   <script src="/metadata.js?v=16"></script>
   <script src="/vendor/codemirror.bundle.js?v=21"></script>
   <script src="/js/typora-live-preview.js?v=27"></script>
-  <script src="/app.js?v=34"></script>
+  <script src="/app.js?v=35"></script>
   <script src="/ui.js?v=3"></script>
 </body>
 </html>

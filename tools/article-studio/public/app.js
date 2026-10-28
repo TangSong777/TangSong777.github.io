@@ -55,7 +55,7 @@ function setEditorContent(value) {
 }
 
 function currentEditorContent() {
-  if (editorMode === 'wysiwyg' && richEditor) return `${richFrontMatter}${richEditor.getMarkdown()}`;
+  if ((editorMode === 'wysiwyg' || editorMode === 'split') && richEditor) return `${richFrontMatter}${richEditor.getMarkdown()}`;
   return sourceEditor.value;
 }
 
@@ -1003,11 +1003,11 @@ async function publishArticle(event) {
 
 function handleRichEditorChange() {
   if (suppressRichChange) return;
+  if (editorMode === 'split' && splitSourceWriting) return; // 源码列输入触发的更新不回写，避免光标跳动
   cancelAnimationFrame(richChangeFrame);
   richChangeFrame = requestAnimationFrame(() => {
-    // CodeMirror 直接持有 Markdown 源码，不需要回写到隐藏的 textarea
-    // 只有切到源码模式时才需要同步
-    if (editorMode !== 'wysiwyg') sourceEditor.value = currentEditorContent();
+    // CodeMirror 直接持有 Markdown 源码；双栏模式下同步到源码列镜像
+    if (editorMode === 'split') sourceEditor.value = currentEditorContent();
     refreshEditorState();
   });
 }
@@ -1244,24 +1244,87 @@ function watchArticleHeadings() {
   outlineObserver.observe(root, { childList: true, subtree: true, characterData: true });
 }
 
+let splitSourceWriting = false;
+
+function syncSwapButton() {
+  const swap = $('#swapPanes');
+  if (!swap) return;
+  const swapped = document.body.classList.contains('split-swapped');
+  swap.hidden = editorMode !== 'split';
+  swap.title = swapped ? '恢复左：所见即所得 / 右：源码' : '交换左右面板（源码在左）';
+}
+
 function switchEditorMode(mode) {
   if (mode === editorMode) return;
-  if (mode === 'source') {
-    // 先取当前 CodeMirror 内容（含 front matter），再切到纯文本编辑
-    sourceEditor.value = currentEditorContent();
-    editorMode = 'source';
-    $('#editingSurface').className = 'editing-surface source-mode';
-    sourceEditor.focus({ preventScroll: true });
-  } else {
-    const parts = splitEditorDocument(sourceEditor.value);
+  const from = editorMode;
+  if (mode === 'wysiwyg') {
+    const text = from === 'split' ? currentEditorContent() : sourceEditor.value;
+    const parts = splitEditorDocument(text);
     richFrontMatter = parts.frontMatter;
     richEditor.setMarkdown(parts.body);
     editorMode = 'wysiwyg';
     $('#editingSurface').className = 'editing-surface wysiwyg-mode';
     richEditor.focus();
+  } else if (mode === 'source') {
+    // 先取当前 CodeMirror 内容（含 front matter），再切到纯文本编辑
+    sourceEditor.value = currentEditorContent();
+    editorMode = 'source';
+    $('#editingSurface').className = 'editing-surface source-mode';
+    sourceEditor.focus({ preventScroll: true });
+  } else if (mode === 'split') {
+    // 双栏：左所见即所得 + 右源码 同屏显示，内容同源，可交换左右
+    sourceEditor.value = currentEditorContent();
+    editorMode = 'split';
+    $('#editingSurface').className = 'editing-surface split-mode';
+    bindSplitSync();
+    richEditor.focus();
   }
   document.querySelectorAll('.view-tab').forEach((item) => item.classList.toggle('active', item.dataset.view === mode));
+  syncSwapButton();
   refreshEditorState();
+}
+
+function bindSplitSync() {
+  if (bindSplitSync.bound) return;
+  bindSplitSync.bound = true;
+  const cmScroller = richEditor.scrollDOM;
+  const source = sourceEditor;
+  let lock = 0;
+  const ratioTo = (from, to) => {
+    const fromSpan = from.scrollHeight - from.clientHeight;
+    const toSpan = to.scrollHeight - to.clientHeight;
+    if (fromSpan <= 0 || toSpan <= 0) return;
+    to.scrollTop = (from.scrollTop / fromSpan) * toSpan;
+  };
+  const guard = (fn) => {
+    if (editorMode !== 'split' || lock) return;
+    lock = 1;
+    try { fn(); } finally { lock = 0; }
+  };
+  cmScroller.addEventListener('scroll', () => guard(() => ratioTo(cmScroller, source)));
+  source.addEventListener('scroll', () => guard(() => ratioTo(source, cmScroller)));
+  // 源码列输入 → CodeMirror：短防抖，避免逐字重设打断输入
+  let timer = 0;
+  source.addEventListener('input', () => {
+    if (editorMode !== 'split') return;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (editorMode !== 'split') return;
+      splitSourceWriting = true;
+      const parts = splitEditorDocument(source.value);
+      richFrontMatter = parts.frontMatter;
+      richEditor.setMarkdown(parts.body);
+      splitSourceWriting = false;
+      refreshEditorState();
+    }, 220);
+  });
+  const swap = $('#swapPanes');
+  if (swap) {
+    swap.addEventListener('click', () => {
+      const swapped = document.body.classList.toggle('split-swapped');
+      swap.title = swapped ? '恢复左：所见即所得 / 右：源码' : '交换左右面板（源码在左）';
+    });
+  }
 }
 
 async function init() {
