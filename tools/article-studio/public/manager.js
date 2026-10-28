@@ -37,6 +37,79 @@
     setTimeout(function () { if (el) el.classList.remove('is-on'); }, 2600);
   }
 
+
+  /* ---------------- 常驻工作台 iframe（Round 69） ----------------
+   * 工作台（studio.html）在管理中心里只加载一次；之后点「编辑」只把 iframe
+   * 挪进卡片并 postMessage 切文章，不再重建 iframe、不再重跑 CodeMirror 初始化。 */
+  var studioFrame = null;
+  var studioReady = false;
+  var studioPendingPath = null;
+
+  function ensureStudioFrame() {
+    if (studioFrame) return studioFrame;
+    var stage = document.getElementById('studioStage');
+    if (!stage) {
+      stage = document.createElement('div');
+      stage.id = 'studioStage';
+      stage.style.visibility = 'hidden';
+      document.body.appendChild(stage);
+    }
+    var frame = document.createElement('iframe');
+    frame.className = 'studio-frame';
+    frame.title = '文章工作台';
+    frame.src = '/studio.html?embed=1&t=' + Date.now();
+    stage.appendChild(frame);
+    studioFrame = frame;
+    return frame;
+  }
+
+  // Round 69c：iframe 常驻在 body 下的固定舞台里，只靠 CSS 定位到编辑卡片区域，
+  // 不再把 iframe 在容器之间搬动（Chrome 在 iframe 换父节点时会重载文档，预热就白做了）。
+  function updateStudioPosition() {
+    var host = document.getElementById('studioHost');
+    var stage = document.getElementById('studioStage');
+    if (!host || !stage || !studioFrame) { if (stage) stage.style.visibility = 'hidden'; return; }
+    var rect = host.getBoundingClientRect();
+    if (!rect.width || !rect.height) { stage.style.visibility = 'hidden'; return; }
+    stage.style.left = rect.left + 'px';
+    stage.style.top = rect.top + 'px';
+    stage.style.width = rect.width + 'px';
+    stage.style.height = rect.height + 'px';
+    stage.style.visibility = 'visible';
+  }
+
+  function sendStudioOpen(path) {
+    if (!studioFrame || !path) return;
+    studioFrame.contentWindow.postMessage({ type: 'studio-open', path: path }, location.origin);
+  }
+
+  function flushStudioOpen() {
+    if (!studioReady || !studioPendingPath) return;
+    var path = studioPendingPath;
+    studioPendingPath = null;
+    var host = document.getElementById('studioHost');
+    if (host) host.classList.remove('is-loading');
+    sendStudioOpen(path);
+  }
+
+  function attachStudio(path) {
+    var host = document.getElementById('studioHost');
+    if (!host) return;
+    ensureStudioFrame();
+    updateStudioPosition();
+    studioPendingPath = path;
+    if (studioReady) {
+      sendStudioOpen(path);
+    } else {
+      host.classList.add('is-loading');
+    }
+  }
+
+  function detachStudio() {
+    var stage = document.getElementById('studioStage');
+    if (stage) stage.style.visibility = 'hidden';
+  }
+
   async function api(url, options) {
     var opts = Object.assign({ credentials: 'same-origin' }, options || {});
     var method = (opts.method || 'GET').toUpperCase();
@@ -95,6 +168,12 @@
       state.comments = results[2].comments || [];
       state.submissions = results[3].submissions || [];
       render();
+      // Round 69：页面数据就绪后空闲预热工作台 iframe，点「编辑」时零等待
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(function () { try { ensureStudioFrame(); } catch (e) {} }, { timeout: 2500 });
+      } else {
+        setTimeout(function () { try { ensureStudioFrame(); } catch (e) {} }, 1500);
+      }
     } catch (error) {
       if (error.message === 'unauthorized') return;
       try { render(); } catch (e) { renderLogin(); }
@@ -170,16 +249,15 @@
   }
 
   function viewEditor() {
-    // 直接把文章工作台（CodeMirror 所见即所得）嵌进管理中心，
-    // 不再整页跳转，编辑完点「返回列表」就回到这里。
+    // 工作台由常驻 iframe 承载（见 ensureStudioFrame），这里只放宿主容器；
+    // 点「编辑」时把预热好的 iframe 挪进来并切文章，不再重载整个工作台。
     return '<section class="card card-editor">' +
       '<div class="card-head"><h2>编辑：' + esc(state.editing.path) + '</h2>' +
       '<div class="row-actions">' +
         '<button class="btn" data-action="save-editor">保存</button>' +
         '<button class="btn primary" data-action="publish-editor">上传</button>' +
         '<button class="btn" data-action="back-to-articles">返回列表</button></div></div>' +
-      '<iframe class="studio-frame" title="文章工作台" src="/studio.html?embed=1&path=' +
-      encodeURIComponent(state.editing.path) + '&t=' + Date.now() + '"></iframe>' +
+      '<div id="studioHost" class="studio-host"></div>' +
       '</section>';
   }
 
@@ -321,6 +399,7 @@
 
   /* ---------------- 编辑器 ---------------- */
   function render() {
+    detachStudio(); // Round 69：先把常驻 iframe 停回 park，避免 innerHTML 替换连它一起销毁
     var views = {
       overview: viewOverview, articles: viewArticles, privacy: viewPrivacy,
       submissions: viewSubmissions, approved: viewApproved, trash: viewTrash,
@@ -331,6 +410,7 @@
       '<button class="top-btn" data-action="logout">退出</button></div></header>' +
       '<div class="layout">' + sidebar() + '<main class="content">' + (views[state.view] || views.overview)() + '</main></div>' +
       '<div id="toast" class="toast"></div>';
+    if (state.editing) attachStudio(state.editing && state.editing.path);
     if (state.message) {
       var el = document.getElementById('toast');
       if (el) { el.textContent = state.message; el.classList.add('is-on'); }
@@ -525,13 +605,25 @@
     }
   });
 
-  // 接收 iframe 内的保存/上传完成回执
+  // 接收 iframe 内的回执与就绪通知
   window.addEventListener('message', function (event) {
     if (event.origin !== location.origin) return;
     var data = event.data || {};
+    if (data.type === 'studio-error') {
+      console.error('[studio]', data.message, data.file + ':' + data.line);
+      toast('工作台报错：' + data.message);
+    }
+    if (data.type === 'studio-ready') {
+      studioReady = true;
+      var host = document.getElementById('studioHost');
+      if (host) host.classList.remove('is-loading');
+      flushStudioOpen();
+    }
     if (data.type === 'studio-saved') { toast('文章已保存'); loadAll(); }
     if (data.type === 'studio-published') { toast('已上传'); loadAll(); }
   });
 
+  window.addEventListener('resize', updateStudioPosition);
+  window.addEventListener('scroll', updateStudioPosition, { passive: true });
   loadAll();
 })();

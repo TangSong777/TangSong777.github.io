@@ -1327,20 +1327,29 @@ function bindSplitSync() {
   }
 }
 
+async function openArticleFromParent(path) {
+  if (state.currentPath === path) return;
+  if (!state.articles.some((item) => item.path === path)) await loadArticles();
+  await selectArticle(path);
+}
+
 async function init() {
   // 被管理中心以 iframe 内嵌时（?embed=1），压扁顶栏、去掉文章列表。
   // 必须放在最前面：未登录时 init 会提前 return，放后面就永远加不上这个类。
   if (new URLSearchParams(location.search).get('embed') === '1') {
     document.body.classList.add('embed-mode');
-    // 与管理中心集成：卡片头统一触发保存/上传（iframe 内不再重复旧顶栏）
+    // 与管理中心集成：保存、上传、切换文章都走 postMessage（iframe 内不再重复旧顶栏）
     window.addEventListener('message', (event) => {
       if (event.origin !== location.origin) return;
       const data = event.data || {};
       if (data.type === 'studio-save') saveArticle().catch((error) => toast(error.message, true));
       if (data.type === 'studio-publish') openPublishDialog();
+      if (data.type === 'studio-open' && data.path) {
+        openArticleFromParent(String(data.path)).catch((error) => toast(error.message, true));
+      }
     });
-    window.parent.postMessage({ type: 'studio-ready' }, location.origin);
   }
+  let openedDeepLink = false;
   try {
     const config = await api('/api/config');
     state.authMode = config.authMode || 'local';
@@ -1364,7 +1373,7 @@ async function init() {
     if (deepLink && state.authenticated) {
       try {
         await selectArticle(deepLink);
-        return;
+        openedDeepLink = true;
       } catch (error) {
         // 文章可能刚被删掉，先把列表刷成真实状态，再说人话。Round 45
         const gone = /不存在/.test(error.message || '');
@@ -1377,7 +1386,12 @@ async function init() {
   }
   // Round 65：空状态初始隐藏，等初始化结束再决定是否显示，
   // 避免「点编辑 → 先闪一下空状态 → 正文才出来」的观感。
-  $('#emptyState').classList.remove('hidden');
+  if (!openedDeepLink) $('#emptyState').classList.remove('hidden');
+  // Round 69：初始化完成后再通知母页面（管理中心）可以发送「切换文章」指令；
+  // 母页面据此把预热好的 iframe 挪进编辑卡片并直接切文章。
+  if (new URLSearchParams(location.search).get('embed') === '1') {
+    window.parent.postMessage({ type: 'studio-ready' }, location.origin);
+  }
 }
 
 function openSettingsDialog() {
