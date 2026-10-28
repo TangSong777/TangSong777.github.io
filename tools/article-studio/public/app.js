@@ -435,6 +435,7 @@ async function selectArticle(path) {
   renderList();
   closeArticlePanel();
   scheduleArticleOutline();
+  renderOutlineArticleSwitcher();
   return true;
 }
 
@@ -841,13 +842,14 @@ function renderArticleOutline() {
     button.title = `H${heading.level} · ${button.textContent}`;
     button.addEventListener('click', () => {
       if (editorMode === 'wysiwyg' && richEditor) {
-        // CodeMirror：按偏移量定位并滚动到可视区
+        // Round 70b: scrollIntoView:true 是「最小滚动」，标题只滚到底部边缘，
+        // 大纲高亮反而停在上一条。这里直接滚到标题行顶部，并立即同步高亮。
         const position = Math.min(heading.offset + 0, richEditor.state.doc.length);
-        richEditor.dispatch({
-          selection: { anchor: position },
-          scrollIntoView: true,
-        });
+        richEditor.dispatch({ selection: { anchor: position } });
+        const block = richEditor.lineBlockAt(position);
+        richEditor.scrollDOM.scrollTop = Math.max(0, block.top - 8);
         richEditor.focus();
+        syncArticleOutline();
         return;
       }
       sourceEditor.focus();
