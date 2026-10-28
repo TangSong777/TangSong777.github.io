@@ -125,20 +125,35 @@ const editor = {
 const articleMetadata = globalThis.ArticleMetadata;
 const AUTO_SAVE_RETRY_MS = 60 * 1000;
 
+let pendingRequests = 0;
+
+function updateLoadingBar() {
+  const bar = document.querySelector('#loadingBar');
+  if (!bar) return;
+  bar.classList.toggle('active', pendingRequests > 0);
+}
+
 async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (options.body) headers['Content-Type'] = 'application/json';
   if (state.accessKey) headers['X-Article-Studio-Key'] = state.accessKey;
   if (options.method && options.method !== 'GET') headers['X-Article-Studio-Token'] = state.token;
-  const response = await fetch(path, { ...options, headers });
-  const data = await response.json();
-  if (!response.ok) {
-    if (response.status === 401 && state.authMode === 'password' && path !== '/api/login') showLoginDialog();
-    const error = new Error(data.message || '操作失败');
-    Object.assign(error, data);
-    throw error;
+  pendingRequests += 1;
+  updateLoadingBar();
+  try {
+    const response = await fetch(path, { ...options, headers });
+    const data = await response.json();
+    if (!response.ok) {
+      if (response.status === 401 && state.authMode === 'password' && path !== '/api/login') showLoginDialog();
+      const error = new Error(data.message || '操作失败');
+      Object.assign(error, data);
+      throw error;
+    }
+    return data;
+  } finally {
+    pendingRequests = Math.max(0, pendingRequests - 1);
+    updateLoadingBar();
   }
-  return data;
 }
 
 function showLoginDialog() {
