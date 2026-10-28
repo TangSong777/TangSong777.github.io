@@ -1461,12 +1461,12 @@ async function init() {
       return;
     }
     $('#identityState').textContent = config.identity?.email || (config.authMode === 'cloudflare' ? '已安全登录' : '本地模式');
-    await loadArticles();
-    // 从管理中心跳过来时带着 ?path=，直接打开对应文章
+    // Round 74：文章列表与深链文章并行拉取（省一次串行往返）
     const deepLink = new URLSearchParams(location.search).get('path');
+    const articlesTask = loadArticles();
     if (deepLink && state.authenticated) {
       try {
-        await selectArticle(deepLink);
+        await Promise.all([articlesTask, selectArticle(deepLink)]);
         openedDeepLink = true;
       } catch (error) {
         // 文章可能刚被删掉，先把列表刷成真实状态，再说人话。Round 45
@@ -1474,6 +1474,8 @@ async function init() {
         toast(gone ? '这篇文章已经不在了（可能刚被删除），列表已刷新。' : `打开文章失败：${error.message}`, true);
         await loadArticles().catch(() => {});
       }
+    } else {
+      await articlesTask;
     }
   } catch (error) {
     toast(`无法连接本地后台：${error.message}`, true);
