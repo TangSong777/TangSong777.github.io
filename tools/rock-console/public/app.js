@@ -1469,6 +1469,12 @@ async function ensureTerminal() {
   // Round 74：终端组件按需加载——只有点开终端时才下载 74.5KB xterm bundle。
   if (!window.RockConsoleXterm) {
     await new Promise((resolve, reject) => {
+      if (!document.querySelector('link[href*="xterm.bundle.css"]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '/vendor/xterm.bundle.css';
+        document.head.appendChild(link);
+      }
       const script = document.createElement('script');
       script.src = '/vendor/xterm.bundle.js';
       script.onload = resolve;
