@@ -1130,6 +1130,10 @@ body::before {
 .seg-bar::after {
   content: attr(data-tip);
   position: absolute;
+  white-space: pre-line;
+  line-height: 1.6;
+  text-align: left;
+  max-width: 240px;
   left: 50%;
   bottom: 140%;
   transform: translateX(-50%);

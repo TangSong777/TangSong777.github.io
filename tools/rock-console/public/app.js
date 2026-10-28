@@ -583,31 +583,6 @@ function buildDayBlock(day) {
 
   wrap.append(buildDayTimeline(day));
 
-  const table = document.createElement('table');
-  table.className = 'seg-table';
-  table.innerHTML = '<thead><tr><th>时间段</th><th>会话数</th><th>串流时长</th><th>画质 · 码率</th><th>丢帧</th><th>断联</th></tr></thead>';
-  const tbody = document.createElement('tbody');
-  for (const seg of day.segments) {
-    const tr = document.createElement('tr');
-    const cells = [
-      `${fmtClockOnly(seg.startMs)} – ${fmtClockOnly(seg.endMs)}`,
-      `${seg.sessionCount} 段`,
-      fmtDuration(seg.streamSeconds),
-      seg.avgBitrateKbps
-        ? `${shortResolution(seg.resolution)} · ${Math.round(seg.avgBitrateKbps / 1000)}Mbps`
-        : shortResolution(seg.resolution),
-      Number.isFinite(seg.droppedRate) ? `${seg.droppedFrames}（${seg.droppedRate}%）` : '—',
-      seg.disconnects > 0 ? `${seg.disconnects} 次` : '—',
-    ];
-    for (const text of cells) {
-      const td = document.createElement('td');
-      td.textContent = text;
-      tr.append(td);
-    }
-    tbody.append(tr);
-  }
-  table.append(tbody);
-  wrap.append(table);
   return wrap;
 }
 
@@ -626,13 +601,22 @@ function buildDayTimeline(day) {
     const leftNum = Number(left.toFixed(2));
     if (leftNum > 80) bar.classList.add('seg-bar--right');
     else if (leftNum < 6) bar.classList.add('seg-bar--left');
-    const parts = [`${seg.sessionCount} 段`, fmtDuration(seg.streamSeconds)];
-    if (seg.disconnects > 0) parts.push(`断联 ${seg.disconnects} 次`);
-    if (Number.isFinite(seg.droppedFrames) && seg.droppedFrames > 0) parts.push(`丢帧 ${seg.droppedFrames}`);
-    if (Number.isFinite(seg.avgBitrateKbps) && seg.avgBitrateKbps > 0) parts.push(`${Math.round(seg.avgBitrateKbps / 1000)}Mbps`);
-    if (Number.isFinite(seg.trafficMB) && seg.trafficMB > 0) parts.push(`约 ${seg.trafficMB >= 1024 ? `${(seg.trafficMB / 1024).toFixed(1)} GB` : `${seg.trafficMB} MB`}`);
-    if (Number.isFinite(seg.droppedRate)) parts.push(`丢帧率 ${seg.droppedRate}%`);
-    bar.dataset.tip = `${fmtClockOnly(seg.startMs)}–${fmtClockOnly(seg.endMs)}\n${parts.join(' · ')}`;
+    const lines = [
+      `${fmtClockOnly(seg.startMs)} – ${fmtClockOnly(seg.endMs)}`,
+      `${seg.sessionCount} 段 · ${fmtDuration(seg.streamSeconds)}`,
+    ];
+    if (Number.isFinite(seg.avgBitrateKbps) && seg.avgBitrateKbps > 0) {
+      lines.push(`${shortResolution(seg.resolution)} · ${Math.round(seg.avgBitrateKbps / 1000)}Mbps`);
+    }
+    if (Number.isFinite(seg.droppedFrames)) {
+      const rate = Number.isFinite(seg.droppedRate) ? `（${seg.droppedRate}%）` : '';
+      lines.push(`丢帧 ${seg.droppedFrames}${rate}`);
+    }
+    if (Number.isFinite(seg.trafficMB) && seg.trafficMB > 0) {
+      lines.push(`流量约 ${seg.trafficMB >= 1024 ? `${(seg.trafficMB / 1024).toFixed(1)} GB` : `${seg.trafficMB} MB`}`);
+    }
+    if (seg.disconnects > 0) lines.push(`断联 ${seg.disconnects} 次`);
+    bar.dataset.tip = lines.join('\n');
     track.append(bar);
   }
   host.append(track);
