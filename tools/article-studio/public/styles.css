@@ -943,3 +943,26 @@ dialog input[type="number"]:focus { border-color: var(--green); box-shadow: 0 0 
 .privacy-toolbar input[type="search"] { flex: 1; }
 .privacy-section { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 14px; }
 .privacy-section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+
+/* ══ Round 51d：中等宽度（≤1100px）排布 ═════════════════════ */
+@media (max-width: 1100px) {
+  .workspace { grid-template-columns: 240px minmax(0, 1fr); }
+  .document-bar { flex-wrap: wrap; height: auto; min-height: 70px; gap: 8px; padding: 12px 14px; }
+  .document-bar > div:first-child { min-width: 0; flex: 1 1 auto; }
+  .document-path { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .document-bar h2 { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .document-actions { flex-wrap: wrap; gap: 8px; }
+  .rename-button, .view-tab, .document-actions .button { flex: 0 0 auto; white-space: nowrap; }
+  .editor-view { grid-template-rows: auto minmax(0, 1fr); }
+  .editing-surface { grid-template-columns: minmax(0, 1fr); }
+  .article-outline { display: none; }
+  .editing-surface > .editor-toolbar,
+  .editing-surface > .rich-editor,
+  .editing-surface > .source-pane,
+  .editing-surface > .pane-footer { grid-column: 1; }
+  .rich-editor .cm-content { max-width: 100%; padding: 0 20px 40vh; }
+}
+
+@media (max-width: 1100px) {
+  .editor-toolbar { overflow-x: auto; }
+}
