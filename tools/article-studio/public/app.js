@@ -452,6 +452,7 @@ async function saveArticle(showToast = true) {
   setDirty(stillDirty);
   await loadArticles();
   if (showToast) toast(data.warnings.length ? `已保存；发现 ${data.warnings.length} 项可能的敏感内容` : data.message);
+  if (window.parent !== window) window.parent.postMessage({ type: 'studio-saved', path: savedPath }, location.origin);
   return data;
 }
 
@@ -983,6 +984,7 @@ async function publishArticle(event) {
     $('#confirmPublish').textContent = '上传完成';
     toast(data.message);
     await loadArticles();
+    if (window.parent !== window) window.parent.postMessage({ type: 'studio-published', path: state.currentPath }, location.origin);
   } catch (error) {
     let sensitiveBlocked = false;
     if (error.code === 'SENSITIVE_WARNING' || error.code === 'SENSITIVE_BLOCK') {
@@ -1267,6 +1269,14 @@ async function init() {
   // 必须放在最前面：未登录时 init 会提前 return，放后面就永远加不上这个类。
   if (new URLSearchParams(location.search).get('embed') === '1') {
     document.body.classList.add('embed-mode');
+    // 与管理中心集成：卡片头统一触发保存/上传（iframe 内不再重复旧顶栏）
+    window.addEventListener('message', (event) => {
+      if (event.origin !== location.origin) return;
+      const data = event.data || {};
+      if (data.type === 'studio-save') saveArticle().catch((error) => toast(error.message, true));
+      if (data.type === 'studio-publish') openPublishDialog();
+    });
+    window.parent.postMessage({ type: 'studio-ready' }, location.origin);
   }
   try {
     const config = await api('/api/config');

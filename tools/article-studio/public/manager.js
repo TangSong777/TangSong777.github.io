@@ -174,7 +174,10 @@
     // 不再整页跳转，编辑完点「返回列表」就回到这里。
     return '<section class="card card-editor">' +
       '<div class="card-head"><h2>编辑：' + esc(state.editing.path) + '</h2>' +
-      '<div class="row-actions"><button class="btn" data-action="back-to-articles">返回列表</button></div></div>' +
+      '<div class="row-actions">' +
+        '<button class="btn" data-action="save-editor">保存</button>' +
+        '<button class="btn primary" data-action="publish-editor">上传</button>' +
+        '<button class="btn" data-action="back-to-articles">返回列表</button></div></div>' +
       '<iframe class="studio-frame" title="文章工作台" src="/studio.html?embed=1&path=' +
       encodeURIComponent(state.editing.path) + '&t=' + Date.now() + '"></iframe>' +
       '</section>';
@@ -411,6 +414,12 @@
       }
       if (action === 'refresh') { loadAll(); return; }
       if (action === 'back-to-articles') { state.editing = null; render(); return; }
+      if (action === 'save-editor' || action === 'publish-editor') {
+        var frame = document.querySelector('.studio-frame');
+        if (!frame || !frame.contentWindow) return toast('工作台还没加载完');
+        frame.contentWindow.postMessage({ type: action === 'save-editor' ? 'studio-save' : 'studio-publish' }, location.origin);
+        return;
+      }
 
       if (action === 'publish-all') {
         target.disabled = true;
@@ -514,6 +523,14 @@
     } catch (error) {
       if (error.message !== 'unauthorized') toast(error.message || '操作失败');
     }
+  });
+
+  // 接收 iframe 内的保存/上传完成回执
+  window.addEventListener('message', function (event) {
+    if (event.origin !== location.origin) return;
+    var data = event.data || {};
+    if (data.type === 'studio-saved') { toast('文章已保存'); loadAll(); }
+    if (data.type === 'studio-published') { toast('已上传'); loadAll(); }
   });
 
   loadAll();

@@ -1087,3 +1087,6 @@ body.embed-mode .loading-bar { top: 54px; }
 }
 .search-clear:hover { background: rgba(51, 84, 79, .22); }
 .search-clear[hidden] { display: none; }
+
+/* Round 66: iframe 内不再显示旧顶栏，保存/上传由管理中心卡片头统一触发 */
+body.embed-mode .topbar { display: none; }

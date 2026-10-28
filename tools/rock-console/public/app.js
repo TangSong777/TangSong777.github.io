@@ -428,25 +428,6 @@ function renderStream(status) {
     rows.push(['看门狗重启', `${events.todayWatchdogRestarts} 次`]);
   }
 
-  // ---- 今日时间段（相邻会话自动合并）----
-  if (Array.isArray(events.segments) && events.segments.length > 0) {
-    const recent = events.segments.slice(-4);
-    for (let index = 0; index < recent.length; index += 1) {
-      const seg = recent[index];
-      if (!Number.isFinite(seg.startMs)) continue;
-      const startText = fmtClock(seg.startMs);
-      const endText = fmtClock(seg.endMs).split(' ').pop();
-      const parts = [`${seg.sessionCount} 段`, fmtDuration(seg.streamSeconds)];
-      if (seg.disconnects > 0) parts.push(`断联 ${seg.disconnects} 次`);
-      if (Number.isFinite(seg.droppedFrames) && seg.droppedFrames > 0) {
-        parts.push(`丢帧 ${seg.droppedFrames}`);
-      }
-      const label = recent.length > 1 ? `时段 ${index + 1}` : '今日时段';
-      // 时间范围单独一行，明细另起一行，避免长串被省略号截断
-      rows.push([label, `${startText}–${endText}\n${parts.join(' · ')}`]);
-    }
-  }
-
   // ---- 上一次会话 ----
   const last = events.lastSession;
   if (last && Number.isFinite(last.startMs)) {
