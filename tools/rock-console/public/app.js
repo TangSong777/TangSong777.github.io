@@ -4,20 +4,6 @@
  * 不含任何凭据：登录后由服务端下发 CSRF 令牌并放在 HttpOnly Cookie 里维持会话。
  */
 
-// Round 74：终端组件空闲加载——首页首屏不碰 74.5KB xterm bundle，空闲时预热。
-const xtermReady = new Promise((resolve) => {
-  const load = () => {
-    const script = document.createElement('script');
-    script.src = '/vendor/xterm.bundle.js';
-    script.async = true;
-    script.onload = resolve;
-    script.onerror = resolve;
-    document.head.appendChild(script);
-  };
-  if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 3000 });
-  else setTimeout(load, 1500);
-});
-
 const state = {
   csrfToken: null,
   allowWrite: true,
@@ -1480,7 +1466,16 @@ function startLatencyProbe(socket) {
 
 async function ensureTerminal() {
   if (state.terminal) return state.terminal;
-  await xtermReady;
+  // Round 74：终端组件按需加载——只有点开终端时才下载 74.5KB xterm bundle。
+  if (!window.RockConsoleXterm) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = '/vendor/xterm.bundle.js';
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('终端组件加载失败'));
+      document.head.appendChild(script);
+    });
+  }
   const xterm = window.RockConsoleXterm;
   if (!xterm) throw new Error('终端组件未加载。');
   const terminal = new xterm.Terminal({
