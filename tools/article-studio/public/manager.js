@@ -157,13 +157,14 @@
     try {
       // Round 73：config 与其余接口并行（GET 请求不依赖 token，省一次串行往返）
       var results = await Promise.all([
-        api('/api/config'),
+        window.__configPromise || api('/api/config'),
         api('/api/articles'),
         api('/api/siyuan-privacy'),
         api('/api/history-privacy'),
         api('/api/admin/comments'),
         api('/api/admin/submissions'),
       ]);
+      window.__configPromise = null;
       state.token = results[0].token || '';
       state.articles = results[1].articles || [];
       state.rules = results[2].rules || state.rules;
