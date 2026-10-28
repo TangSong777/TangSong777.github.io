@@ -313,7 +313,7 @@ input[type="radio"] {
   width: 100%;
 }
 .side-group-title:hover { color: var(--green); }
-.side-group-title .caret { font-size: 10px; }
+.side-group-title .caret { color: var(--green); font-size: 12px; }
 .side-group-items[hidden] { display: none; }
 @media (max-width: 760px) {
   .side-group-title { display: none; }

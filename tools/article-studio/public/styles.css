@@ -243,7 +243,8 @@ h1 { margin: 3px 0 0; font-size: 23px; letter-spacing: -.01em; color: var(--gree
 .local-note { padding: 12px 8px 0; border-top: 1px solid var(--line); color: var(--muted-2); font-size: 11px; line-height: 1.5; }
 
 /* ── 编辑区：第二张卡 ──────────────────────────────────────── */
-.editor-shell { min-width: 0; min-height: 0; padding: 0; overflow: hidden; background: transparent; }
+.editor-shell { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); min-width: 0; min-height: 0; padding: 0; overflow: hidden; background: transparent; }
+#emptyState, #editorView { grid-area: 1 / 1; }
 .empty-state {
   display: grid;
   place-items: center;
