@@ -280,9 +280,12 @@ body.blog-home-mode .main-inner.index { padding-top: 26px; }
 
 .blog-home-hero {
   align-items: center;
+  /* Round 38：暖色光斑原来是 circle(at 86% 6%) 配 50% 半径，宽度到 1180 时
+     半径约 590px，整个右半边被染成橄榄绿，里面的 CODE/BUILD/NOTE 环也糊在雾里。
+     改成显式小半径 + 更低透明度，只做角落里的一点暖光。 */
   background:
-    radial-gradient(circle at 86% 6%, rgba(217, 131, 36, .30), transparent 50%),
-    radial-gradient(circle at 8% 98%, rgba(194, 91, 126, .20), transparent 44%),
+    radial-gradient(circle 300px at 88% 0%, rgba(217, 131, 36, .20), transparent 100%),
+    radial-gradient(circle 260px at 6% 100%, rgba(194, 91, 126, .14), transparent 100%),
     linear-gradient(120deg, rgba(28, 68, 59, .96), rgba(85, 133, 119, .92)),
     var(--green-deep);
   border-radius: 24px;
@@ -2860,7 +2863,14 @@ body.siyuan-mode .siyuan-references a:hover {
    于是正文列居中在 1280 里、右侧 320 被侧栏占掉 —— 左边留 340、右边留 20，看着整块偏到墙上。
    给 .main 加一个等于侧栏宽度的右内边距，正文就在「侧栏以外的区域」里居中。 */
 @media (min-width: 992px) {
-  body.sidebar-active .main {
+  /* Round 38b：首页没有 NexT 的固定侧栏（它自带 .blog-home-rail），
+     却也带着 sidebar-active 类，于是白扣了 320px —— 1920 视口下 hero 左边距 203、右边距 517。
+     只在真有固定侧栏的页面留这 320px。 */
+  body.sidebar-active:not(.blog-home-mode) .main {
+    /* Round 38：原来只有 padding-right，没有 box-sizing —— 默认 content-box 时
+       宽度会变成「视口宽 + 320」，1920 视口下文档被撑到 2225，整页出现横向滚动条。
+       border-box 让 320 从宽度里扣，而不是加在上面。 */
+    box-sizing: border-box;
     padding-right: 320px;
   }
 }
@@ -3697,4 +3707,12 @@ body.archive-mode .posts-collapse .post-content .collection-title small {
   margin-left: 0;
   padding: 3px 10px;
   vertical-align: middle;
+}
+
+/* 同上：宽屏下 .main 已被 padding 撑开过，这里再兜一层，避免任何子元素把文档顶宽。 */
+body.blog-home-mode .main,
+body.siyuan-mode .main,
+body.archive-mode .main {
+  box-sizing: border-box;
+  max-width: 100%;
 }
