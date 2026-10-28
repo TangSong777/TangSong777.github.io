@@ -1131,9 +1131,9 @@ body::before {
 .seg-fold::after {
   content: attr(data-tip);
   position: absolute;
-  white-space: pre-line;
   line-height: 1.6;
   text-align: left;
+  width: max-content;
   max-width: 240px;
   left: 50%;
   bottom: 140%;
@@ -1220,10 +1220,10 @@ body::before {
   position: absolute;
   top: -2px;
   bottom: -2px;
-  width: 10px;
-  margin-left: -5px;
-  border-radius: 4px;
-  background: repeating-linear-gradient(135deg, rgba(107, 127, 123, .35) 0 2px, transparent 2px 5px);
+  width: 6px;
+  margin-left: -3px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(135deg, rgba(107, 127, 123, .22) 0 2px, transparent 2px 5px);
   cursor: default;
   z-index: 2;
 }

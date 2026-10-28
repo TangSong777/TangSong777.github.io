@@ -641,7 +641,7 @@ function buildDayTimeline(day) {
     const fold = document.createElement('span');
     fold.className = 'seg-fold';
     fold.style.left = `${((mapActive(fs) / ACTIVE_MS) * 100).toFixed(2)}%`;
-    fold.dataset.tip = `${fmtClockOnly(day.dayStart + fs)} – ${fmtClockOnly(day.dayStart + fe)} 已隐藏`;
+    fold.dataset.tip = `${fmtClockOnly(day.dayStart + fs)} – ${fmtClockOnly(day.dayStart + fe)} 已折叠（上课时段不串流）`;
     track.append(fold);
   }
 
@@ -652,8 +652,8 @@ function buildDayTimeline(day) {
   const marks = [
     { label: '00:00', pos: 0 },
     { label: '06:00', pos: (mapActive(6 * 3600e3) / ACTIVE_MS) * 100 },
-    { label: '09–12 隐藏', pos: (mapActive(9 * 3600e3) / ACTIVE_MS) * 100, muted: true },
-    { label: '14–18 隐藏', pos: (mapActive(14 * 3600e3) / ACTIVE_MS) * 100, muted: true },
+    { label: '12:00', pos: (mapActive(12 * 3600e3) / ACTIVE_MS) * 100 },
+    { label: '18:00', pos: (mapActive(18 * 3600e3) / ACTIVE_MS) * 100 },
     { label: '24:00', pos: 100 },
   ];
   for (const m of marks) {
