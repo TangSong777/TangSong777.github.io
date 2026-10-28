@@ -364,3 +364,12 @@ body::before {
   .side::-webkit-scrollbar { display: none; }
   .side button { font-size: 13px; }
 }
+
+/* Round 58：管理中心文章列表行（与工作台列表节奏一致） */
+.article-row { align-items: center; display: flex; gap: 12px; justify-content: space-between; padding: 12px 0; }
+.article-row + .article-row { border-top: 1px solid var(--line); }
+.article-main { display: grid; gap: 3px; min-width: 0; }
+.article-main .row-title { font-size: 15px; }
+.article-main .row-meta { font-size: 12px; }
+.btn.pill { border-radius: 999px; padding: 5px 14px; }
+.btn.pill:hover { background: var(--green-soft); }

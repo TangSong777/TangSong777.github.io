@@ -162,10 +162,10 @@
       '<button class="btn primary" data-action="new-article">新建文章</button></div>';
     if (!state.articles.length) return '<section class="card">' + head + '<p class="empty">还没有文章</p></section>';
     return '<section class="card">' + head + state.articles.map(function (item) {
-      return '<div class="row"><div class="row-head"><span class="row-title">' + esc(item.title) + '</span>' +
-        '<span class="row-meta">' + fmt(item.updatedAt) + '</span></div>' +
-        '<p class="row-meta">' + esc(item.path) + '</p>' +
-        '<div class="row-actions"><button class="btn" data-action="edit" data-path="' + esc(item.path) + '">编辑</button></div></div>';
+      return '<div class="article-row"><div class="article-main">' +
+        '<span class="row-title">' + esc(item.title) + '</span>' +
+        '<span class="row-meta">' + fmt(item.updatedAt) + ' · ' + esc(item.path) + '</span>' +
+        '</div><button class="btn pill" data-action="edit" data-path="' + esc(item.path) + '">编辑</button></div>';
     }).join('') + '</section>';
   }
 
