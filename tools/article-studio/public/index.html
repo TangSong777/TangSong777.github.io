@@ -342,6 +342,24 @@ body::before {
     var(--pop-amber) 76%, var(--pop-rose) 100%);
   z-index: 999;
 }
+
+/* Round 44: 内嵌文章工作台的尺寸 */
+/* 管理中心不加载 styles.css，这两条必须写在页面内联样式里，
+   否则 iframe 用浏览器默认的 300x150（2026-10-28 用户反馈「编辑界面很小」的根因）。 */
+.card-editor { padding: 0; overflow: hidden; }
+.card-editor > .card-head { margin: 0; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.studio-frame {
+  display: block;
+  width: 100%;
+  /* 母页面占用：顶栏 60 + 卡片头 60 + 上下留白 30 = 150 */
+  height: calc(100vh - 150px);
+  min-height: 520px;
+  border: 0;
+  background: var(--paper);
+}
+@media (max-width: 720px) {
+  .studio-frame { height: calc(100vh - 118px); min-height: 420px; }
+}
 </style>
 </head>
 <body>
