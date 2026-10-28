@@ -352,3 +352,15 @@ body::before {
 @media (max-width: 720px) {
   .studio-frame { height: calc(100vh - 118px); min-height: 420px; }
 }
+
+/* Round 57：管理中心移动端收口 */
+@media (max-width: 760px) {
+  .topbar { gap: 8px; padding: 10px 12px; }
+  .topbar .brand { font-size: 15px; letter-spacing: .04em; white-space: nowrap; }
+  .topbar .brand span { display: none; }
+  .top-actions { flex: 0 0 auto; gap: 6px; }
+  .top-btn { padding: 5px 11px; font-size: 11.5px; white-space: nowrap; }
+  .side { scrollbar-width: none; }
+  .side::-webkit-scrollbar { display: none; }
+  .side button { font-size: 13px; }
+}
