@@ -6,7 +6,7 @@
   <title>文章工作台 · YangHanLin</title>
   <link rel="icon" type="image/jpeg" href="/site-preview/images/avatar.jpg?v=80260905">
   <link rel="apple-touch-icon" href="/site-preview/images/avatar.jpg?v=80260905">
-  <link rel="stylesheet" href="/styles.css?v=39">
+  <link rel="stylesheet" href="/styles.css?v=41">
 </head>
 <body>
   <header class="topbar">
@@ -53,6 +53,7 @@
             <button id="metadataButton" class="rename-button metadata-button" title="编辑标题、发布时间、分类等文章信息">信息</button>
             <button id="renameButton" class="rename-button" title="修改 Markdown 文件名">重命名</button>
             <button id="markdownHelpButton" class="rename-button" type="button" title="查看 Markdown 语法">语法</button>
+            <button id="outlineToggle" class="rename-button" type="button" aria-pressed="true" title="显示或隐藏文章大纲">大纲</button>
             <div class="view-tabs" role="tablist">
               <button class="view-tab active" data-view="wysiwyg">所见即所得</button>
               <button class="view-tab" data-view="source">源码</button>
@@ -88,13 +89,25 @@
 
   <dialog id="loginDialog" class="login-dialog">
     <form id="loginForm" method="dialog">
-      <span class="eyebrow">ARTICLE STUDIO</span>
-      <h2>登录工作台</h2>
-      <p>请输入工作台访问密码。密码只用于本次登录，不会显示在地址栏。</p>
-      <label>访问密码<input id="loginPassword" type="password" autocomplete="current-password" required autofocus></label>
-      <label id="loginTotpLabel" hidden>动态验证码<input id="loginTotp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="验证器 App 里的 6 位数字"></label>
+      <div class="login-head">
+        <span class="login-mark" aria-hidden="true">文</span>
+        <div>
+          <span class="eyebrow">ARTICLE STUDIO</span>
+          <h2>登录工作台</h2>
+        </div>
+      </div>
+      <p class="login-lead">输入本机密码进入文章工作台，密码仅用于本次登录。</p>
+      <label class="login-field">
+        <span>访问密码</span>
+        <input id="loginPassword" type="password" autocomplete="current-password" required autofocus placeholder="本机密码">
+      </label>
+      <label id="loginTotpLabel" class="login-field" hidden>
+        <span>动态验证码</span>
+        <input id="loginTotp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="验证器 App 里的 6 位数字">
+      </label>
       <p id="loginError" class="login-error" role="alert"></p>
-      <div class="dialog-actions"><button id="loginSubmit" type="submit" class="button primary">登录</button></div>
+      <button id="loginSubmit" type="submit" class="button primary login-submit">进入工作台</button>
+      <p class="login-foot">文章保存在 Rock 5B+ 本机，不经过第三方服务。</p>
     </form>
   </dialog>
 
@@ -237,5 +250,6 @@
   <script src="/vendor/codemirror.bundle.js?v=21"></script>
   <script src="/js/typora-live-preview.js?v=27"></script>
   <script src="/app.js?v=25"></script>
+  <script src="/ui.js?v=1"></script>
 </body>
 </html>
