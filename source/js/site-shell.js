@@ -112,3 +112,35 @@
     open(target);
   });
 })();
+
+/* 笔记详情页标题重复（Round 43）
+   siyuan 导出时正文第一个 h1 就是文档标题，而页面本身已经有 .post-title，
+   于是卡片里出现两次同样的名字（「（已归档）」这类后缀会让两者只差几个字）。
+   规则：h1 文本与页面标题相同、或页面标题以它开头，就去掉这个 h1，
+   同时删掉右侧目录里对应的条目，免得点进去是空的。 */
+(function () {
+  'use strict';
+  if (!document.body || document.body.className.indexOf('siyuan-mode') < 0) return;
+
+  var box = document.querySelector('.post-body');
+  var titleEl = document.querySelector('.post-title');
+  if (!box || !titleEl) return;
+
+  var title = (titleEl.textContent || '').trim();
+  var h1 = box.querySelector('h1');
+  if (!title || !h1) return;
+
+  var text = (h1.textContent || '').trim();
+  if (!text || (text !== title && title.indexOf(text) !== 0)) return;
+
+  var id = h1.id;
+  h1.parentNode.removeChild(h1);
+  if (!id) return;
+
+  Array.prototype.forEach.call(document.querySelectorAll('.post-toc a[href]'), function (link) {
+    var href = link.getAttribute('href');
+    if (href !== '#' + id && href !== '#' + encodeURIComponent(id)) return;
+    var item = link.closest('li');
+    if (item) item.parentNode.removeChild(item);
+  });
+})();

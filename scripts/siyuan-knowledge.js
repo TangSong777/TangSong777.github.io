@@ -30,7 +30,7 @@ const siyuanCssVersion = hashOf('source/css/siyuan-knowledge.css');
 const mainCssVersion = hashOf('source/_data/styles.styl');
 
 const style = `<link rel="stylesheet" href="${siteRoot}css/siyuan-knowledge.css?v=${siyuanCssVersion}">`;
-const shell = `<script src="${siteRoot}js/site-shell.js?v=20261031" defer></script>`;
+const shell = `<script src="${siteRoot}js/site-shell.js?v=20261038" defer></script>`;
 const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=20261037" defer></script><script src="${siteRoot}js/siyuan-knowledge.js?v=20261037" defer></script>`;
 
 // 导航流畅化：浏览器预渲染（悬停即准备）+ 跨文档平滑过渡，纯原生零 JS 开销
