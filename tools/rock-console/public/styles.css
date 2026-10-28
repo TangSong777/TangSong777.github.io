@@ -1127,7 +1127,8 @@ body::before {
   background: linear-gradient(90deg, var(--green-deep), var(--green-raw));
   cursor: default;
 }
-.seg-bar::after {
+.seg-bar::after,
+.seg-fold::after {
   content: attr(data-tip);
   position: absolute;
   white-space: pre-line;
@@ -1213,3 +1214,33 @@ body::before {
 .seg-table th:nth-child(4) { min-width: 92px; }
 .seg-table td:nth-child(4) { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .seg-table td:nth-child(5) { white-space: nowrap; }
+
+/* v53：时间轴隐藏区间（09–12 / 14–18 不画，斜纹示意） */
+.seg-fold {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 10px;
+  margin-left: -5px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(135deg, rgba(107, 127, 123, .35) 0 2px, transparent 2px 5px);
+  cursor: default;
+  z-index: 2;
+}
+.seg-scale {
+  position: relative;
+  display: block;
+  height: 16px;
+  margin-top: 6px;
+}
+.seg-scale span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.seg-scale span:first-child { transform: none; }
+.seg-scale span:last-child { transform: translateX(-100%); }
+.seg-scale-hide {
+  color: #9db3ad;
+  font-style: italic;
+}

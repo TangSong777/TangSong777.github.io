@@ -563,6 +563,110 @@ function shortResolution(resolution) {
   return m ? `${m[2]}p${m[3]}` : '—';
 }
 
+/** 时间轴可用区间：忽略 09:00–12:00 与 14:00–18:00（上课时段不串流）。 */
+const FOLD_RANGES = [[9 * 3600e3, 12 * 3600e3], [14 * 3600e3, 18 * 3600e3]];
+const ACTIVE_MS = DAY_MS - FOLD_RANGES.reduce((sum, [s, e]) => sum + (e - s), 0);
+
+/** 当天偏移毫秒 → 可用轴位置（折叠隐藏区间）。 */
+function mapActive(offsetMs) {
+  let pos = 0;
+  let cursor = 0;
+  for (const [fs, fe] of FOLD_RANGES) {
+    if (offsetMs <= fs) return pos + (offsetMs - cursor);
+    pos += fs - cursor;
+    if (offsetMs < fe) return pos;
+    cursor = fe;
+  }
+  return pos + (offsetMs - cursor);
+}
+
+/** 把横跨隐藏区间的会话段拆开，隐藏区间内的部分不画。 */
+function splitByFolds(startMs, endMs) {
+  const parts = [];
+  let cursor = startMs;
+  for (const [fs, fe] of FOLD_RANGES) {
+    if (cursor < fs && endMs > fs) {
+      parts.push([cursor, Math.min(endMs, fs)]);
+      cursor = fe;
+    }
+    if (cursor >= fs && cursor < fe) cursor = fe;
+  }
+  if (cursor < endMs) parts.push([cursor, endMs]);
+  return parts;
+}
+
+function buildDayTimeline(day) {
+  const host = document.createElement('div');
+  host.className = 'seg-timeline';
+  const track = document.createElement('div');
+  track.className = 'seg-track seg-track-day';
+
+  const addBar = (startOff, endOff, seg) => {
+    const bar = document.createElement('span');
+    bar.className = 'seg-bar';
+    const left = (mapActive(startOff) / ACTIVE_MS) * 100;
+    const width = ((mapActive(endOff) - mapActive(startOff)) / ACTIVE_MS) * 100;
+    bar.style.left = `${left.toFixed(2)}%`;
+    bar.style.width = `${Math.max(0.3, width).toFixed(2)}%`;
+    const leftNum = Number(left.toFixed(2));
+    if (leftNum > 80) bar.classList.add('seg-bar--right');
+    else if (leftNum < 6) bar.classList.add('seg-bar--left');
+    const lines = [
+      `${fmtClockOnly(seg.startMs)} – ${fmtClockOnly(seg.endMs)}`,
+      `${seg.sessionCount} 段 · ${fmtDuration(seg.streamSeconds)}`,
+    ];
+    if (Number.isFinite(seg.avgBitrateKbps) && seg.avgBitrateKbps > 0) {
+      lines.push(`${shortResolution(seg.resolution)} · ${Math.round(seg.avgBitrateKbps / 1000)}Mbps`);
+    }
+    if (Number.isFinite(seg.droppedFrames)) {
+      const rate = Number.isFinite(seg.droppedRate) ? `（${seg.droppedRate}%）` : '';
+      lines.push(`丢帧 ${seg.droppedFrames}${rate}`);
+    }
+    if (Number.isFinite(seg.trafficMB) && seg.trafficMB > 0) {
+      lines.push(`流量约 ${seg.trafficMB >= 1024 ? `${(seg.trafficMB / 1024).toFixed(1)} GB` : `${seg.trafficMB} MB`}`);
+    }
+    if (seg.disconnects > 0) lines.push(`断联 ${seg.disconnects} 次`);
+    bar.dataset.tip = lines.join('\n');
+    track.append(bar);
+  };
+
+  for (const seg of day.segments) {
+    for (const [a, b] of splitByFolds(seg.startMs - day.dayStart, seg.endMs - day.dayStart)) {
+      addBar(a, b, seg);
+    }
+  }
+
+  // 隐藏区间标记（斜纹 + 悬停说明）
+  for (const [fs, fe] of FOLD_RANGES) {
+    const fold = document.createElement('span');
+    fold.className = 'seg-fold';
+    fold.style.left = `${((mapActive(fs) / ACTIVE_MS) * 100).toFixed(2)}%`;
+    fold.dataset.tip = `${fmtClockOnly(day.dayStart + fs)} – ${fmtClockOnly(day.dayStart + fe)} 已隐藏`;
+    track.append(fold);
+  }
+
+  host.append(track);
+
+  const scale = document.createElement('div');
+  scale.className = 'seg-scale seg-scale-day';
+  const marks = [
+    { label: '00:00', pos: 0 },
+    { label: '06:00', pos: (mapActive(6 * 3600e3) / ACTIVE_MS) * 100 },
+    { label: '09–12 隐藏', pos: (mapActive(9 * 3600e3) / ACTIVE_MS) * 100, muted: true },
+    { label: '14–18 隐藏', pos: (mapActive(14 * 3600e3) / ACTIVE_MS) * 100, muted: true },
+    { label: '24:00', pos: 100 },
+  ];
+  for (const m of marks) {
+    const span = document.createElement('span');
+    span.textContent = m.label;
+    span.style.left = `${m.pos.toFixed(2)}%`;
+    if (m.muted) span.className = 'seg-scale-hide';
+    scale.append(span);
+  }
+  host.append(scale);
+  return host;
+}
+
 function buildDayBlock(day) {
   const wrap = document.createElement('div');
   wrap.className = 'seg-day';
@@ -586,51 +690,6 @@ function buildDayBlock(day) {
   return wrap;
 }
 
-function buildDayTimeline(day) {
-  const host = document.createElement('div');
-  host.className = 'seg-timeline';
-  const track = document.createElement('div');
-  track.className = 'seg-track seg-track-day';
-  for (const seg of day.segments) {
-    const bar = document.createElement('span');
-    bar.className = 'seg-bar';
-    const left = ((seg.startMs - day.dayStart) / DAY_MS) * 100;
-    const width = ((seg.endMs - seg.startMs) / DAY_MS) * 100;
-    bar.style.left = `${left.toFixed(2)}%`;
-    bar.style.width = `${Math.max(0.3, width).toFixed(2)}%`;
-    const leftNum = Number(left.toFixed(2));
-    if (leftNum > 80) bar.classList.add('seg-bar--right');
-    else if (leftNum < 6) bar.classList.add('seg-bar--left');
-    const lines = [
-      `${fmtClockOnly(seg.startMs)} – ${fmtClockOnly(seg.endMs)}`,
-      `${seg.sessionCount} 段 · ${fmtDuration(seg.streamSeconds)}`,
-    ];
-    if (Number.isFinite(seg.avgBitrateKbps) && seg.avgBitrateKbps > 0) {
-      lines.push(`${shortResolution(seg.resolution)} · ${Math.round(seg.avgBitrateKbps / 1000)}Mbps`);
-    }
-    if (Number.isFinite(seg.droppedFrames)) {
-      const rate = Number.isFinite(seg.droppedRate) ? `（${seg.droppedRate}%）` : '';
-      lines.push(`丢帧 ${seg.droppedFrames}${rate}`);
-    }
-    if (Number.isFinite(seg.trafficMB) && seg.trafficMB > 0) {
-      lines.push(`流量约 ${seg.trafficMB >= 1024 ? `${(seg.trafficMB / 1024).toFixed(1)} GB` : `${seg.trafficMB} MB`}`);
-    }
-    if (seg.disconnects > 0) lines.push(`断联 ${seg.disconnects} 次`);
-    bar.dataset.tip = lines.join('\n');
-    track.append(bar);
-  }
-  host.append(track);
-
-  const scale = document.createElement('div');
-  scale.className = 'seg-scale seg-scale-day';
-  for (const label of ['00:00', '06:00', '12:00', '18:00', '24:00']) {
-    const span = document.createElement('span');
-    span.textContent = label;
-    scale.append(span);
-  }
-  host.append(scale);
-  return host;
-}
 
 /**
  * 渲染「今日时段」表格：每行一个时间段，从早到晚排列。
