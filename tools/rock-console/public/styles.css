@@ -1156,3 +1156,56 @@ body::before {
   font-size: 11px;
   color: #6b7f7b;
 }
+
+/* 按天时间线（今天/昨天/前天） */
+.seg-day {
+  margin-bottom: 20px;
+}
+.seg-day:last-child {
+  margin-bottom: 0;
+}
+.seg-day-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.seg-day-name {
+  font-weight: 600;
+  color: #2a4a44;
+}
+.seg-day-date {
+  font-size: 12px;
+  color: #6b7f7b;
+}
+.seg-day-meta {
+  margin-left: auto;
+  font-size: 12px;
+  color: #6b7f7b;
+}
+.seg-track-day {
+  background: #eef5f2;
+}
+.seg-scale-day {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #93a8a2;
+}
+
+/* 边缘色条的 tooltip 对齐（不溢出卡片） */
+.seg-bar--right::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.seg-bar--left::after {
+  left: 0;
+  transform: none;
+}
+
+/* ---- 时段表格：新增画质列 ---- */
+.seg-table th:nth-child(4) { min-width: 92px; }
+.seg-table td:nth-child(4) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.seg-table td:nth-child(5) { white-space: nowrap; }

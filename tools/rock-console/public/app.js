@@ -439,6 +439,18 @@ function renderStream(status) {
     if (Number.isFinite(last.droppedFrames)) rows.push(['上次丢帧', `${last.droppedFrames} 帧`]);
   }
 
+  // ---- 最近一场实测（Moonlight 客户端日志）----
+  const live = stream.quality;
+  if (live && live.available) {
+    const parts = [];
+    if (live.incomingFps != null) parts.push(`到达 ${live.incomingFps} fps`);
+    if (live.renderingFps != null) parts.push(`渲染 ${live.renderingFps} fps`);
+    if (live.idrRequests > 0) parts.push(`IDR ${live.idrRequests} 次`);
+    if (live.firstPacketMs != null) parts.push(`首帧 ${live.firstPacketMs} ms`);
+    if (parts.length) rows.push(['最近实测', parts.join(' · ')]);
+    if (live.endpoint) rows.push(['数据路径', live.endpoint]);
+  }
+
   // ---- 最近一条事件 ----
   if (Array.isArray(events.recentEvents) && events.recentEvents.length > 0) {
     const latest = events.recentEvents[events.recentEvents.length - 1];
@@ -452,7 +464,7 @@ function renderStream(status) {
   fillFacts(facts, rows);
 
   // 时段单独用表格展示，一行一个时间段
-  renderSegments(events.segments || []);
+  renderDailySegments(events.dailySegments, events.segments);
 }
 
 /**
@@ -485,6 +497,9 @@ function renderTimeline(segments) {
     const parts = [`${seg.sessionCount} 段`, fmtDuration(seg.streamSeconds)];
     if (seg.disconnects > 0) parts.push(`断联 ${seg.disconnects} 次`);
     if (Number.isFinite(seg.droppedFrames) && seg.droppedFrames > 0) parts.push(`丢帧 ${seg.droppedFrames}`);
+    if (Number.isFinite(seg.avgBitrateKbps) && seg.avgBitrateKbps > 0) parts.push(`${Math.round(seg.avgBitrateKbps / 1000)}Mbps`);
+    if (Number.isFinite(seg.trafficMB) && seg.trafficMB > 0) parts.push(`约 ${seg.trafficMB >= 1024 ? `${(seg.trafficMB / 1024).toFixed(1)} GB` : `${seg.trafficMB} MB`}`);
+    if (Number.isFinite(seg.droppedRate)) parts.push(`丢帧率 ${seg.droppedRate}%`);
     bar.dataset.tip = `${startText}–${endText}\n${parts.join(' · ')}`;
     track.append(bar);
   }
@@ -498,8 +513,144 @@ function renderTimeline(segments) {
   host.replaceChildren(track, scale);
 }
 
+const DAY_MS = 86400000;
+
+function fmtDate(ms) {
+  const date = new Date(ms);
+  const pad = (value) => String(value).padStart(2, '0');
+  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function dayLabel(dayStart) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const diff = Math.round((today - dayStart) / DAY_MS);
+  if (diff === 0) return '今天';
+  if (diff === 1) return '昨天';
+  if (diff === 2) return '前天';
+  return fmtDate(dayStart);
+}
+
+function fmtClockOnly(ms) {
+  const date = new Date(ms);
+  const pad = (value) => String(value).padStart(2, '0');
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * 渲染「今天 / 昨天 / 前天」三条 24 小时时间线（每天 00:00 → 次日 00:00）。
+ */
+function renderDailySegments(daily, fallback) {
+  const block = $('seg-block');
+  const host = $('seg-days');
+  if (!block || !host) return;
+  const list = Array.isArray(daily) ? daily.filter((day) => Array.isArray(day.segments) && day.segments.length > 0) : [];
+  if (list.length === 0) {
+    block.hidden = true;
+    host.replaceChildren();
+    if (Array.isArray(fallback) && fallback.length > 0 && $('seg-timeline')) renderSegments(fallback);
+    return;
+  }
+  block.hidden = false;
+  host.replaceChildren();
+  for (const day of list) {
+    host.append(buildDayBlock(day));
+  }
+}
+
+function shortResolution(resolution) {
+  const m = /([0-9]+)x([0-9]+)x([0-9]+)/.exec(resolution || '');
+  return m ? `${m[2]}p${m[3]}` : '—';
+}
+
+function buildDayBlock(day) {
+  const wrap = document.createElement('div');
+  wrap.className = 'seg-day';
+
+  const head = document.createElement('div');
+  head.className = 'seg-day-head';
+  const name = document.createElement('span');
+  name.className = 'seg-day-name';
+  name.textContent = dayLabel(day.dayStart);
+  const date = document.createElement('span');
+  date.className = 'seg-day-date';
+  date.textContent = fmtDate(day.dayStart);
+  const meta = document.createElement('span');
+  meta.className = 'seg-day-meta';
+  meta.textContent = `${day.segments.length} 段 · ${fmtDuration(day.segments.reduce((sum, seg) => sum + (seg.streamSeconds || 0), 0))}`;
+  head.append(name, date, meta);
+  wrap.append(head);
+
+  wrap.append(buildDayTimeline(day));
+
+  const table = document.createElement('table');
+  table.className = 'seg-table';
+  table.innerHTML = '<thead><tr><th>时间段</th><th>会话数</th><th>串流时长</th><th>画质 · 码率</th><th>丢帧</th><th>断联</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+  for (const seg of day.segments) {
+    const tr = document.createElement('tr');
+    const cells = [
+      `${fmtClockOnly(seg.startMs)} – ${fmtClockOnly(seg.endMs)}`,
+      `${seg.sessionCount} 段`,
+      fmtDuration(seg.streamSeconds),
+      seg.avgBitrateKbps
+        ? `${shortResolution(seg.resolution)} · ${Math.round(seg.avgBitrateKbps / 1000)}Mbps`
+        : shortResolution(seg.resolution),
+      Number.isFinite(seg.droppedRate) ? `${seg.droppedFrames}（${seg.droppedRate}%）` : '—',
+      seg.disconnects > 0 ? `${seg.disconnects} 次` : '—',
+    ];
+    for (const text of cells) {
+      const td = document.createElement('td');
+      td.textContent = text;
+      tr.append(td);
+    }
+    tbody.append(tr);
+  }
+  table.append(tbody);
+  wrap.append(table);
+  return wrap;
+}
+
+function buildDayTimeline(day) {
+  const host = document.createElement('div');
+  host.className = 'seg-timeline';
+  const track = document.createElement('div');
+  track.className = 'seg-track seg-track-day';
+  for (const seg of day.segments) {
+    const bar = document.createElement('span');
+    bar.className = 'seg-bar';
+    const left = ((seg.startMs - day.dayStart) / DAY_MS) * 100;
+    const width = ((seg.endMs - seg.startMs) / DAY_MS) * 100;
+    bar.style.left = `${left.toFixed(2)}%`;
+    bar.style.width = `${Math.max(0.3, width).toFixed(2)}%`;
+    const leftNum = Number(left.toFixed(2));
+    if (leftNum > 80) bar.classList.add('seg-bar--right');
+    else if (leftNum < 6) bar.classList.add('seg-bar--left');
+    const parts = [`${seg.sessionCount} 段`, fmtDuration(seg.streamSeconds)];
+    if (seg.disconnects > 0) parts.push(`断联 ${seg.disconnects} 次`);
+    if (Number.isFinite(seg.droppedFrames) && seg.droppedFrames > 0) parts.push(`丢帧 ${seg.droppedFrames}`);
+    if (Number.isFinite(seg.avgBitrateKbps) && seg.avgBitrateKbps > 0) parts.push(`${Math.round(seg.avgBitrateKbps / 1000)}Mbps`);
+    if (Number.isFinite(seg.trafficMB) && seg.trafficMB > 0) parts.push(`约 ${seg.trafficMB >= 1024 ? `${(seg.trafficMB / 1024).toFixed(1)} GB` : `${seg.trafficMB} MB`}`);
+    if (Number.isFinite(seg.droppedRate)) parts.push(`丢帧率 ${seg.droppedRate}%`);
+    bar.dataset.tip = `${fmtClockOnly(seg.startMs)}–${fmtClockOnly(seg.endMs)}\n${parts.join(' · ')}`;
+    track.append(bar);
+  }
+  host.append(track);
+
+  const scale = document.createElement('div');
+  scale.className = 'seg-scale seg-scale-day';
+  for (const label of ['00:00', '06:00', '12:00', '18:00', '24:00']) {
+    const span = document.createElement('span');
+    span.textContent = label;
+    scale.append(span);
+  }
+  host.append(scale);
+  return host;
+}
+
 /**
  * 渲染「今日时段」表格：每行一个时间段，从早到晚排列。
+
 
  * 列固定为：时间段 / 会话数 / 串流时长 / 断联 / 丢帧
  */

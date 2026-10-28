@@ -7,7 +7,7 @@
  *   - 需要差分的量（CPU 占用、网络速率）由采集器缓存上一次采样，
  *     纯计算部分抽成可单测的独立函数。
  */
-import { existsSync, readFileSync, readdirSync, statfsSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, statfsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
 const readText = (path) => {
@@ -505,18 +505,121 @@ export function buildTimeSegments(sessions, gapMinutes = 5) {
 
   return blocks.map((block) => {
     const last = block.sessions[block.sessions.length - 1];
+    const totalStream = block.sessions.reduce((sum, item) => sum + (item.durationSeconds || 0), 0);
+    const weightedBitrate = block.sessions.reduce(
+      (sum, item) => sum + (item.bitrateKbps || 0) * (item.durationSeconds || 0),
+      0,
+    );
+    const avgBitrateKbps = totalStream > 0 ? Math.round(weightedBitrate / totalStream) : null;
+    const fpsMatch = /x([0-9]+)$/.exec(last.resolution || '');
+    const fps = fpsMatch ? Number(fpsMatch[1]) : null;
+    const droppedFrames = block.sessions.reduce((sum, item) => sum + (item.droppedFrames || 0), 0);
+    const expectedFrames = fps && totalStream > 0 ? fps * totalStream : null;
     return {
       startMs: block.startMs,
       endMs: block.endMs,
       wallSeconds: Math.max(0, Math.round((block.endMs - block.startMs) / 1000)),
       sessionCount: block.sessions.length,
-      streamSeconds: block.sessions.reduce((sum, item) => sum + (item.durationSeconds || 0), 0),
+      streamSeconds: totalStream,
       disconnects: Math.max(0, block.sessions.length - 1),
       resolution: last.resolution || null,
       bitrateKbps: last.bitrateKbps ?? null,
-      droppedFrames: block.sessions.reduce((sum, item) => sum + (item.droppedFrames || 0), 0),
+      avgBitrateKbps,
+      fps,
+      droppedFrames,
+      droppedRate: expectedFrames ? Math.min(100, Math.round((droppedFrames / expectedFrames) * 1000) / 10) : null,
+      trafficMB: avgBitrateKbps && totalStream ? Math.round((avgBitrateKbps * totalStream) / 8 / 1024) : null,
     };
   });
+}
+
+/**
+ * 按自然日拆分时段（今天/昨天/前天），每条从当天 00:00 到次日 00:00。
+ * 跨天的会话裁剪到当天区间内，再按 gapMinutes 合并。
+ */
+export function buildDailySegments(sessions, days = 3, gapMinutes = 45) {
+  const list = Array.isArray(sessions) ? sessions : [];
+  const result = [];
+  const now = new Date();
+  for (let i = 0; i < days; i += 1) {
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i).getTime();
+    const dayEnd = dayStart + 86400000;
+    const clipped = [];
+    for (const session of list) {
+      const startMs = Math.max(session.startMs, dayStart);
+      const endMs = Math.min(session.endMs, dayEnd);
+      if (endMs > startMs) {
+        clipped.push({
+          ...session,
+          startMs,
+          endMs,
+          durationSeconds: Math.round((endMs - startMs) / 1000),
+        });
+      }
+    }
+    result.push({ dayStart, segments: buildTimeSegments(clipped, gapMinutes) });
+  }
+  return result;
+}
+
+const MOONLIGHT_LIVE_LOG = '/home/radxa/.cache/moonlight-live.log';
+let liveStatsCache = { mtimeMs: -1, size: -1, value: null };
+
+/**
+ * 解析 Moonlight 客户端日志（~/.cache/moonlight-live.log），提炼最近一场的实测画质：
+ * 分辨率/码率/到达与渲染帧率/IDR 请求次数/首帧延迟/解码器/连接地址。
+ * 按 mtime+size 缓存，日志不变时不重复读盘。
+ */
+export function readMoonlightLiveStats() {
+  const empty = {
+    available: false,
+    resolution: null,
+    bitrateKbps: null,
+    incomingFps: null,
+    decodingFps: null,
+    renderingFps: null,
+    idrRequests: 0,
+    firstPacketMs: null,
+    decoder: null,
+    endpoint: null,
+  };
+  try {
+    if (!existsSync(MOONLIGHT_LIVE_LOG)) return empty;
+    const stat = statSync(MOONLIGHT_LIVE_LOG);
+    if (
+      liveStatsCache.value &&
+      liveStatsCache.mtimeMs === stat.mtimeMs &&
+      liveStatsCache.size === stat.size
+    ) {
+      return liveStatsCache.value;
+    }
+    const raw = readFileSync(MOONLIGHT_LIVE_LOG, 'utf8');
+    const tail = raw.slice(-512 * 1024);
+    const pick = (re) => {
+      const hit = tail.match(re);
+      return hit ? hit[1] : null;
+    };
+    const lastFps = (label) => {
+      const hits = [...tail.matchAll(new RegExp(`${label} frame rate[^:]*: ([0-9.]+) FPS`, 'g'))];
+      return hits.length ? Number(hits[hits.length - 1][1]) : null;
+    };
+    const value = {
+      available: true,
+      resolution: pick(/Video stream is ([0-9]+x[0-9]+x[0-9]+)/),
+      bitrateKbps: Number(pick(/Video bitrate: ([0-9]+) kbps/)) || null,
+      incomingFps: lastFps('Incoming'),
+      decodingFps: lastFps('Decoding'),
+      renderingFps: lastFps('Rendering'),
+      idrRequests: (raw.match(/IDR frame request sent/g) || []).length,
+      firstPacketMs: Number(pick(/Received first video packet after ([0-9]+) ms/)) || null,
+      decoder: (() => { const hits = [...raw.matchAll(/decoder for (h264_rkmpp|hevc_rkmpp)/g)]; return hits.length ? hits[hits.length - 1][1] : null; })(),
+      endpoint: (() => { const hits = [...raw.matchAll(/Executing request: "https:\/\/([^/"]+)/g)]; return hits.length ? hits[hits.length - 1][1] : null; })(),
+    };
+    liveStatsCache = { mtimeMs: stat.mtimeMs, size: stat.size, value };
+    return value;
+  } catch {
+    return empty;
+  }
 }
 
 export function readMoonlightEvents() {
@@ -617,8 +720,10 @@ export function readMoonlightEvents() {
     reason: ev.reason || null,
   }));
 
-  // 按时间段聚合（相邻会话间隔 5 分钟内视为同一次使用）
+  // 按时间段聚合（相邻会话间隔 45 分钟内视为同一次使用）
   result.segments = buildTimeSegments(sessions, 45);
+  result.dailySegments = buildDailySegments(sessions, 3, 45);
+  result.quality = readMoonlightLiveStats();
 
   return result;
 }

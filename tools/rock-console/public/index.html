@@ -9,7 +9,7 @@
 <link rel="icon" type="image/jpeg" href="/avatar.jpg?v=1">
 <link rel="apple-touch-icon" href="/avatar.jpg?v=1">
 <link rel="stylesheet" href="/vendor/xterm.bundle.css">
-<link rel="stylesheet" href="/styles.css?v=52">
+<link rel="stylesheet" href="/styles.css?v=55">
 </head>
 <body>
 
@@ -177,20 +177,8 @@
           </div>
           <dl class="facts facts-cols" id="stream-facts"></dl>
           <div class="seg-block" id="seg-block" hidden>
-            <h3 class="seg-heading">今日时段</h3>
-            <div class="seg-timeline" id="seg-timeline"></div>
-            <table class="seg-table">
-              <thead>
-                <tr>
-                  <th>时间段</th>
-                  <th>会话数</th>
-                  <th>串流时长</th>
-                  <th>断联</th>
-                  <th>丢帧</th>
-                </tr>
-              </thead>
-              <tbody id="seg-rows"></tbody>
-            </table>
+            <h3 class="seg-heading">远程串流时段</h3>
+            <div id="seg-days"></div>
           </div>
         </article>
 
@@ -269,5 +257,5 @@
 </section>
 
 <script src="/vendor/xterm.bundle.js"></script>
-<script src="/app.js?v=48"></script></body>
+<script src="/app.js?v=51"></script></body>
 </html>
