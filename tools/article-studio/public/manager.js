@@ -9,6 +9,8 @@
     rules: { excludedDocuments: [], privateValues: [] },
     documents: [],
     notebook: '',
+    historyRules: { excludedDocuments: [], privateValues: [] },
+    historyDocs: [],
     comments: [],
     submissions: [],
     editing: null,
@@ -153,20 +155,24 @@
   /* ---------------- 数据 ---------------- */
   async function loadAll() {
     try {
-      var config = await api('/api/config');
-      state.token = config.token || '';
+      // Round 73：config 与其余接口并行（GET 请求不依赖 token，省一次串行往返）
       var results = await Promise.all([
+        api('/api/config'),
         api('/api/articles'),
         api('/api/siyuan-privacy'),
+        api('/api/history-privacy'),
         api('/api/admin/comments'),
         api('/api/admin/submissions'),
       ]);
-      state.articles = results[0].articles || [];
-      state.rules = results[1].rules || state.rules;
-      state.documents = results[1].documents || [];
-      state.notebook = results[1].notebook || '';
-      state.comments = results[2].comments || [];
-      state.submissions = results[3].submissions || [];
+      state.token = results[0].token || '';
+      state.articles = results[1].articles || [];
+      state.rules = results[2].rules || state.rules;
+      state.documents = results[2].documents || [];
+      state.notebook = results[2].notebook || '';
+      state.historyRules = results[3].rules || state.historyRules;
+      state.historyDocs = results[3].documents || [];
+      state.comments = results[4].comments || [];
+      state.submissions = results[5].submissions || [];
       render();
       // Round 69：页面数据就绪后空闲预热工作台 iframe，点「编辑」时零等待
       if ('requestIdleCallback' in window) {
@@ -206,6 +212,7 @@
         item('privacy', '隐私规则', excluded)) +
       group('history', '岁月史书',
         item('submissions', '内容补充审核', pending) +
+        item('historyPrivacy', '隐私规则', (state.historyRules.excludedDocuments || []).length) +
         item('approved', '已采纳', approved) +
         item('trash', '垃圾桶', rejected) +
         item('comments', '评论', state.comments.length)) +
@@ -297,7 +304,7 @@
     return root;
   }
 
-  function renderDocTree(node, excluded) {
+  function renderDocTree(node, excluded, viewAction) {
     var entries = [...node.children.values()].sort(function (a, b) {
       var aHas = a.children.size > 0;
       var bHas = b.children.size > 0;
@@ -316,8 +323,9 @@
         '<span>' + esc(isDoc ? child.doc.title : child.name) +
         (isDoc ? '<small>' + esc(child.doc.path) + '</small>' : '') +
         (isDoc && hasChildren ? '<em class="privacy-badge">含子文档</em>' : '') +
-        '</span></label>';
-      var kids = hasChildren ? renderDocTree(child, excluded) : '';
+        '</span></label>' +
+        (viewAction && isDoc ? '<button type="button" class="btn tiny" data-action="' + viewAction + '" data-path="' + esc(child.doc.path) + '">查看</button>' : '');
+      var kids = hasChildren ? renderDocTree(child, excluded, viewAction) : '';
       return '<li>' + self + kids + '</li>';
     }).join('') + '</ul>';
   }
@@ -334,6 +342,43 @@
     return '<section class="card">' + head +
       '<p class="hint">勾选表示「不公开」。勾选目录会连带勾选其下所有文档；保存后自动重新导入、构建并发布。</p>' +
       '<div class="privacy-tree-wrap">' + renderDocTree(tree, excluded) + '</div></section>';
+  }
+
+  /* ---------------- 岁月史书隐私 ---------------- */
+  function showHistoryDoc(doc) {
+    var old = document.getElementById('historyDocDialog');
+    if (old) old.remove();
+    var wrap = document.createElement('div');
+    wrap.id = 'historyDocDialog';
+    wrap.className = 'doc-view';
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'btn';
+    close.textContent = '关闭';
+    close.addEventListener('click', function () { wrap.remove(); });
+    var title = document.createElement('h3');
+    title.textContent = doc.title || '';
+    var pre = document.createElement('pre');
+    pre.className = 'doc-source';
+    pre.textContent = doc.content || '';
+    wrap.appendChild(close);
+    wrap.appendChild(title);
+    wrap.appendChild(pre);
+    document.body.appendChild(wrap);
+  }
+
+  function viewHistoryPrivacy() {
+    var excluded = new Set(state.historyRules.excludedDocuments || []);
+    var docs = state.historyDocs || [];
+    var head = '<div class="card-head"><h2>岁月史书隐私（排除 ' + excluded.size + ' / 共 ' + docs.length + '）</h2>' +
+      '<div class="row-actions">' +
+      '<button class="btn" data-action="history-privacy-expand">全部展开</button>' +
+      '<button class="btn primary" data-action="save-history-privacy">保存并重新生成</button></div></div>';
+    if (!docs.length) return '<section class="card">' + head + '<p class="empty">没有找到岁月史书文档（确认 /srv/blog/history-source 存在）</p></section>';
+    var tree = buildDocTree(docs, '岁月史书');
+    return '<section class="card">' + head +
+      '<p class="hint">勾选表示「不公开到岁月史书站」——勾选目录会连带其下所有文档。保存后自动重新导出、生成并部署岁月史书；被排除的文档只在管理中心可见（点「查看」读原文）。</p>' +
+      '<div class="privacy-tree-wrap">' + renderDocTree(tree, excluded, 'history-doc') + '</div></section>';
   }
 
   /* ---------------- 内容补充审核 ---------------- */
@@ -401,7 +446,7 @@
   function render() {
     detachStudio(); // Round 69：先把常驻 iframe 停回 park，避免 innerHTML 替换连它一起销毁
     var views = {
-      overview: viewOverview, articles: viewArticles, privacy: viewPrivacy,
+      overview: viewOverview, articles: viewArticles, privacy: viewPrivacy, historyPrivacy: viewHistoryPrivacy,
       submissions: viewSubmissions, approved: viewApproved, trash: viewTrash,
       comments: viewComments,
     };
@@ -563,6 +608,33 @@
         });
         state.rules = result.rules || state.rules;
         toast(result.republish && result.republish.started ? '已保存，正在重新发布' : '已保存');
+        return;
+      }
+
+      if (action === 'history-privacy-expand') {
+        document.querySelectorAll('.privacy-tree-wrap ul').forEach(function (list) { list.hidden = false; });
+        return;
+      }
+
+      if (action === 'save-history-privacy') {
+        var checked = [];
+        document.querySelectorAll('[data-privacy]').forEach(function (box) {
+          if (box.checked) checked.push(box.getAttribute('data-privacy'));
+        });
+        var hresult = await api('/api/history-privacy', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ excludedDocuments: checked, privateValues: state.historyRules.privateValues || [] }),
+        });
+        state.historyRules = hresult.rules || state.historyRules;
+        render();
+        toast(hresult.sync && hresult.sync.started ? '已保存，正在重新生成岁月史书' : '已保存');
+        return;
+      }
+
+      if (action === 'history-doc') {
+        var hdocPath = target.getAttribute('data-path');
+        var hdoc = await api('/api/history-doc?path=' + encodeURIComponent(hdocPath));
+        showHistoryDoc(hdoc);
         return;
       }
 

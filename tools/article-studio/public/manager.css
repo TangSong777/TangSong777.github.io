@@ -397,3 +397,8 @@ body::before {
   .studio-host { height: calc(100vh - 118px); min-height: 420px; }
 }
 
+
+/* Round 73：首屏骨架（manager.js 就绪前的占位，避免白屏） */
+.boot { min-height: 100vh; display: grid; place-items: center; margin: 0;
+  color: #5f7d78; font: 14px/1.6 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--canvas, #f2f7f6); }
