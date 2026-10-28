@@ -1008,3 +1008,18 @@ body.outline-hidden .editing-surface > .pane-footer { grid-column: 1; }
 }
 .rename-button.is-on:hover { background: var(--green-dark, #1f4b42); }
 @media (max-width: 1100px) { #outlineToggle { display: none; } }
+
+/* ══ Round 54：源码视图行号 ═════════════════════════════════ */
+.source-pane { grid-template-columns: auto minmax(0, 1fr); }
+.source-gutter {
+  overflow: hidden;
+  padding: 22px 10px 22px 16px;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--surface);
+  font: 14px/1.75 "Cascadia Code", Consolas, "Microsoft YaHei", monospace;
+  text-align: right;
+  white-space: pre;
+  user-select: none;
+  pointer-events: none;
+}
