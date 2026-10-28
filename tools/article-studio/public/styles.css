@@ -174,7 +174,13 @@ h1 { margin: 4px 0 0; font-size: 25px; }
 .rich-editor { height: 100%; display: flex; flex-direction: column; background:  var(--paper); }
 .rich-editor .cm-editor { height: 100%; flex: 1 1 auto; min-height: 0; }
 .rich-editor .cm-scroller { overflow: auto; overscroll-behavior: contain; }
-.rich-editor .cm-content { max-width: 1280px; margin: 0 auto; width: 100%; min-height: 100%; padding-bottom: 45vh; overflow-wrap: anywhere; word-break: break-word; }
+/* Round 43: 正文行宽与发布页对齐。
+   发布页 .post-block 宽 780、左右 padding 各 52，正文内容宽 676。
+   编辑器以前是 max-width: 1280px —— 桌面版被两侧面板挤到 675 刚好撞上，
+   embed 版（管理中心 iframe 里两侧面板都隐藏）就摊到 1250，
+   同一篇稿子「编辑时一行 40 字、发布后一行 35 字」，看起来不是同一个东西。
+   728 = 676 正文 + 左右 padding 26×2。 */
+.rich-editor .cm-content { max-width: 728px; margin: 0 auto; width: 100%; min-height: 100%; padding-bottom: 45vh; overflow-wrap: anywhere; word-break: break-word; }
 .rich-editor .cm-line { padding-left: 0; padding-right: 0; }
 /* 选中态与焦点环统一到站点配色 */
 .rich-editor .cm-editor.cm-focused { outline: none; }

@@ -6,7 +6,7 @@
  */
 import { EditorState } from '../../../node_modules/@codemirror/state/dist/index.js';
 import { markdown, markdownLanguage } from '../../../node_modules/@codemirror/lang-markdown/dist/index.js';
-import { syntaxTree } from '../../../node_modules/@codemirror/language/dist/index.js';
+import { ensureSyntaxTree, syntaxTree } from '../../../node_modules/@codemirror/language/dist/index.js';
 import { Decoration } from '../../../node_modules/@codemirror/view/dist/index.js';
 
 const doc = [
@@ -47,7 +47,13 @@ const HIDE_WHEN_INACTIVE = new Set([
 // cursorLines 为空 = 光标不在任何行（模拟"所有行都非活动"）
 function build(activeLines) {
   const decorations = [];
-  const tree = syntaxTree(state);
+  /* 必须先 ensureSyntaxTree：
+     syntaxTree(state) 拿到的可能只是「已解析到一半」的树 —— 它是后台增量解析的快照。
+     平时文档短、跑得快，看不出问题；一旦机器有负载（比如 10 个测试文件并行），
+     解析预算没花完，文档尾部的 Image / HorizontalRule / ListItem 就都还没进树，
+     于是这套断言会随机失败（实测 57 pass / 1 fail，重跑又全绿）。
+     这里给 20 秒预算强制解析到文档末尾；只有真的超时才退回快照。 */
+  const tree = ensureSyntaxTree(state, state.doc.length, 20000) || syntaxTree(state);
 
   function hide(from, to) {
     if (to > from) decorations.push({ kind: 'replace', cls: '', from, to });

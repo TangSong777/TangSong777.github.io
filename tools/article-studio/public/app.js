@@ -935,6 +935,7 @@ function initializeRichEditor() {
       TP.highlight,
       TP.livePreview,
       TP.tablePreview,
+      TP.parseWatch,
       TP.liveStyles,
       theme,
       keymap.of([
@@ -1023,6 +1024,7 @@ function initializeRichEditor() {
   window.__CM__ = () => ({
     ready: true,
     mode: editorMode,
+    text: richEditor.state.doc.toString(),
     docLength: richEditor.state.doc.length,
     lines: richEditor.state.doc.lines,
     selection: richEditor.state.selection.main,
@@ -1033,6 +1035,21 @@ function initializeRichEditor() {
       try {
         const plugin = richEditor.plugin(window.TyporaPreview.livePreview);
         return plugin ? plugin.decorations.size : 'no-plugin';
+      } catch (error) { return 'error: ' + error.message; }
+    })(),
+    // 语法树自检：解析到底了没有、认出了多少张表
+    treeLength: (() => {
+      try {
+        const tree = CM.ensureSyntaxTree(richEditor.state, richEditor.state.doc.length, 3000);
+        return tree ? tree.length : 'null';
+      } catch (error) { return 'error: ' + error.message; }
+    })(),
+    tablesInTree: (() => {
+      try {
+        const tree = CM.ensureSyntaxTree(richEditor.state, richEditor.state.doc.length, 3000) || CM.syntaxTree(richEditor.state);
+        let count = 0;
+        tree.iterate({ enter: (node) => { if (node.name === 'Table') count += 1; } });
+        return count;
       } catch (error) { return 'error: ' + error.message; }
     })(),
   });

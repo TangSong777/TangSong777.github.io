@@ -1460,6 +1460,9 @@ async function routeStatic(req, res, url) {
     target = resolveInside(join(repoDir, 'public'), decodeURIComponent(url.pathname.slice('/site-preview/'.length)));
   } else {
     const pathname = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
+    // 自检桩（__fakeapi.js / __studio_fake.html / __studio_probe.*）是开发期用的假后端，
+    // 默认一律 404，只有显式设了 STUDIO_HARNESS=1 才放行，避免线上被人摸到调试页面。
+    if (pathname.startsWith('__') && process.env.STUDIO_HARNESS !== '1') return false;
     target = resolveInside(publicDir, pathname);
   }
   if (!existsSync(target) || !(await stat(target)).isFile()) return false;

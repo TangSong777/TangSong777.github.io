@@ -17,7 +17,7 @@ import {
   insertNewlineContinueMarkup, deleteMarkupBackward, pasteURLAsLink,
 } from '@codemirror/lang-markdown';
 import {
-  syntaxHighlighting, HighlightStyle, syntaxTree, bracketMatching,
+  syntaxHighlighting, HighlightStyle, syntaxTree, ensureSyntaxTree, bracketMatching,
   indentOnInput, foldGutter, foldKeymap, codeFolding,
   LanguageDescription, LanguageSupport,
 } from '@codemirror/language';
@@ -67,7 +67,7 @@ window.CM = {
   defaultKeymap, history, historyKeymap, indentWithTab, undo, redo, selectAll,
   markdown, markdownLanguage,
   markdownKeymap, insertNewlineContinueMarkup, deleteMarkupBackward, pasteURLAsLink,
-  syntaxHighlighting, HighlightStyle, syntaxTree, bracketMatching,
+  syntaxHighlighting, HighlightStyle, syntaxTree, ensureSyntaxTree, bracketMatching,
   indentOnInput, foldGutter, foldKeymap, codeFolding,
   LanguageDescription, codeLanguages,
   searchKeymap, highlightSelectionMatches, search,

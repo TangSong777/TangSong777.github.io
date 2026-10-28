@@ -17,6 +17,16 @@
   var ViewPlugin = CM.ViewPlugin;
   var WidgetType = CM.WidgetType;
   var syntaxTree = CM.syntaxTree;
+  var ensureSyntaxTree = CM.ensureSyntaxTree;
+
+  /* Round 43c: 解析没跑完也要渲染。
+     syntaxTree(state) 读的是「后台增量解析的当前快照」—— 打开一篇长文时，
+     树可能只解析到前几屏，后面还没有节点。原来的装饰只在
+     docChanged / viewportChanged 时重建，而「解析又推进了一段」这两件事都不算，
+     于是文档尾部（尤其表格这种整块 widget）会一直空着，直到你去滚动或改一个字。
+     两个办法一起用：
+       1. 生成装饰前对「要渲染到的位置」做一次有限时的同步解析；
+       2. update 里发现语法树换了新对象就重建一次，兜住后台解析推进的情况。 */
   var EditorView = CM.EditorView;
   var tags = CM.tags;
   var HighlightStyle = CM.HighlightStyle;
@@ -102,18 +112,36 @@
      facet。所以表格渲染单独用 EditorView.decorations.compute 提供，与行内装饰的
      livePreview 插件并行存在：光标在表格外时看到真表格，点进表格就变回源码。 */
   class TableWidget extends WidgetType {
-    constructor(source) {
+    /* Round 43: 表格卡点得进去。
+       这个 widget 是 block replace，占位区间里没有可映射的文字，
+       CodeMirror 的默认点击处理算不出文档位置 —— 以前点表格完全没反应，
+       想改表格内容只能先用方向键把光标挪进去（或切源码模式）。
+       这里自己接 mousedown，把选区落到表格起始位置，
+       光标进入范围后 tablePreview 就不再替换，源码自然露出来。 */
+    constructor(source, from, to) {
       super();
       this.source = source;
+      this.from = from;
+      this.to = to;
     }
 
     eq(other) {
-      return other.source === this.source;
+      return other.source === this.source && other.from === this.from && other.to === this.to;
     }
 
-    toDOM() {
+    toDOM(view) {
       var wrap = document.createElement('div');
       wrap.className = 'cm-md-table-widget';
+      var self = this;
+      wrap.addEventListener('mousedown', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        var anchor = typeof self.from === 'number' ? self.from : 0;
+        if (view && typeof view.dispatch === 'function') {
+          view.dispatch({ selection: { anchor: anchor, head: anchor }, scrollIntoView: true });
+          view.focus();
+        }
+      });
 
       var rows = this.source.split('\n').filter(function (line) {
         return line.trim() !== '';
@@ -290,31 +318,34 @@
     '.cm-md-table-widget': {
       margin: '10px 0 14px 0',
     },
+    /* Round 43b: 表格卡配色对齐发布页。
+       发布页（siyuan-knowledge.css 1270–1282）是：外框 1px #d8e5e3、圆角 12px、
+       表头底色 #eef4f3、表头文字 #1c2b2a、表头下 2px 琥珀线 #edc989、无斑马纹。
+       编辑器以前表头文字偏绿、底线是灰的 1px、还多一层 even 斑马，
+       同一张表在编辑器里和在页面上长得不一样。 */
     '.cm-md-table-widget table': {
-      borderCollapse: 'collapse',
+      borderCollapse: 'separate',
+      borderSpacing: '0',
       width: '100%',
       fontSize: '.94em',
       lineHeight: '1.6',
       color: '#1c2b2a',
       border: '1px solid #d8e5e3',
-      borderRadius: '10px',
+      borderRadius: '12px',
       overflow: 'hidden',
       display: 'table',
     },
     '.cm-md-table-widget th': {
       background: '#eef4f3',
-      color: '#33544f',
+      color: '#1c2b2a',
       fontWeight: '700',
       padding: '9px 12px',
-      borderBottom: '1px solid #d8e5e3',
+      borderBottom: '2px solid #edc989',
       textAlign: 'left',
     },
     '.cm-md-table-widget td': {
       padding: '9px 12px',
       borderTop: '1px solid #edf2f1',
-    },
-    '.cm-md-table-widget tbody tr:nth-child(even)': {
-      background: '#fafcfb',
     },
     '.cm-md-table-align': { color: '#d2dcda', fontStyle: 'italic', fontSize: '.82em' },
     '.cm-md-table-head': { fontWeight: '700', color: '#1c2b2a' },
@@ -496,7 +527,11 @@
       if (to > from) decorations.push(Decoration.mark({ class: className }).range(from, to));
     }
 
-    var tree = syntaxTree(state);
+    var visibleTo = state.doc.length;
+    if (view.visibleRanges.length) {
+      visibleTo = view.visibleRanges[view.visibleRanges.length - 1].to;
+    }
+    var tree = (ensureSyntaxTree && ensureSyntaxTree(state, Math.min(visibleTo + 2000, state.doc.length), 30)) || syntaxTree(state);
 
     for (var r = 0; r < view.visibleRanges.length; r += 1) {
       var range = view.visibleRanges[r];
@@ -723,8 +758,42 @@
     return line.from;
   }
 
-  var tablePreview = EditorView.decorations.compute(['doc', 'selection'], function (state) {
-    var tree = syntaxTree(state);
+  var tickEffect = CM.StateEffect.define();
+
+  /* Round 43d: 解析推进时重算整块装饰。
+     表格 widget 是 block 装饰，只能来自 EditorView.decorations 的 compute，
+     而 compute 只在它声明的依赖变化时才重算。原来依赖是 ['doc','selection']，
+     于是「后台解析又多解析了一段」这件事它永远不知道 —— 打开一篇长文（40K 字符）
+     时实测只有 1 张表格被渲染，滚到底也是 0 张，要等随便改一个字才补上。
+     这里加一个 parseTick 状态字段：watch 插件发现语法树换了新对象就派发 tickEffect，
+     compute 依赖里带上 parseTick，于是解析每推进一步就重算一次。
+     tickEffect 不改文档，下一轮 startState 与 state 读到的是同一棵树，不会自激。 */
+  var parseTick = CM.StateField.define({
+    create: function () { return 0; },
+    update: function (value, tr) {
+      for (var i = 0; i < tr.effects.length; i += 1) {
+        if (tr.effects[i].is(tickEffect)) return value + 1;
+      }
+      return value;
+    },
+  });
+
+  var parseWatch = ViewPlugin.fromClass(
+    class {
+      update(update) {
+        if (update.docChanged) return;
+        // 组字期间不派发任何事务，否则输入法会把正在组的那几个字吐出来重排
+        if (update.view.composing) return;
+        if (CM.syntaxTree(update.state) !== CM.syntaxTree(update.startState)) {
+          update.view.dispatch({ effects: tickEffect.of(null) });
+        }
+      }
+    },
+  );
+
+  var tablePreview = EditorView.decorations.compute(['doc', 'selection', parseTick], function (state) {
+    /* 表格是整块 widget，覆盖全文，解析得更彻底一点（预算 120ms，超时退回快照） */
+    var tree = (ensureSyntaxTree && ensureSyntaxTree(state, state.doc.length, 120)) || syntaxTree(state);
     var ranges = state.selection.ranges;
     var items = [];
 
@@ -736,7 +805,7 @@
         }
         items.push(
           Decoration.replace({
-            widget: new TableWidget(state.doc.sliceString(node.from, node.to)),
+            widget: new TableWidget(state.doc.sliceString(node.from, node.to), node.from, node.to),
             block: true,
           }).range(tableBlockStart(state.doc, node.from), node.to),
         );
@@ -755,6 +824,14 @@
         this.atomic = result.atomic;
       }
       update(update) {
+        /* Round 43e: 中文输入法组字期间不动装饰。
+           组字（composing）时每敲一个拼音就会触发一次 docChanged，
+           过去每次都整棵重建装饰并替换 DOM —— 这正是「中文输入时字会跳、
+           会重复、会吃字」的经典来源。组字期间只记一笔，等 compositionend
+           之后的第一次 update（那时 view.composing 已经是 false）统一重建。 */
+        if (update.view.composing) { this.deferred = true; return; }
+        if (this.deferred) this.deferred = false;
+
         /* 只在这两种情况下重建：
              docChanged      —— 内容变了，装饰当然要重算
              viewportChanged —— 装饰是按 view.visibleRanges 逐段生成的，
@@ -762,7 +839,8 @@
            特意不含 selectionSet：activeLines 恒为空（编辑时不显示源码标记），
            光标移动不会改变任何装饰的结果。以前每次点选、每次打字都白算一遍
            整棵语法树，长文档（近 400 行）在快速输入时会攒出可感的卡顿。 */
-        if (update.docChanged || update.viewportChanged) {
+        if (update.docChanged || update.viewportChanged
+            || (CM.syntaxTree(update.state) !== CM.syntaxTree(update.startState))) {
           var result = buildDecorations(update.view);
           this.decorations = result.all;
           this.atomic = result.atomic;
@@ -859,5 +937,6 @@
     highlight: syntaxHighlighting(markdownHighlight),
     toggleInlineMark: toggleInlineMark,
     tablePreview: tablePreview,
+    parseWatch: parseWatch,
   };
 })();
