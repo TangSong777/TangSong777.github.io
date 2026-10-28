@@ -23,8 +23,23 @@ let richChangeFrame;
 
 function splitEditorDocument(value) {
   const text = String(value || '');
-  const match = text.match(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/);
-  return match ? { frontMatter: match[0], body: text.slice(match[0].length) } : { frontMatter: '', body: text };
+  const match = text.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/);
+  if (!match) return { frontMatter: '', body: text };
+
+  /* Round 43f: 只有「长得像 YAML」才当前置属性区。
+     原来的正则只要有两条 --- 就切走中间内容，于是「正文以水平分割线开头」的文章
+     会被吃掉一整段（编辑器里看起来内容凭空消失，保存后又原样写回，极难排查）。
+     YAML 的判据：每一行要么空、要么注释、要么 key: value、要么是列表项 - xxx。 */
+  const looksYaml = match[1].split(/\r?\n/).every((row) => {
+    const t = row.trim();
+    if (t === '') return true;
+    if (t.charAt(0) === '#') return true;
+    if (/^[-\w]+\s*:/.test(t)) return true;
+    return /^-\s/.test(t);
+  });
+  if (!looksYaml) return { frontMatter: '', body: text };
+
+  return { frontMatter: match[0], body: text.slice(match[0].length) };
 }
 
 function setEditorContent(value) {
@@ -598,7 +613,32 @@ function parseMarkdownHeadings(body, baseOffset, out) {
   let offset = baseOffset;
   let fence = null;
   const lines = String(body || '').split('\n');
+
+  /* Round 43f: 大纲跳过 YAML 属性区。
+     属性区里的 `sticky: 2` 下一行正好是 `---`，会被 setext 规则误判成二级标题，
+     于是大纲第一条变成 "sticky: 2"。这里先把开头那一段整块排除掉。 */
+  let fmSkip = -1;
+  for (let i = 0; i < Math.min(lines.length, 5); i += 1) {
+    const probe = lines[i].trim();
+    if (!probe) continue;
+    if (probe === '---' || probe === '---yaml') {
+      for (let j = i + 1; j < Math.min(lines.length, i + 301); j += 1) {
+        const close = lines[j].trim();
+        if (close === '---' || close === '...') {
+          const looksYaml = lines.slice(i + 1, j).every((row) => {
+            const t = row.trim();
+            return t === '' || /^[-\w]+\s*:/.test(t) || t.charAt(0) === '#';
+          });
+          if (looksYaml) fmSkip = j;
+          break;
+        }
+      }
+    }
+    break;
+  }
+
   lines.forEach((line, index) => {
+    if (index <= fmSkip) { offset += line.length + 1; return; }
     const marker = line.match(/^ {0,3}(`{3,}|~{3,})/);
     if (marker) {
       if (!fence) fence = marker[1];

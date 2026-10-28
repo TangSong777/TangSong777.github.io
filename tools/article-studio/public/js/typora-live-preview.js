@@ -136,7 +136,9 @@
       wrap.addEventListener('mousedown', function (event) {
         event.preventDefault();
         event.stopPropagation();
-        var anchor = typeof self.from === 'number' ? self.from : 0;
+        /* 光标必须落在替换区间的「内部」，只贴边界时块级 replace 仍然会渲染出卡片，
+           表现就是「点了没反应」。self.from + 1 一定在表格块里面。 */
+        var anchor = typeof self.from === 'number' ? Math.min(self.from + 1, self.to || self.from + 1) : 0;
         if (view && typeof view.dispatch === 'function') {
           view.dispatch({ selection: { anchor: anchor, head: anchor }, scrollIntoView: true });
           view.focus();
@@ -533,6 +535,44 @@
     }
     var tree = (ensureSyntaxTree && ensureSyntaxTree(state, Math.min(visibleTo + 2000, state.doc.length), 30)) || syntaxTree(state);
 
+    /* ---- 前置属性区（YAML front matter）：Typora 里是一块灰色属性区 ----
+       文档开头 --- … --- 之间的内容不是正文。不拦住的话，`title: xxx` 会被当成
+       段落，`---` 会被当成水平分割线，整篇开头又粗又空。 */
+    var fm = null;
+    var docRef = state.doc;
+    /* 开头可能先有几个空行（从别处复制过来时很常见），跳过它们再认 --- */
+    var fmOpen = 0;
+    for (var fo = 1; fo <= Math.min(docRef.lines, 5); fo += 1) {
+      var foText = docRef.line(fo).text.trim();
+      if (foText === '') continue;
+      if (foText === '---' || foText === '---yaml') fmOpen = fo;
+      break;
+    }
+    if (fmOpen && docRef.lines > fmOpen + 1) {
+      var fmLimit = Math.min(docRef.lines, fmOpen + 300);
+      for (var fi = fmOpen + 1; fi <= fmLimit; fi += 1) {
+        var fmText = docRef.line(fi).text.trim();
+        if (fmText === '---' || fmText === '...') {
+          /* 光有 --- 包起来还不够：正文以水平分割线开头也很常见。
+             这里再要求中间每一行都是 YAML 的「key: value」或空行，
+             否则按普通正文处理，不做属性区样式。 */
+          var looksYaml = true;
+          for (var fy = fmOpen + 1; fy < fi; fy += 1) {
+            var fyText = docRef.line(fy).text.trim();
+            if (fyText === '') continue;
+            if (!/^[-\w]+\s*:/.test(fyText) && fyText.charAt(0) !== '#') { looksYaml = false; break; }
+          }
+          if (looksYaml) fm = { from: docRef.line(fmOpen).from, to: docRef.line(fi).to, last: fi };
+          break;
+        }
+      }
+    }
+    if (fm) {
+      for (var fl = 1; fl <= fm.last; fl += 1) {
+        decorations.push(Decoration.line({ class: 'cm-md-fm-line' }).range(docRef.line(fl).from));
+      }
+    }
+
     for (var r = 0; r < view.visibleRanges.length; r += 1) {
       var range = view.visibleRanges[r];
 
@@ -540,6 +580,8 @@
         from: range.from,
         to: range.to,
         enter: function (node) {
+          /* 属性区里的节点一律不套用任何 Markdown 装饰 */
+          if (fm && node.from >= fm.from && node.to <= fm.to) return false;
           var name = node.name;
           var line = state.doc.lineAt(node.from);
           var isActive = activeLines.has(line.number);

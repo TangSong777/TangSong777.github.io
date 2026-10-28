@@ -567,3 +567,19 @@ body.embed-mode .editor-toolbar { flex-wrap: nowrap; }
   transform: translateY(-50%);
   background: var(--line);
 }
+
+/* ---- Round 43f: 前置属性区（front matter）按 Typora 的样子显示 ----
+   文档开头 --- 到 --- 之间的 YAML 既不是正文也不该被当成 Markdown 渲染，
+   这里统一做成一块浅灰等宽属性区：可编辑、可选中，但不再放大成标题。 */
+.cm-md-fm-line {
+  background: #f4f7f6;
+  color: #63716f;
+  font-family: ui-monospace, SFMono-Regular, "Cascadia Code", Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  box-shadow: inset 3px 0 0 #d8e5e3;
+}
+.cm-md-fm-line.cm-activeLine {
+  background: #eef4f3;
+  color: #3f4d4b;
+}
