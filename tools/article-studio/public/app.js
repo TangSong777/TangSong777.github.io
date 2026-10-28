@@ -313,6 +313,18 @@ function openArticlePanel() {
   $('#mobileMenuButton').setAttribute('aria-expanded', 'true');
 }
 
+function articleStamp(item) {
+  const raw = item.updatedAt || item.date || '';
+  const d = new Date(raw);
+  if (!d || Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function articleMeta(item) {
+  const stamp = articleStamp(item);
+  return stamp ? `${stamp} · ${item.path}` : item.path;
+}
+
 function renderList() {
   const list = $('#articleList');
   const oldScroll = list.scrollTop;
@@ -321,7 +333,7 @@ function renderList() {
   list.innerHTML = articles.length ? articles.map((item) => `
     <div class="article-row" data-path="${escapeHtml(item.path)}">
     <button class="article-item ${item.path === state.currentPath ? 'active' : ''}" data-path="${escapeHtml(item.path)}" title="右键编辑文章信息">
-      <strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.path)}</small>
+      <strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(articleMeta(item))}</small>
     </button><button type="button" class="article-more" aria-label="编辑 ${escapeHtml(item.title)} 的文章信息" title="文章信息">⋯</button></div>`).join('') : '<div class="local-note">没有找到文章。</div>';
   list.scrollTop = oldScroll;
   document.querySelectorAll('.article-item').forEach((button) => button.addEventListener('click', () => selectArticle(button.dataset.path)));

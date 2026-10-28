@@ -1023,3 +1023,6 @@ body.outline-hidden .editing-surface > .pane-footer { grid-column: 1; }
   user-select: none;
   pointer-events: none;
 }
+
+/* Round 56：文章列表显示更新时间 */
+.article-item small { font-variant-numeric: tabular-nums; letter-spacing: .01em; }
