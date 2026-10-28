@@ -1110,6 +1110,12 @@ body.embed-mode .editing-surface.split-mode > .source-pane { grid-column: 2; }
 body.embed-mode .editing-surface.split-mode > .editor-toolbar { grid-column: 1 / 3; }
 body.embed-mode.split-swapped .editing-surface.split-mode > .rich-editor { grid-column: 2; }
 body.embed-mode.split-swapped .editing-surface.split-mode > .source-pane { grid-column: 1; }
+/* Round 72：embed 双栏下大纲列隐藏（之前 210px 大纲与工具栏/正文重叠），两栏各占一半；
+   正文去掉 728px 阅读上限并收紧左右留白，让双栏内容更舒展。 */
+body.embed-mode .editing-surface.split-mode > .article-outline { display: none; }
+body.embed-mode .editing-surface.split-mode .rich-editor .cm-scroller { padding-left: 12px; padding-right: 12px; }
+body.embed-mode .editing-surface.split-mode .rich-editor .cm-content { max-width: none; padding-left: 12px; padding-right: 12px; }
+body.embed-mode .editing-surface.split-mode .source-pane { padding-left: 10px; padding-right: 10px; }
 .swap-button { border: 1px solid var(--line); background: var(--surface); color: var(--green-deep); border-radius: 9px; padding: 4px 9px; font-size: 14px; line-height: 1; cursor: pointer; }
 .swap-button:hover { border-color: var(--green); color: var(--green); }
 .swap-button[hidden] { display: none; }
