@@ -1,3 +1,8 @@
+/* Round 80：/api/config 预取——尽早与静态脚本并行发出。 */
+window.__configPromise = fetch('/api/config')
+  .then(function (r) { return r.ok ? r.json() : null; })
+  .catch(function () { return null; });
+
 (function attachArticleMetadata(global) {
   const knownKeys = new Set(['title', 'date', 'updated', 'categories', 'tags', 'description']);
 

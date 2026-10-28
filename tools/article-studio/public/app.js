@@ -1445,7 +1445,8 @@ async function init() {
   }
   let openedDeepLink = false;
   try {
-    const config = await api('/api/config');
+    const config = await (window.__configPromise || api('/api/config'));
+    window.__configPromise = null;
     state.authMode = config.authMode || 'local';
     state.token = config.token || '';
     state.authenticated = config.authenticated !== false;
