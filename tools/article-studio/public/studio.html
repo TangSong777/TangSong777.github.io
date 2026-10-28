@@ -6,7 +6,7 @@
   <title>文章工作台 · YangHanLin</title>
   <link rel="icon" type="image/jpeg" href="/site-preview/images/avatar.jpg?v=80260905">
   <link rel="apple-touch-icon" href="/site-preview/images/avatar.jpg?v=80260905">
-  <link rel="stylesheet" href="/styles.css?v=47">
+  <link rel="stylesheet" href="/styles.css?v=48">
 </head>
 <body>
   <header class="topbar">
@@ -34,7 +34,7 @@
         <div><span class="eyebrow">CONTENT</span><h1>文章</h1></div>
         <div class="panel-actions"><button id="newButton" class="icon-button" title="新建文章" aria-label="新建文章">＋</button><button id="closePanelButton" class="icon-button panel-close" type="button" aria-label="关闭文章列表">×</button></div>
       </div>
-      <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索文章"></label>
+      <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索文章"><button type="button" class="search-clear" id="searchClear" aria-label="清空搜索" hidden>✕</button></label>
       <div id="articleList" class="article-list" aria-live="polite"></div>
       <div class="local-note">内容只在本机处理。上传时仅提交当前文章及其图片。</div>
     </aside>
@@ -253,7 +253,7 @@
   <script src="/metadata.js?v=16"></script>
   <script src="/vendor/codemirror.bundle.js?v=21"></script>
   <script src="/js/typora-live-preview.js?v=27"></script>
-  <script src="/app.js?v=30"></script>
+  <script src="/app.js?v=31"></script>
   <script src="/ui.js?v=2"></script>
 </body>
 </html>

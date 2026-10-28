@@ -1608,7 +1608,22 @@ window.addEventListener('resize', () => {
   }
 });
 $('#imageInput').addEventListener('change', (event) => { insertImages(event.target.files); event.target.value = ''; });
-$('#searchInput').addEventListener('input', renderList);
+$('#searchInput').addEventListener('input', () => { syncSearchClear(); renderList(); });
+
+function syncSearchClear() {
+  const button = $('#searchClear');
+  if (button) button.hidden = !$('#searchInput').value;
+}
+
+$('#searchClear').addEventListener('click', (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  const input = $('#searchInput');
+  input.value = '';
+  syncSearchClear();
+  renderList();
+  input.focus();
+});
 $('#newButton').addEventListener('click', openNewDialog);
 $('#emptyNewButton').addEventListener('click', openNewDialog);
 $('#newTitle').addEventListener('input', () => { if (!$('#newSlug').dataset.edited) $('#newSlug').value = slugify($('#newTitle').value); });
