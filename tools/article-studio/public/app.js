@@ -835,6 +835,43 @@ function insertDivider() {
   applyUndoableEdit(start, end, replacement, start + prefix.length + 3);
 }
 
+function blockInsertRange() {
+  let start = editor.selectionStart;
+  let end = editor.selectionEnd;
+  // 光标落在行中间时，把插入点移到本行末尾，避免把一句话切断
+  if (start === end) {
+    const lineStart = editor.value.lastIndexOf('\n', start - 1) + 1;
+    if (start > lineStart) {
+      const lineEnd = editor.value.indexOf('\n', start);
+      if (lineEnd !== -1) {
+        start = lineEnd;
+        end = lineEnd;
+      }
+    }
+  }
+  const before = editor.value.slice(0, start);
+  const after = editor.value.slice(end);
+  const prefix = before.length && !before.endsWith('\n\n') ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
+  const suffix = after.length && !after.startsWith('\n\n') ? (after.startsWith('\n') ? '\n' : '\n\n') : '';
+  return { start, end, prefix, suffix };
+}
+
+function insertTable() {
+  const { start, end, prefix, suffix } = blockInsertRange();
+  const table = '| 列 1 | 列 2 |\n| --- | --- |\n| 内容 | 内容 |';
+  const replacement = `${prefix}${table}${suffix}`;
+  const selectStart = start + prefix.length + 2;
+  applyUndoableEdit(start, end, replacement, selectStart, selectStart + 3);
+}
+
+function insertTaskList() {
+  const { start, end, prefix, suffix } = blockInsertRange();
+  const body = '- [ ] 待办事项\n- [ ] 待办事项';
+  const replacement = `${prefix}${body}${suffix}`;
+  const selectStart = start + prefix.length + 6;
+  applyUndoableEdit(start, end, replacement, selectStart, selectStart + 4);
+}
+
 async function fileToDataUrl(file) {
   return await new Promise((resolvePromise, reject) => {
     const reader = new FileReader();
@@ -1522,6 +1559,8 @@ document.querySelectorAll('.editor-toolbar button').forEach((button) => {
     else if (button.dataset.prefix) prefixLines(button.dataset.prefix);
     else if (button.dataset.action === 'link') replaceSelection('[', '](https://)', '链接文字');
     else if (button.dataset.action === 'divider') insertDivider();
+    else if (button.dataset.action === 'table') insertTable();
+    else if (button.dataset.action === 'tasklist') insertTaskList();
     else if (button.dataset.action === 'codeblock') insertCodeBlock();
   });
 });
