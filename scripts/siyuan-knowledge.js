@@ -58,7 +58,10 @@ const navEnhance = [
 });
 
 // The full document index is only needed by the home and knowledge pages.
-hexo.extend.injector.register('body_end', knowledge, 'home');
+// Round 76：首页只需要 siyuan-data.js（hero 统计），siyuan-knowledge.js（TOC 高亮/引用聚焦）
+// 只在笔记页（page）需要——拆分注入，首页省下约 10KB。
+const dataOnly = `<script src="${siteRoot}js/siyuan-data.js?v=20261037" defer></script>`;
+hexo.extend.injector.register('body_end', dataOnly, 'home');
 hexo.extend.injector.register('body_end', knowledge, 'page');
 
 // 给主题自己输出的 main.css 补上同样的缓存指纹（NexT 模板不改，只在渲染结果里替换）。
