@@ -401,6 +401,7 @@ async function loadArticles() {
   const data = await api('/api/articles');
   state.articles = data.articles;
   renderList();
+  renderOutlineArticleSwitcher();
 }
 
 async function selectArticle(path) {
@@ -581,6 +582,10 @@ function openNewDialog() {
   $('#newTitle').value = '';
   $('#newSlug').value = '';
   delete $('#newSlug').dataset.edited;
+  if ($('#newDate')) $('#newDate').value = articleMetadata.currentLocalDateTime();
+  if ($('#newCategories')) $('#newCategories').value = '';
+  if ($('#newTags')) $('#newTags').value = '';
+  if ($('#newDescription')) $('#newDescription').value = '';
   $('#newDialog').showModal();
   $('#newTitle').focus();
 }
@@ -594,11 +599,22 @@ async function createArticle(event) {
   const title = $('#newTitle').value.trim();
   const slug = $('#newSlug').value.trim();
   if (!title || !slug) return;
+  const metadata = {
+    date: $('#newDate')?.value || articleMetadata.currentLocalDateTime(),
+    categories: ($('#newCategories')?.value || '').split(',').map((value) => value.trim()).filter(Boolean),
+    tags: ($('#newTags')?.value || '').split(',').map((value) => value.trim()).filter(Boolean),
+    description: ($('#newDescription')?.value || '').trim(),
+  };
   try {
     const data = await api('/api/create', { method: 'POST', body: JSON.stringify({ title, slug }) });
     $('#newDialog').close();
     await loadArticles();
     await selectArticle(data.path);
+    const updated = articleMetadata.update(editor.value, metadata);
+    if (updated !== editor.value) {
+      editor.value = updated;
+      await saveArticle(false);
+    }
     toast('新文章已创建。');
   } catch (error) { toast(error.message, true); }
 }
@@ -631,8 +647,15 @@ function syncArticleOutline() {
   const threshold = Math.min(180, container.clientHeight * .24);
   let current = outlineEntries[0];
   outlineEntries.forEach((entry) => {
-    const top = entry.node ? entry.node.getBoundingClientRect().top - bounds.top
-      : sourceEditor.value.slice(0, entry.offset).split('\n').length * parseFloat(getComputedStyle(sourceEditor).lineHeight) - container.scrollTop;
+    let top;
+    if (editorMode === 'wysiwyg' && richEditor && richEditor.lineBlockAt) {
+      // Round 70: 所见即所得模式改用 CodeMirror 行块坐标。旧实现走 sourceEditor.value，
+      // 但 wysiwyg 下 textarea 不保证同步（常为空），导致高亮永远停在大纲最后一条。
+      const block = richEditor.lineBlockAt(Math.min(entry.offset, richEditor.state.doc.length));
+      top = block.top - richEditor.scrollDOM.scrollTop;
+    } else {
+      top = sourceEditor.value.slice(0, entry.offset).split('\n').length * parseFloat(getComputedStyle(sourceEditor).lineHeight) - container.scrollTop;
+    }
     if (top <= threshold) current = entry;
   });
   if (container.scrollHeight > container.clientHeight + 8 && container.scrollTop + container.clientHeight >= container.scrollHeight - 8) current = outlineEntries.at(-1);
@@ -653,6 +676,75 @@ $('#editingSurface').addEventListener('scroll', (event) => {
   if (outlineScrollFrame) return;
   outlineScrollFrame = requestAnimationFrame(() => { outlineScrollFrame = null; syncArticleOutline(); });
 }, true);
+// Round 70: 大纲顶部文章切换器（切换文章 / 新建，新建复用信息面板字段）
+function renderOutlineArticleSwitcher() {
+  const list = $('#outlineArticleList');
+  if (!list) return;
+  list.replaceChildren();
+  state.articles.forEach((article) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'outline-article-item' + (article.path === state.currentPath ? ' is-active' : '');
+    button.textContent = article.title || article.fileName || article.path;
+    button.title = article.path;
+    button.addEventListener('click', () => {
+      closeOutlineArticleMenu();
+      selectArticle(article.path);
+    });
+    list.append(button);
+  });
+  if (!state.articles.length) {
+    const empty = document.createElement('p');
+    empty.className = 'outline-empty';
+    empty.textContent = '还没有文章，点「＋」新建';
+    list.append(empty);
+  }
+  const label = $('#outlineArticleLabel');
+  if (label) {
+    const current = state.articles.find((article) => article.path === state.currentPath);
+    label.textContent = current ? (current.title || current.path) : '选择文章';
+  }
+}
+
+function openOutlineArticleMenu() {
+  const shell = $('#outlineArticleShell');
+  if (!shell || shell.classList.contains('open')) return;
+  renderOutlineArticleSwitcher();
+  shell.classList.add('open');
+  $('#outlineArticleToggle')?.setAttribute('aria-expanded', 'true');
+}
+
+function closeOutlineArticleMenu() {
+  const shell = $('#outlineArticleShell');
+  if (!shell || !shell.classList.contains('open')) return;
+  shell.classList.remove('open');
+  $('#outlineArticleToggle')?.setAttribute('aria-expanded', 'false');
+}
+
+function toggleOutlineArticleMenu() {
+  if ($('#outlineArticleShell')?.classList.contains('open')) closeOutlineArticleMenu();
+  else openOutlineArticleMenu();
+}
+
+document.addEventListener('click', (event) => {
+  if (!$('#outlineArticleShell')?.classList.contains('open')) return;
+  if (event.target.closest('#outlineArticleShell')) return;
+  closeOutlineArticleMenu();
+});
+
+$('#outlineArticleToggle')?.addEventListener('click', (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  toggleOutlineArticleMenu();
+});
+
+$('#outlineNewArticle')?.addEventListener('click', (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  closeOutlineArticleMenu();
+  openNewDialog();
+});
+
 function scheduleArticleOutline() {
   clearTimeout(outlineTimer);
   outlineTimer = setTimeout(renderArticleOutline, 120);

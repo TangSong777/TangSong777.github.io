@@ -7,7 +7,7 @@
   <title>文章工作台 · YangHanLin</title>
   <link rel="icon" type="image/jpeg" href="/site-preview/images/avatar.jpg?v=80260905">
   <link rel="apple-touch-icon" href="/site-preview/images/avatar.jpg?v=80260905">
-  <link rel="stylesheet" href="/styles.css?v=53">
+  <link rel="stylesheet" href="/styles.css?v=54">
 </head>
 <body>
   <header class="topbar">
@@ -64,6 +64,15 @@
         </div>
         <div id="editingSurface" class="editing-surface wysiwyg-mode">
           <aside class="article-outline" aria-label="当前文章大纲">
+            <div class="outline-article-bar">
+              <div id="outlineArticleShell" class="outline-article-shell">
+                <button id="outlineArticleToggle" class="outline-article-toggle" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="outlineArticleLabel">选择文章</span><span class="outline-caret" aria-hidden="true">▾</span>
+                </button>
+                <div id="outlineArticleList" class="outline-article-list" role="listbox"></div>
+              </div>
+              <button id="outlineNewArticle" class="outline-new-button" type="button" title="新建文章" aria-label="新建文章">＋</button>
+            </div>
             <div class="outline-heading">文章大纲</div>
             <nav id="articleOutline" aria-label="标题导航"><p class="outline-empty">添加标题后显示大纲</p></nav>
           </aside>
@@ -116,11 +125,18 @@
     </form>
   </dialog>
 
-  <dialog id="newDialog">
+  <dialog id="newDialog" class="new-dialog">
     <form id="newForm" method="dialog">
-      <span class="eyebrow">NEW ARTICLE</span><h2>创建文章</h2>
+      <span class="eyebrow">NEW ARTICLE</span><h2>新建文章</h2>
+      <p class="dialog-hint">与文章「信息」面板相同。创建后仍可在信息面板里继续修改。</p>
       <label>文章标题<input id="newTitle" required placeholder="例如：如何搭建个人博客"></label>
-      <label>文章 slug<input id="newSlug" required placeholder="例如：build-personal-blog"><small>用于文件名和网址，发布后不建议修改。</small></label>
+      <label>文件名<input id="newSlug" required placeholder="例如：build-personal-blog"><small>用于文件名和网址，发布后不建议修改。</small></label>
+      <div class="new-dialog-grid">
+        <label>日期<input id="newDate" type="datetime-local"></label>
+        <label>分类（逗号分隔）<input id="newCategories" placeholder="例如：教程, 博客"></label>
+      </div>
+      <label>标签（逗号分隔）<input id="newTags" placeholder="例如：Hexo, Rock5B"></label>
+      <label>描述<input id="newDescription" placeholder="一句话摘要，用于列表与 SEO"></label>
       <div class="dialog-actions"><button id="cancelCreate" type="button" class="button secondary">取消</button><button id="createButton" type="submit" class="button primary">创建</button></div>
     </form>
   </dialog>
@@ -254,7 +270,7 @@
   <script src="/metadata.js?v=16"></script>
   <script src="/vendor/codemirror.bundle.js?v=21"></script>
   <script src="/js/typora-live-preview.js?v=27"></script>
-  <script src="/app.js?v=37"></script>
+  <script src="/app.js?v=38"></script>
   <script src="/ui.js?v=3"></script>
 </body>
 </html>

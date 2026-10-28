@@ -1120,3 +1120,19 @@ body.embed-mode.split-swapped .editing-surface.split-mode > .source-pane { grid-
   .editing-surface.split-mode > .editor-toolbar { grid-column: 1; }
 }
 
+/* ===== Round 70：大纲顶部文章切换器 + 新建文章信息面板 ===== */
+.outline-article-bar { display: flex; align-items: center; gap: 6px; padding: 10px 8px 6px; }
+.outline-article-shell { position: relative; flex: 1; min-width: 0; }
+.outline-article-toggle { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 6px 8px; font-size: 12px; cursor: pointer; }
+.outline-article-toggle .outline-caret { color: var(--green); font-size: 11px; }
+.outline-article-toggle:hover { border-color: var(--green-line); background: var(--green-soft); }
+.outline-article-list { position: absolute; left: 0; top: calc(100% + 4px); z-index: 30; width: 220px; max-height: 320px; overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 34px -14px rgba(20, 60, 55, .3); padding: 4px; display: none; }
+.outline-article-shell.open .outline-article-list { display: block; }
+.outline-article-item { display: block; width: 100%; border: 0; border-radius: 6px; background: transparent; color: var(--ink); text-align: left; padding: 7px 8px; font-size: 12px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.outline-article-item:hover { background: var(--green-soft); color: var(--green-deep); }
+.outline-article-item.is-active { background: var(--green-soft); color: var(--green-deep); font-weight: 700; box-shadow: inset 3px 0 var(--green); }
+.outline-new-button { flex: none; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--green-deep); font-size: 16px; line-height: 1; cursor: pointer; }
+.outline-new-button:hover { background: var(--green-soft); border-color: var(--green-line); }
+.new-dialog .dialog-hint { margin: 2px 0 12px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.new-dialog .new-dialog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 600px) { .new-dialog .new-dialog-grid { grid-template-columns: 1fr; } }
