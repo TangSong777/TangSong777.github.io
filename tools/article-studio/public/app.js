@@ -431,6 +431,7 @@ async function login(event) {
     $('#loginDialog').close();
     $('#identityState').textContent = '已登录';
     await loadArticles();
+  document.getElementById('studioBoot')?.remove();
   } catch (error) {
     $('#loginError').textContent = error.message || '登录失败';
   } finally {
