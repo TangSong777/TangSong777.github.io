@@ -567,11 +567,27 @@
     var items = document.querySelectorAll('.post-body li');
     for (var i = 0; i < items.length; i++) {
       var li = items[i];
+      // siyuan 导出的列表有两种形态：
+      //   <li>📄 <a>…</a></li>            ← 文字节点直接在 li 下
+      //   <li><p>📄 <a>…</a></p></li>     ← 多包一层 p（大部分页面是这种）
+      // 早先只认第一种，于是同一份目录里一部分行换成了小文档图标、另一部分还留着彩色 emoji，
+      // 在没装 emoji 字体的机器上（开发板就是这样）后者直接渲染成方框。
+      // 只认 📄。用 surrogate 高字节判断会把 📘 🔗 📋 🔐 一起剥掉（实测会误伤 10 处）。
       var first = li.firstChild;
-      // 只认 📄。早前用 surrogate 高字节判断，会把 📘 🔗 📋 🔐 一起剥掉（实测 10 处）。
-      if (first && first.nodeType === 3 && first.nodeValue.trim().indexOf('📄') === 0) {
-        li.className = (li.className ? li.className + ' ' : '') + 'doc-link';
-        first.nodeValue = first.nodeValue.replace(/^\s*\uD83D\uDCC4\s*/, '');
+      if (first && first.nodeType === 1 && first.tagName === 'P') first = first.firstChild;
+      if (first && first.nodeType === 3) {
+        var head = first.nodeValue.replace(/^\s+/, '').charAt(0);
+        // 只剥「这是一篇文档」这一类的标记，换成统一的灰色文档图标：
+        //   📄 单篇文档、📑 目录/索引、📁 分组、📘 手册
+        // 主题图标（🔗 🔐 🐧 🖥 🧩 ⚙ …）保留，它们各自代表内容主题，不是「文档」的同义符号。
+        var DOC_MARKS = '\uD83D\uDCC4\uD83D\uDCD1\uD83D\uDCC1\uD83D\uDCD8';
+        var idx = DOC_MARKS.indexOf(head);
+        if (idx >= 0 && idx % 2 === 0) {
+          li.className = (li.className ? li.className + ' ' : '') + 'doc-link';
+          // 注意：emoji 是代理对占两个 code unit，[\s\S] 只吃一个会把低代理留在文本里，
+          // 渲染成一个小方块。必须精确吃两个。
+          first.nodeValue = first.nodeValue.replace(/^\s*[\s\S]{2}\s*/, '');
+        }
       }
     }
   }
