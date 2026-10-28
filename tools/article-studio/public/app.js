@@ -1291,6 +1291,7 @@ async function init() {
     if (deepLink && state.authenticated) {
       try {
         await selectArticle(deepLink);
+        return;
       } catch (error) {
         // 文章可能刚被删掉，先把列表刷成真实状态，再说人话。Round 45
         const gone = /不存在/.test(error.message || '');
@@ -1301,6 +1302,9 @@ async function init() {
   } catch (error) {
     toast(`无法连接本地后台：${error.message}`, true);
   }
+  // Round 65：空状态初始隐藏，等初始化结束再决定是否显示，
+  // 避免「点编辑 → 先闪一下空状态 → 正文才出来」的观感。
+  $('#emptyState').classList.remove('hidden');
 }
 
 function openSettingsDialog() {

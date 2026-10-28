@@ -176,7 +176,7 @@
       '<div class="card-head"><h2>编辑：' + esc(state.editing.path) + '</h2>' +
       '<div class="row-actions"><button class="btn" data-action="back-to-articles">返回列表</button></div></div>' +
       '<iframe class="studio-frame" title="文章工作台" src="/studio.html?embed=1&path=' +
-      encodeURIComponent(state.editing.path) + '"></iframe>' +
+      encodeURIComponent(state.editing.path) + '&t=' + Date.now() + '"></iframe>' +
       '</section>';
   }
 
