@@ -127,12 +127,13 @@
 
   /* ---------------- 登录 ---------------- */
   function renderLogin() {
-    app.innerHTML = '<div class="login"><form class="login-card" id="login-form">' +
+    app.innerHTML = '<div class="login"><canvas class="login-bg" aria-hidden="true"></canvas><form class="login-card" id="login-form">' +
       '<h1>管理中心</h1><p>学习笔记 · 博客 · 岁月史书</p>' +
       '<label class="field"><span>密码</span><input id="login-password" type="password" autocomplete="current-password" required></label>' +
       '<label class="field"><span>动态验证码（如已启用）</span><input id="login-totp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label>' +
       '<button class="btn primary block" type="submit">登录</button>' +
       '<div class="login-msg" id="login-msg"></div></form></div>';
+    if (!document.querySelector('script[src*=login-bg]')) { var _lb = document.createElement('script'); _lb.src = '/login-bg.js'; document.body.appendChild(_lb); }
     document.getElementById('login-form').addEventListener('submit', async function (event) {
       event.preventDefault();
       var msg = document.getElementById('login-msg');

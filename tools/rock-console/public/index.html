@@ -10,13 +10,14 @@
 <link rel="apple-touch-icon" href="/avatar-32.jpg?v=1">
 <link rel="preload" href="/api/config" as="fetch" crossorigin="anonymous">
 <style>#boot{position:fixed;inset:0;display:grid;place-items:center;background:#f2f7f6;color:#5f7d78;font:15px/1.6 "Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;z-index:0}</style>
-<link rel="stylesheet" href="/styles.css?v=55">
+<link rel="stylesheet" href="/styles.css?v=56">
 </head>
 <body>
 <div id="boot">Rock 5B+ 控制台</div>
 
 <!-- 登录视图 -->
 <section id="login-view" class="login-shell" hidden>
+  <canvas class="login-bg" aria-hidden="true"></canvas>
   <form id="login-form" class="login-card" autocomplete="off">
     <div class="login-brand">
       <span class="brand-mark">板</span>
@@ -258,5 +259,5 @@
   </div>
 </section>
 
-<script src="/app.js?v=61"></script></body>
+<script src="/app.js?v=61"></script><script src="/login-bg.js" defer></script></body>
 </html>
