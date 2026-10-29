@@ -676,8 +676,22 @@ export function readMoonlightEvents() {
         droppedFrames: ev.droppedFrames ?? null,
       });
       open = null;
-    } else if (ev.event === 'watchdog_restart' && ev.tsMs >= todayStart) {
-      result.todayWatchdogRestarts += 1;
+    } else if (ev.event === 'watchdog_restart') {
+      if (ev.tsMs >= todayStart) result.todayWatchdogRestarts += 1;
+      // 看门狗重启 = 旧会话被中断，但旧脚本从不写 stop 事件；这里用 restart
+      // 时间闭合当前 open，否则凌晨的连续重启会话永远进不了 sessions。
+      if (open && (ev.pid == null || ev.pid === open.pid)) {
+        sessions.push({
+          startMs: open.tsMs,
+          endMs: ev.tsMs,
+          durationSeconds: Math.round((ev.tsMs - open.tsMs) / 1000),
+          host: open.host || null,
+          resolution: null,
+          bitrateKbps: null,
+          droppedFrames: null,
+        });
+        open = null;
+      }
     }
   }
 
