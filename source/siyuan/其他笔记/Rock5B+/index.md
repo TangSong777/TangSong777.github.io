@@ -13,6 +13,8 @@ categories:
   - '其他笔记'
 ---
 
+# <span id="" style="display: none;"></span>Rock5B+
+
 > 本文档是 Rock 5B+（Radxa OS 26.01 / KDE Plasma）从"烧录系统"到"投入使用"的完整实操记录：系统烧录与启动、基础环境配置、系统设置、UART 串口调试、SSH 远程连接、多媒体软件（ffmpeg-rockchip / Moonlight / GStreamer）编译安装。官方参考：[ROCK 5B/5B+ | Radxa Docs](https://docs.radxa.com/rock5/rock5b)。
 
 ## 一、系统烧录与启动

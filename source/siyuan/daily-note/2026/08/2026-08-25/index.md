@@ -15,6 +15,8 @@ categories:
   - '08'
 ---
 
+# <span id="" style="display: none;"></span>2026-08-25
+
 # 今日工作：
 
 玩Rock5B+这块板子，给之前的程序备份到U盘里了，然后重新刷系统了，SD卡烧录和NVME烧录过了一遍

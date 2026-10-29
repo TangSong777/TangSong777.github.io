@@ -16,6 +16,8 @@ categories:
   - '蓝桥杯嵌入式赛道分析'
 ---
 
+# <span id="" style="display: none;"></span>历届蓝桥杯省赛真题模块使用
+
 第十四届：
 
 **LCD**：三个界面

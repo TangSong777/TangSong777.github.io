@@ -15,6 +15,8 @@ categories:
   - '08'
 ---
 
+# <span id="" style="display: none;"></span>2026-08-27
+
 # 今日工作：
 
 将ssh学习文档过了一遍并归档

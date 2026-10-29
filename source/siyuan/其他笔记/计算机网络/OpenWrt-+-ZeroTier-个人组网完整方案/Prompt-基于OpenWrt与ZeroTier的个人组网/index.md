@@ -15,6 +15,8 @@ categories:
   - 'OpenWrt + ZeroTier 个人组网完整方案'
 ---
 
+# <span id="" style="display: none;"></span>Prompt-基于OpenWrt与ZeroTier的个人组网
+
 我有一台 OpenWrt 路由器，需要设计一个双场景网络访问方案。
 
 网络结构：

@@ -14,6 +14,8 @@ categories:
   - '计算机网络'
 ---
 
+# <span id="" style="display: none;"></span>OpenWrt + ZeroTier 个人组网完整方案
+
 > 本文档整合《Prompt-基于OpenWrt与ZeroTier的个人组网》的需求分析与《基于OpenWrt与ZeroTier的个人组网》的方案设计，形成一份可直接照做的完整实施方案。最终目标：笔记本无论在家还是外地，都能透明访问家庭 ████ 网段，并自动选择最佳路径。
 
 # 0. 速通

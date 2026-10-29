@@ -15,6 +15,8 @@ categories:
   - '08'
 ---
 
+# <span id="" style="display: none;"></span>2026-08-03
+
 # <span id="20260803133815-px3p5o5" class="siyuan-block-anchor" aria-hidden="true"></span>力扣刷题：[1768. 交替合并字符串](https://leetcode.cn/problems/merge-strings-alternately/)
 
 ## 题目

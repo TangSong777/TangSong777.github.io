@@ -15,6 +15,8 @@ categories:
   - 'STM32'
 ---
 
+# <span id="" style="display: none;"></span>STM32CubeMX配置
+
 > STM32CubeMX 工程配置速查：包含工程级配置、引脚功能配置总表，以及"为什么要这样配"的原理说明（面向蓝桥杯嵌入式赛道统一开发板）。
 
 ## 一、工程配置总览

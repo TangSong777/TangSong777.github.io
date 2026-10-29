@@ -15,6 +15,8 @@ categories:
   - '08'
 ---
 
+# <span id="" style="display: none;"></span>2026-08-05
+
 # <span id="20260805214039-pto6mtx" class="siyuan-block-anchor" aria-hidden="true"></span>力扣刷题：[1672. 最富有客户的资产总量](https://leetcode.cn/problems/richest-customer-wealth/)
 
 ## 题目

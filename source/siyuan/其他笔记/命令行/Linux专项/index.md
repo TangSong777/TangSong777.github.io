@@ -14,6 +14,8 @@ categories:
   - '命令行'
 ---
 
+# <span id="" style="display: none;"></span>Linux专项
+
 # Linux 命令行核心知识
 
 > 与 Windows 命令行体系的对应：PowerShell 内置别名兼容了 `ls`​、`cat`​、`pwd`​、`rm`​、`cp`​、`mv`​ 等 Linux 常用命令（别名机制与命令映射详见 [PowerShell专项：别名机制](/siyuan/其他笔记/命令行/PowerShell专项/)）；PowerShell 与 CMD 的对照见 [CMD专项：与 PowerShell 的对照](/siyuan/其他笔记/命令行/CMD专项/)。命令体系逻辑相通（导航/文件/文本/进程/网络），跨体系时先找"对应命令"即可快速上手。

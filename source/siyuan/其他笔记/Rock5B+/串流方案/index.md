@@ -14,6 +14,8 @@ categories:
   - 'Rock5B+'
 ---
 
+# <span id="" style="display: none;"></span>串流方案
+
 我想要基于sunshine和moon等串流软件，基于我现在的zerotier和个人路由配置，实现在宿舍里使用平板去远程串流在实验室里的电脑玩游戏，能否为我生成一个能否为我生成一套完整的方案。注意参考我现在的笔记，为我生成一个相关未知知识点的学习文档吧。
 
 <section class="siyuan-references" aria-label="文档引用">

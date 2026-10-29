@@ -15,6 +15,8 @@ categories:
   - '学习文档'
 ---
 
+# <span id="" style="display: none;"></span>ZeroTier专项
+
 # ZeroTier 专项 · 知识笔记
 
 > 本笔记融合 [OpenWrt + ZeroTier 个人组网完整方案](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/)（部署方案）与 [从公网、局域网到 ZeroTier：构建属于自己的虚拟局域网（已归档）](/siyuan/已归档/从公网、局域网到-ZeroTier：构建属于自己的虚拟局域网（已归档）/)（原理），记录 ZeroTier 组网的知识链条与个人部署实践。

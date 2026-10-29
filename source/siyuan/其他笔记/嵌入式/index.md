@@ -13,6 +13,8 @@ categories:
   - '其他笔记'
 ---
 
+# <span id="" style="display: none;"></span>嵌入式
+
 - 📑 [ESP32](/siyuan/其他笔记/嵌入式/ESP32/)
 
   - 📄 [函数与配置](/siyuan/其他笔记/嵌入式/ESP32/知识点大纲/)

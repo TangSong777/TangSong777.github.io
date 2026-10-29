@@ -1,7 +1,7 @@
 ---
 title: '学习笔记'
 date: '2026-06-23T16:54:27+08:00'
-updated: '2026-10-28T09:26:33+08:00'
+updated: '2026-10-29T09:16:03+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -12,7 +12,11 @@ categories:
   - '学习笔记'
 ---
 
-- 思源笔记中写 LaTeX 公式[^1]
+# <span id="" style="display: none;"></span>学习笔记
+
+
+
+  - [思源笔记中写 LaTeX 公式](/siyuan/待学习/思源笔记中写-LaTeX-公式/)
 - [Python笔记](/siyuan/Python笔记/)
 
   - [NumPy专项](/siyuan/Python笔记/NumPy专项/)

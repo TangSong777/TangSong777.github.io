@@ -15,6 +15,8 @@ categories:
   - 'STM32'
 ---
 
+# <span id="" style="display: none;"></span>旋转编码器与电机详解
+
 > 旋转编码器 / 编码电机 A/B 相计数原理，以及 STM32 定时器编码器模式的配置与使用速查。与《知识点大纲》的 TIM 输入捕获、CubeMX 配置联动。
 
 ## 一、A/B 相与旋转方向

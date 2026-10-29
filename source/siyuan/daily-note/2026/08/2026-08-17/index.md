@@ -15,6 +15,8 @@ categories:
   - '08'
 ---
 
+# <span id="" style="display: none;"></span>2026-08-17
+
 # 力扣刷题：[27. 移除元素](https://leetcode.cn/problems/remove-element/)
 
 ## 题目

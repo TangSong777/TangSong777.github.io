@@ -15,6 +15,8 @@ categories:
   - 'ESP32'
 ---
 
+# <span id="" style="display: none;"></span>知识点大纲
+
 > ESP32 Arduino 基础函数速查，涵盖 GPIO 数字 I/O、延时、LEDC PWM 输出与串口通信四大常用模块。
 
 ## 一、GPIO 数字 I/O

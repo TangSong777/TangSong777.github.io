@@ -13,6 +13,8 @@ categories:
   - '其他笔记'
 ---
 
+# <span id="" style="display: none;"></span>文本编码与字符集专项
+
 > 文本编码与字符集知识点专项：从"字符集 vs 编码"概念出发，覆盖 Unicode、ASCII、UTF-8、GBK、BOM、乱码排查与 Python 实操。来源：《文本编码与字符集学习方案（已归档）》。项目用途：跨 Windows（GBK）/ Linux（UTF-8）读写中文实验数据。
 
 ## 一、字符集与编码（核心概念）

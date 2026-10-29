@@ -15,6 +15,8 @@ categories:
   - '08'
 ---
 
+# <span id="" style="display: none;"></span>2026-08-04
+
 # <span id="20260804001819-jo9ybpr" class="siyuan-block-anchor" aria-hidden="true"></span>力扣刷题：[283. 移动零](https://leetcode.cn/problems/move-zeroes/)
 
 ## 题目

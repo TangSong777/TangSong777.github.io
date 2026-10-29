@@ -13,6 +13,8 @@ categories:
   - '已归档'
 ---
 
+# <span id="" style="display: none;"></span>Python 调用系统命令学习方案（已归档）
+
 > 教学讲义式学习方案：解决"如何在 Python 中运行 Windows/Linux 命令行、并让每次运行 Python 文件时都自动执行某条命令"的问题。核心结论先行：**最推荐使用标准库** **​`subprocess`​**​ **（尤其** **​`subprocess.run`​**​ **）** ；第三方 `sh` 库可作为舒适替代。按依赖顺序：为什么需要 → 方案总览 → subprocess 详解 → shell 安全 → 跨平台差异 → 自动化最佳实践 → 排障。能力基线：L0 → 目标 L2。
 
 ## 一、为什么要在 Python 里运行系统命令

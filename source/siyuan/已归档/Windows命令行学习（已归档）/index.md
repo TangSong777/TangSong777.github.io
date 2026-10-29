@@ -13,6 +13,8 @@ categories:
   - '已归档'
 ---
 
+# <span id="" style="display: none;"></span>Windows命令行学习（已归档）
+
 # Windows 命令行学习
 
 > 学习 Windows 环境中的 PowerShell 基本指令与 CMD 基本指令，重点掌握文件管理、目录导航、文本查看、进程管理、环境变量和命令帮助。

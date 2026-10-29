@@ -13,6 +13,8 @@ categories:
   - 'daily note'
 ---
 
+# <span id="" style="display: none;"></span>daily note
+
 - 📑 [2026](/siyuan/daily-note/2026/)
 
   - 📑 [08](/siyuan/daily-note/2026/08/)

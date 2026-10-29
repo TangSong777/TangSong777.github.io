@@ -14,6 +14,8 @@ categories:
   - '命令行'
 ---
 
+# <span id="" style="display: none;"></span>CMD专项
+
 > CMD 是 Windows 传统命令解释器：**内部命令**（`dir`​/`copy`​/`del`​ 等，由 cmd.exe 内置）＋**外部命令**（`findstr`​/`ping`​ 等独立 exe，靠 PATH 调用）。本专项整理自《Windows命令行学习（已归档）》。相关专项：[PowerShell专项](/siyuan/其他笔记/命令行/PowerShell专项/)、[Linux专项](/siyuan/其他笔记/命令行/Linux专项/)。
 
 ## 一、CMD 基础
