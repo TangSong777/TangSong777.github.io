@@ -47,7 +47,7 @@
   var studioReady = false;
   var studioPendingPath = null;
 
-  function ensureStudioFrame() {
+  function ensureStudioFrame(preloadPath) {
     if (studioFrame) return studioFrame;
     var stage = document.getElementById('studioStage');
     if (!stage) {
@@ -59,7 +59,8 @@
     var frame = document.createElement('iframe');
     frame.className = 'studio-frame';
     frame.title = '文章工作台';
-    frame.src = '/studio.html?embed=1&t=' + Date.now();
+    frame.src = '/studio.html?embed=1&t=' + Date.now() +
+      (preloadPath ? '&path=' + encodeURIComponent(preloadPath) : '');
     stage.appendChild(frame);
     studioFrame = frame;
     return frame;
@@ -97,7 +98,7 @@
   function attachStudio(path) {
     var host = document.getElementById('studioHost');
     if (!host) return;
-    ensureStudioFrame();
+    ensureStudioFrame(path);
     updateStudioPosition();
     studioPendingPath = path;
     if (studioReady) {
@@ -110,6 +111,14 @@
   function detachStudio() {
     var stage = document.getElementById('studioStage');
     if (stage) stage.style.visibility = 'hidden';
+  }
+
+  function preloadPath() {
+    try {
+      var last = localStorage.getItem('manager.last-path') || '';
+      if (last && state.articles.some(function (a) { return a.path === last; })) return last;
+      return state.articles.length ? state.articles[0].path : '';
+    } catch (e) { return ''; }
   }
 
   async function api(url, options) {
@@ -178,9 +187,9 @@
       render();
       // Round 69：页面数据就绪后空闲预热工作台 iframe，点「编辑」时零等待
       if ('requestIdleCallback' in window) {
-        requestIdleCallback(function () { try { ensureStudioFrame(); } catch (e) {} }, { timeout: 2500 });
+        requestIdleCallback(function () { try { ensureStudioFrame(preloadPath()); } catch (e) {} }, { timeout: 2500 });
       } else {
-        setTimeout(function () { try { ensureStudioFrame(); } catch (e) {} }, 1500);
+        setTimeout(function () { try { ensureStudioFrame(preloadPath()); } catch (e) {} }, 1500);
       }
     } catch (error) {
       if (error.message === 'unauthorized') return;

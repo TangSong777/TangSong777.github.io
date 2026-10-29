@@ -1680,7 +1680,8 @@ async function openArticleFromParent(path) {
 async function init() {
   // 被管理中心以 iframe 内嵌时（?embed=1），压扁顶栏、去掉文章列表。
   // 必须放在最前面：未登录时 init 会提前 return，放后面就永远加不上这个类。
-  if (new URLSearchParams(location.search).get('embed') === '1') {
+  const isEmbedMode = new URLSearchParams(location.search).get('embed') === '1';
+  if (isEmbedMode) {
     document.body.classList.add('embed-mode');
     // 与管理中心集成：保存、上传、切换文章都走 postMessage（iframe 内不再重复旧顶栏）
     window.addEventListener('message', (event) => {
@@ -1736,7 +1737,8 @@ async function init() {
   document.getElementById('studioBoot')?.remove();
   // Round 65：空状态初始隐藏，等初始化结束再决定是否显示，
   // 避免「点编辑 → 先闪一下空状态 → 正文才出来」的观感。
-  if (!openedDeepLink) $('#emptyState').classList.remove('hidden');
+  // Round 87：embed 内嵌模式（管理中心）不显示空状态，避免点编辑时闪「新建文章」。
+  if (!openedDeepLink && !isEmbedMode) $('#emptyState').classList.remove('hidden');
   // Round 69：初始化完成后再通知母页面（管理中心）可以发送「切换文章」指令；
   // 母页面据此把预热好的 iframe 挪进编辑卡片并直接切文章。
   if (new URLSearchParams(location.search).get('embed') === '1') {
