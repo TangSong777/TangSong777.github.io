@@ -1709,6 +1709,7 @@ async function init() {
     if (state.authMode === 'password' && !state.authenticated) {
       $('#identityState').textContent = '需要登录';
       showLoginDialog();
+      document.getElementById('studioBoot')?.remove();
       return;
     }
     $('#identityState').textContent = config.identity?.email || (config.authMode === 'cloudflare' ? '已安全登录' : '本地模式');
@@ -1731,6 +1732,8 @@ async function init() {
   } catch (error) {
     toast(`无法连接本地后台：${error.message}`, true);
   }
+  // Round 86：初始化结束（无论哪个分支）都移除骨架，避免已登录时永远卡在「加载中」
+  document.getElementById('studioBoot')?.remove();
   // Round 65：空状态初始隐藏，等初始化结束再决定是否显示，
   // 避免「点编辑 → 先闪一下空状态 → 正文才出来」的观感。
   if (!openedDeepLink) $('#emptyState').classList.remove('hidden');
