@@ -43,6 +43,11 @@ const siyuanPrivacyFile = resolve(process.env.SIYUAN_PRIVACY_RULES_FILE || (proc
   ? '/srv/blog/state/siyuan-privacy-rules.json'
   : join(repoDir, '.siyuan-privacy-rules.json')));
 const siyuanSourceDir = resolve(process.env.SIYUAN_SOURCE_DIR || join(repoDir, 'origin', '学习笔记.md'));
+const historySourceDir = resolve(process.env.HISTORY_SOURCE_DIR || '/srv/blog/history-source');
+const historyPrivacyFile = resolve(process.env.HISTORY_PRIVACY_RULES_FILE || (process.platform === 'linux'
+  ? '/srv/blog/state/history-privacy-rules.json'
+  : join(repoDir, '.history-privacy-rules.json')));
+const historySyncScript = join(repoDir, 'tools', 'sync-history.mjs');
 const articlePendingFile = '/srv/blog/state/article-pending-push.json';
 const publishLockFile = '/srv/blog/locks/publish.lock';
 const lockHolderFile = join(studioDir, 'lock-holder.mjs');
@@ -669,6 +674,91 @@ async function loadSiyuanPrivacyRules() {
   }
 }
 
+/* --------------------------------- 岁月史书隐私规则 */
+
+function normalizeHistoryPrivacyRules(input = {}) {
+  const clean = (values, minimumLength) => [...new Set((Array.isArray(values) ? values : [])
+    .map((value) => String(value).trim().replaceAll('\\', '/'))
+    .filter((value) => value.length >= minimumLength))].slice(0, 500);
+  return {
+    excludedDocuments: clean(input.excludedDocuments, 3),
+    privateValues: clean(input.privateValues, 4),
+  };
+}
+
+async function loadHistoryPrivacyRules() {
+  if (!existsSync(historyPrivacyFile)) return normalizeHistoryPrivacyRules();
+  try { return normalizeHistoryPrivacyRules(JSON.parse(await readFile(historyPrivacyFile, 'utf8'))); }
+  catch (error) {
+    console.warn(`无法读取岁月史书隐私规则，将使用空规则：${error.message}`);
+    return normalizeHistoryPrivacyRules();
+  }
+}
+
+async function listHistoryDocuments() {
+  if (!existsSync(historySourceDir)) return [];
+  const documents = [];
+  async function visit(directory) {
+    for (const item of await readdir(directory, { withFileTypes: true })) {
+      const target = join(directory, item.name);
+      if (item.isDirectory()) { await visit(target); continue; }
+      if (!item.name.toLowerCase().endsWith('.md')) continue;
+      const content = await readFile(target, 'utf8');
+      const title = frontMatterValue(content, 'title') || item.name.replace(/\.md$/i, '');
+      documents.push({ path: toPosix(relative(historySourceDir, target)), title });
+    }
+  }
+  await visit(historySourceDir);
+  return documents.sort((left, right) => left.path.localeCompare(right.path, 'zh-CN'));
+}
+
+let historySyncTask = null;
+
+function historySyncSnapshot() {
+  if (!historySyncTask) return { running: false, ok: null, message: '', startedAt: null, tail: '' };
+  return {
+    running: historySyncTask.running,
+    ok: historySyncTask.ok,
+    message: historySyncTask.message,
+    startedAt: historySyncTask.startedAt,
+    tail: historySyncTask.tail,
+  };
+}
+
+function startHistorySync() {
+  if (historySyncTask && historySyncTask.running) return false;
+  historySyncTask = { running: true, ok: null, message: '正在重新导出并生成岁月史书…', startedAt: Date.now(), tail: '' };
+  let child;
+  try {
+    child = spawn(process.execPath, [historySyncScript], {
+      cwd: repoDir,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+  } catch (error) {
+    historySyncTask.running = false;
+    historySyncTask.ok = false;
+    historySyncTask.message = `无法启动同步：${error.message}`;
+    return false;
+  }
+  const append = (data) => {
+    historySyncTask.tail = `${historySyncTask.tail}${String(data)}`.slice(-4000);
+  };
+  child.stdout.on('data', append);
+  child.stderr.on('data', append);
+  child.on('close', (code) => {
+    historySyncTask.running = false;
+    historySyncTask.ok = code === 0;
+    historySyncTask.message = code === 0 ? '岁月史书已重新生成' : `同步失败（退出码 ${code}）`;
+  });
+  child.on('error', (error) => {
+    historySyncTask.running = false;
+    historySyncTask.ok = false;
+    historySyncTask.message = `同步进程异常：${error.message}`;
+  });
+  return true;
+}
+
 async function listSiyuanDocuments() {
   const candidates = [siyuanSourceDir, join(repoDir, 'source', 'siyuan')];
   const roots = [];
@@ -1153,6 +1243,18 @@ async function routeApi(req, res, url, identity) {
     return send(res, 200, { ok: true, rules, documents, notebook });
   }
 
+  if (req.method === 'GET' && url.pathname === '/api/history-privacy') {
+    const [rules, documents] = await Promise.all([loadHistoryPrivacyRules(), listHistoryDocuments()]);
+    return send(res, 200, { ok: true, rules, documents, source: historySourceDir, sync: historySyncSnapshot() });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/history-doc') {
+    const docPath = String(url.searchParams.get('path') || '');
+    const target = resolveInside(historySourceDir, docPath, '.md');
+    if (!existsSync(target)) return fail(res, 404, '文档不存在。');
+    return send(res, 200, { ok: true, path: docPath, content: await readFile(target, 'utf8') });
+  }
+
   if (req.method === 'GET' && url.pathname === '/api/article') {
     const articlePath = normalizeArticlePath(url.searchParams.get('path'));
     const target = resolveInside(postsDir, articlePath, '.md');
@@ -1179,6 +1281,17 @@ async function routeApi(req, res, url, identity) {
     await writeJsonAtomic(siyuanPrivacyFile, rules);
     const started = startRepublishTask();
     return send(res, 200, { ok: true, rules, republish: { started } });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/history-privacy/status') {
+    return send(res, 200, { ok: true, sync: historySyncSnapshot() });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/history-privacy') {
+    const rules = normalizeHistoryPrivacyRules(await readJson(req));
+    await writeJsonAtomic(historyPrivacyFile, rules);
+    const started = startHistorySync();
+    return send(res, 200, { ok: true, rules, sync: { started } });
   }
 
   if (req.method === 'POST' && url.pathname === '/api/create') {
@@ -1338,6 +1451,19 @@ async function routeApi(req, res, url, identity) {
     const list = await readList(join(historyDataDir, 'comments.json'));
     await writeList(join(historyDataDir, 'comments.json'), list.filter((item) => item.id !== id));
     return send(res, 200, { ok: true });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/admin/comments/review') {
+    const body = await readJson(req);
+    const id = String(body.id || '');
+    const status = body.status === 'approved' ? 'approved' : body.status === 'rejected' ? 'rejected' : '';
+    if (!id || !status) return send(res, 400, { ok: false, error: '参数不正确。' });
+    const list = await readList(join(historyDataDir, 'comments.json'));
+    const target = list.find((item) => item.id === id);
+    if (!target) return send(res, 404, { ok: false, error: '评论不存在。' });
+    target.status = status;
+    await writeList(join(historyDataDir, 'comments.json'), list);
+    return send(res, 200, { ok: true, id, status });
   }
 
   if (req.method === 'GET' && url.pathname === '/api/admin/submissions') {

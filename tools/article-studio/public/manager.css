@@ -157,6 +157,25 @@ a:hover { text-decoration: underline; }
   background: color-mix(in srgb, var(--ok) 86%, #000);
   border-color: color-mix(in srgb, var(--ok) 86%, #000);
 }
+.btn.warn {
+  background: #fdf3e2;
+  border-color: #f0d9b0;
+  color: #a56213;
+}
+.btn.warn:hover { background: #fbe7c8; }
+.comment-status {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  vertical-align: middle;
+}
+.comment-status.is-pending { background: #fdf3e2; color: #a56213; }
+.comment-status.is-approved { background: #e6efee; color: #33544f; }
+.comment-status.is-rejected { background: #f5e7e4; color: #a33a2d; }
+.comment-source { display: flex; gap: 6px; align-items: center; }
+.comment-doc { color: var(--green); }
+
 .btn.danger {
   border-color: color-mix(in srgb, var(--bad) 42%, var(--line));
   color: var(--bad);

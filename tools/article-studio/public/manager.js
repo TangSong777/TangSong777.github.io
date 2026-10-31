@@ -393,18 +393,26 @@
   }
 
   /* ---------------- 内容补充审核 ---------------- */
+  var CAT_LABELS = { event: '事件', person: '人物', guild: '公会', timeline: '时间线', topic: '专题', fix: '纠错', other: '其他' };
+
   function submissionRow(item, actions) {
     var status = item.status || 'pending';
+    var catLabel = CAT_LABELS[item.category] || '';
     return '<div class="row"><div class="row-head"><span class="row-title">' + esc(item.title || '（未指定文档）') + '</span>' +
-      '<span class="tag ' + status + '">' + ({ pending: '待处理', approved: '已采纳', rejected: '已忽略' }[status] || status) + '</span></div>' +
+      '<span class="tag ' + status + '">' + ({ pending: '待处理', approved: '已采纳', rejected: '已忽略' }[status] || status) + '</span>' +
+      (catLabel ? '<span class="tag cat">' + catLabel + '</span>' : '') + '</div>' +
       '<p class="row-body">' + esc(item.content) + '</p>' +
-      '<p class="row-meta">' + fmt(item.createdAt) + (item.contact ? ' · ' + esc(item.contact) : '') + '</p>' +
+      '<p class="row-meta">' + (item.page ? '来源：' + esc(item.page) + ' · ' : '') + fmt(item.createdAt) + (item.contact ? ' · ' + esc(item.contact) : '') + '</p>' +
       (actions ? '<div class="row-actions">' + actions + '</div>' : '') + '</div>';
   }
 
   function viewSubmissions() {
     var pending = state.submissions.filter(function (s) { return (s.status || 'pending') === 'pending'; });
-    var head = '<div class="card-head"><h2>岁月史书内容补充审核（待处理 ' + pending.length + '）</h2></div>';
+    var cats = {};
+    pending.forEach(function (it) { var c = it.category || 'other'; cats[c] = (cats[c] || 0) + 1; });
+    var catSummary = Object.keys(CAT_LABELS).filter(function (k) { return cats[k]; }).map(function (k) { return CAT_LABELS[k] + ' ' + cats[k]; }).join(' · ');
+    var head = '<div class="card-head"><h2>岁月史书内容补充审核（待处理 ' + pending.length + '）</h2>' +
+      (catSummary ? '<span class="hint" style="margin-left:10px">' + catSummary + '</span>' : '') + '</div>';
     if (!pending.length) return '<section class="card">' + head + '<p class="empty">没有待处理的申请</p></section>';
     return '<section class="card">' + head +
       '<p class="hint">只需决定采纳或忽略。采纳的申请会出现在「已采纳」里，供后续整理入库；忽略的进入垃圾桶，30 天后自动删除。</p>' +
@@ -442,14 +450,35 @@
       }).join('') + '</section>';
   }
 
+  function commentStatus(item) {
+    return item.status === 'rejected' ? 'rejected' : item.status === 'pending' ? 'pending' : 'approved';
+  }
+
+  function commentDocName(page) {
+    try {
+      var p = decodeURIComponent(page || '').replace(/\/index\.html$/, '');
+      var parts = p.split('/').filter(Boolean);
+      return parts.length ? parts.slice(-2).join(' / ') : (page || '');
+    } catch (e) { return page || ''; }
+  }
+
   function viewComments() {
     if (!state.comments.length) return '<section class="card"><h2>评论</h2><p class="empty">还没有评论</p></section>';
     return '<section class="card"><h2>评论（' + state.comments.length + '）</h2>' + state.comments.map(function (item) {
+      var status = commentStatus(item);
+      var statusText = status === 'pending' ? '待审核' : status === 'rejected' ? '已驳回' : '已通过';
+      var docName = commentDocName(item.page);
+      var approve = status === 'approved' ? '' :
+        '<button class="btn ok" data-action="approve-comment" data-id="' + esc(item.id) + '">通过</button>';
+      var reject = status === 'rejected' ? '' :
+        '<button class="btn warn" data-action="reject-comment" data-id="' + esc(item.id) + '">驳回</button>';
       return '<div class="row"><div class="row-head"><span class="row-title">' + esc(item.name) + '</span>' +
-        '<span class="row-meta">' + fmt(item.createdAt) + ' · ▲ ' + (item.likes ? item.likes.length : 0) + '</span></div>' +
+        '<span class="row-meta">' + fmt(item.createdAt) + ' · ▲ ' + (item.likes ? item.likes.length : 0) +
+        ' · <span class="comment-status is-' + status + '">' + statusText + '</span></span></div>' +
         '<p class="row-body">' + esc(item.content) + '</p>' +
-        '<p class="row-meta">' + esc(item.page) + '</p>' +
-        '<div class="row-actions"><button class="btn danger" data-action="delete-comment" data-id="' + esc(item.id) + '">删除</button></div></div>';
+        '<p class="row-meta comment-source"><span>评论于</span><span class="comment-doc" title="' + esc(item.page) + '">' + esc(docName) + '</span></p>' +
+        '<div class="row-actions">' + approve + reject +
+        '<button class="btn danger" data-action="delete-comment" data-id="' + esc(item.id) + '">删除</button></div></div>';
     }).join('') + '</section>';
   }
 
@@ -646,6 +675,20 @@
         var hdocPath = target.getAttribute('data-path');
         var hdoc = await api('/api/history-doc?path=' + encodeURIComponent(hdocPath));
         showHistoryDoc(hdoc);
+        return;
+      }
+
+      if (action === 'approve-comment' || action === 'reject-comment') {
+        var reviewId = target.getAttribute('data-id');
+        var reviewStatus = action === 'approve-comment' ? 'approved' : 'rejected';
+        await api('/api/admin/comments/review', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id: reviewId, status: reviewStatus }),
+        });
+        state.comments.forEach(function (item) { if (item.id === reviewId) item.status = reviewStatus; });
+        render();
+        toast(reviewStatus === 'approved' ? '已通过，网站上可见' : '已驳回，网站上不显示');
         return;
       }
 
