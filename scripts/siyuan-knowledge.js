@@ -57,11 +57,11 @@ const navEnhance = [
   hexo.extend.injector.register('body_end', shell, type);
 });
 
-// The full document index is only needed by the home and knowledge pages.
-// Round 76：首页只需要 siyuan-data.js（hero 统计），siyuan-knowledge.js（TOC 高亮/引用聚焦）
-// 只在笔记页（page）需要——拆分注入，首页省下约 10KB。
-const dataOnly = `<script src="${siteRoot}js/siyuan-data.js?v=20261037" defer></script>`;
-hexo.extend.injector.register('body_end', dataOnly, 'home');
+// 首页与笔记页都要 siyuan-knowledge.js：它不只做笔记页的 TOC 高亮/引用聚焦，
+// setupBlogHome()（hero、双栏、右侧 rail、blog-home-mode）也在里面。
+// Round 76 为省 10KB 把它从首页拆掉，结果 11-02 首页退回 NexT 原始卡片流 + 深色侧栏。
+// 回归教训：按页裁剪脚本前，先确认被裁掉的脚本里没有其它页面的初始化逻辑。
+hexo.extend.injector.register('body_end', knowledge, 'home');
 hexo.extend.injector.register('body_end', knowledge, 'page');
 
 // 给主题自己输出的 main.css 补上同样的缓存指纹（NexT 模板不改，只在渲染结果里替换）。
