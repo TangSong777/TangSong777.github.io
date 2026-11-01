@@ -140,7 +140,35 @@
   Array.prototype.forEach.call(document.querySelectorAll('.post-toc a[href]'), function (link) {
     var href = link.getAttribute('href');
     if (href !== '#' + id && href !== '#' + encodeURIComponent(id)) return;
-    var item = link.closest('li');
-    if (item) item.parentNode.removeChild(item);
+    var item = link.closest ? link.closest('li') : null;
+    if (!item || !item.parentNode) return;
+    // 笔记页的目录是「单根」结构：正文第一个 h1 就是整棵目录的根 li，
+    // 直接删会把下面所有条目一起带走，右侧栏只剩空白。
+    // 所以先把子项整体提升一级，再停掉这一条；子树层级同步 -1，缩进不跳级。
+    var childList = null;
+    for (var c = item.firstElementChild; c; c = c.nextElementSibling) {
+      if (c.tagName === 'OL') { childList = c; break; }
+    }
+    if (!childList || !childList.children.length) {
+      item.parentNode.removeChild(item);
+      return;
+    }
+    function demote(node) {
+      if (!node || node.nodeType !== 1) return;
+      if (node.className) {
+        node.className = node.className.replace(/nav-level-(\d+)/, function (m, d) {
+          var n = parseInt(d, 10) - 1;
+          return 'nav-level-' + (n < 1 ? 1 : n);
+        });
+      }
+      Array.prototype.forEach.call(node.children, demote);
+    }
+    var parentList = item.parentNode;
+    while (childList.firstChild) {
+      var moved = childList.firstChild;
+      demote(moved);
+      parentList.insertBefore(moved, item);
+    }
+    parentList.removeChild(item);
   });
 })();
