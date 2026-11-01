@@ -980,6 +980,9 @@ body.siyuan-tree-open { overflow: hidden !important; }
 body.blog-home-mode .blog-home-feed .post-body::after { display: none; }
 body.blog-home-mode .headerlink { display: none !important; }
 
+/* 卡片里不要列表页那根行间分隔线：.post-eof 自带 80/60px 外边距，搬进卡片后会撑出一大块空白 */
+body.blog-home-mode .blog-home-feed .post-eof { display: none; }
+
 
 /* 标签页 / 分类页与归档页保持一致 */
 body.archive-mode .collection-title small {
