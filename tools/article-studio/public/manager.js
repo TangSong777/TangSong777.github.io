@@ -18,6 +18,7 @@
     message: '',
     trashOpen: false,
     groupOpen: { notes: true, history: true },
+    studioDirty: 0,
   };
 
   function esc(value) {
@@ -33,6 +34,30 @@
       return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
     } catch (e) { return ''; }
   }
+  function flushStudio() {
+    return new Promise(function (resolve) {
+      var frame = document.querySelector('.studio-frame');
+      if (!frame || !frame.contentWindow) return resolve();
+      var done = false;
+      var timer = null;
+      function finish() {
+        if (done) return;
+        done = true;
+        if (timer) clearTimeout(timer);
+        window.removeEventListener('message', onMessage);
+        resolve();
+      }
+      function onMessage(event) {
+        if (!event.data || event.data.type !== 'studio-flushed') return;
+        if (event.data.ok === false) toast(event.data.message || '保存失败');
+        finish();
+      }
+      timer = setTimeout(finish, 8000);
+      window.addEventListener('message', onMessage);
+      frame.contentWindow.postMessage({ type: 'studio-flush' }, location.origin);
+    });
+  }
+
   function toast(text) {
     state.message = text;
     var el = document.getElementById('toast');
@@ -360,16 +385,19 @@
   }
 
   function viewEditor() {
-    // 工作台由常驻 iframe 承载（见 ensureStudioFrame），这里只放宿主容器；
-    // 点「编辑」时把预热好的 iframe 挪进来并切文章，不再重载整个工作台。
-    return '<section class="card card-editor">' +
-      '<div class="card-head"><h2>编辑：' + esc(state.editing.path) + '</h2>' +
-      '<div class="row-actions">' +
-        '<button class="btn" data-action="save-editor">保存</button>' +
-        '<button class="btn primary" data-action="publish-editor">上传</button>' +
-        '<button class="btn" data-action="back-to-articles">返回概览</button></div></div>' +
-      '<div id="studioHost" class="studio-host"></div>' +
-      '</section>';
+    // 编辑器由常驻 iframe 承载（见 ensureStudioFrame）；左边是文档栏，
+    // 保存/上传统一放在顶栏，切文章不再弹确认也不再丢改动。
+    var current = state.editing ? state.editing.path : '';
+    var rows = orderedArticles().map(function (item) {
+      return '<button class="doc-item' + (item.path === current ? ' is-active' : '') + '" data-action="edit" data-path="' + esc(item.path) + '">' +
+        '<span class="doc-name">' + esc(item.title) + '</span>' +
+        '<span class="doc-meta">' + esc(item.date || fmt(item.updatedAt)) + '</span></button>';
+    }).join('');
+    return '<section class="editor-layout">' +
+      '<aside class="doc-rail"><div class="doc-rail-head"><strong>文章（' + state.articles.length + '）</strong>' +
+      '<button class="btn tiny" data-action="new-article">新建</button></div>' +
+      '<div class="doc-rail-list">' + (rows || '<p class="empty">还没有文章</p>') + '</div></aside>' +
+      '<div class="editor-pane"><div id="studioHost" class="studio-host"></div></div></section>';
   }
 
   /* ---------------- 隐私规则（树形 + 父子联动） ---------------- */
@@ -590,8 +618,10 @@
       ? '<button class="top-btn top-btn-accent" data-action="publish-all" title="把这些改动构建并推送到线上">' +
         pendingText + ' · 立即上线</button>'
       : '';
+    var dirtyChip = '<button class="top-btn" data-action="save-all"' + (state.studioDirty ? '' : ' disabled') + '>' +
+      (state.studioDirty ? '保存（' + state.studioDirty + ' 篇）' : '保存') + '</button>';
     app.innerHTML = '<header class="topbar"><div class="brand">管理中心<span>学习笔记 · 博客 · 岁月史书</span></div>' +
-      '<div class="top-actions">' + pendingChip + '<button class="top-btn" data-action="refresh">刷新</button>' +
+      '<div class="top-actions">' + dirtyChip + pendingChip + '<button class="top-btn" data-action="refresh">刷新</button>' +
       '<button class="top-btn" data-action="logout">退出</button></div></header>' +
       '<div class="layout">' + sidebar() + '<main class="content">' + (views[state.view] || views.overview)() + '</main></div>' +
       '<div id="toast" class="toast"></div>';
@@ -603,6 +633,27 @@
   }
 
   /* ---------------- 交互 ---------------- */
+  // 在编辑器视图里点左侧文档栏切换文章：不整页重渲，也不重新校验列表，
+  // 直接把 path 交给 iframe（它自己会把当前草稿先 stash 起来）。
+  async function switchArticle(path) {
+    if (!path) return;
+    if (state.editing && state.editing.path === path) return;
+    if (!state.editing) { await openEditor(path); return; }
+    state.editing = { path: path };
+    try { localStorage.setItem('manager.last-path', path); } catch (error) {}
+    Array.prototype.forEach.call(document.querySelectorAll('.doc-item'), function (item) {
+      item.classList.toggle('is-active', item.getAttribute('data-path') === path);
+    });
+    // 编辑器还没加载完时先把目标路径记下来，等 studio-ready 后由 flushStudioOpen 补发
+    studioPendingPath = path;
+    if (studioReady) {
+      sendStudioOpen(path);
+    } else {
+      var host = document.getElementById('studioHost');
+      if (host) host.classList.add('is-loading');
+    }
+  }
+
   async function openEditor(path) {
     // 编辑器内嵌在管理中心里（iframe 载入文章工作台），不做整页跳转。
     // 先取一次最新列表：文章可能刚在工作台里（或另一个标签页）被删掉、改名，
@@ -630,6 +681,17 @@
   // Round 45
   window.addEventListener('message', function (event) {
     var data = event.data;
+    if (data && data.type === 'studio-dirty') {
+      var next = Number(data.count) || 0;
+      if (next === state.studioDirty) return;
+      state.studioDirty = next;
+      var button = document.querySelector('[data-action="save-all"]');
+      if (button) {
+        button.textContent = next ? '保存（' + next + ' 篇）' : '保存';
+        button.disabled = next === 0;
+      }
+      return;
+    }
     if (!data || data.type !== 'rock-studio:article-deleted') return;
     state.editing = null;
     api('/api/articles').then(function (latest) {
@@ -690,10 +752,11 @@
         return changePinOrder(action, target.getAttribute('data-path'));
       }
       if (action === 'back-to-articles') { state.editing = null; state.view = 'overview'; render(); return; }
-      if (action === 'save-editor' || action === 'publish-editor') {
+      if (action === 'save-all' || action === 'save-editor' || action === 'publish-editor') {
         var frame = document.querySelector('.studio-frame');
-        if (!frame || !frame.contentWindow) return toast('工作台还没加载完');
-        frame.contentWindow.postMessage({ type: action === 'save-editor' ? 'studio-save' : 'studio-publish' }, location.origin);
+        if (!frame || !frame.contentWindow) return toast('编辑器还没加载完');
+        var message = action === 'publish-editor' ? 'studio-publish' : 'studio-save-all';
+        frame.contentWindow.postMessage({ type: message }, location.origin);
         return;
       }
 
@@ -702,6 +765,8 @@
         target.disabled = true;
         target.textContent = '正在构建并上线…';
         try {
+          // 先把编辑器里还没落盘的改动写下去，否则「上线」只会带上已保存的那些。
+          if (state.studioDirty) await flushStudio();
           var published = await api('/api/publish', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
           toast(published.message || '已上线');
         } catch (publishError) {
@@ -736,7 +801,7 @@
         return;
       }
 
-      if (action === 'edit') { await openEditor(target.getAttribute('data-path')); return; }
+      if (action === 'edit') { await switchArticle(target.getAttribute('data-path')); return; }
 
       if (action === 'delete-article') {
         if (!confirm('删除这篇文章及其图片？此操作会立即发布。')) return;
@@ -874,7 +939,12 @@
       if (host) host.classList.remove('is-loading');
       flushStudioOpen();
     }
-    if (data.type === 'studio-saved') { toast('文章已保存'); loadAll(); }
+    // 保存的吐司由 iframe 自己弹（「已保存 N 篇。」），这里只同步数据，避免两条重叠。
+    if (data.type === 'studio-saved') {
+      // 编辑器被藏起来时（概览/排序页），iframe 里的吐司看不见，由外层补一条
+      if (!state.editing) toast(Number(data.saved) > 0 ? '已保存 ' + data.saved + ' 篇。' : '已保存。');
+      loadAll();
+    }
     if (data.type === 'studio-published') { toast('已上传'); loadAll(); }
   });
 

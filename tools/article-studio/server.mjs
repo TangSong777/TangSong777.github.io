@@ -1711,6 +1711,13 @@ async function sendStatic(req, res, url, target, contentType) {
 }
 
 async function routeStatic(req, res, url) {
+  // 页面入口只有一个：管理中心。单独打开工作台（不带 embed=1）时直接转回去，
+  // 避免用户看到两套界面（文章工作台现在是管理中心里的一块编辑器）。
+  if (url.pathname === '/studio.html' && url.searchParams.get('embed') !== '1') {
+    res.writeHead(302, { Location: '/' });
+    res.end();
+    return true;
+  }
   let target;
   const vendorFiles = {
     '/vendor/toastui-editor.js': join(publicDir, 'vendor', 'toastui-editor.bundle.js'),

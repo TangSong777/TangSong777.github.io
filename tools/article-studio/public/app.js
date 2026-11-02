@@ -300,6 +300,11 @@ const state = {
   authMode: 'local', authenticated: false,
   siyuanDocuments: [], privateIncluded: new Set(), collapsed: new Set(), documentTree: null,
   accessKey: mobileKeyFromUrl || sessionStorage.getItem('articleStudioKey') || '',
+  // 多篇一起改：切换文章时把没保存的内容留在内存里，最后一次「保存」统一写盘。
+  drafts: new Map(),
+  // 「编辑器里现在装着哪一篇」——和内容同时更新，避免快速切换时张冠李戴。
+  editorPath: '',
+  selectSeq: 0,
 };
 const $ = (selector) => document.querySelector(selector);
 const sourceEditor = $('#markdownEditor');
@@ -567,6 +572,7 @@ function autoSaveDelayMs() {
 }
 
 function scheduleAutoSave(delay) {
+  if (document.body.classList.contains('embed-mode')) return; // 管理中心里统一手动保存
   if (!state.currentPath || !state.dirty || state.autoSaveTimer) return;
   const elapsed = state.dirtySince ? Date.now() - state.dirtySince : 0;
   const wait = delay ?? Math.max(0, autoSaveDelayMs() - elapsed);
@@ -591,6 +597,25 @@ function scheduleAutoSave(delay) {
   }, wait);
 }
 
+function draftCount() {
+  let count = state.drafts.size;
+  const owner = state.editorPath || state.currentPath;
+  if (owner && editor.value !== state.content && !state.drafts.has(owner)) count += 1;
+  return count;
+}
+
+function notifyDirty() {
+  if (window.parent === window) return;
+  window.parent.postMessage({ type: 'studio-dirty', count: draftCount(), path: state.currentPath || '' }, location.origin);
+}
+
+function stashCurrentDraft() {
+  const owner = state.editorPath || state.currentPath;
+  if (!owner) return;
+  if (editor.value !== state.content) state.drafts.set(owner, editor.value);
+  else state.drafts.delete(owner);
+}
+
 function setDirty(dirty) {
   const wasDirty = state.dirty;
   state.dirty = dirty;
@@ -605,6 +630,7 @@ function setDirty(dirty) {
   $('#saveButton').disabled = !state.currentPath || !dirty || state.publishing;
   $('#publishButton').disabled = !state.currentPath || state.publishing;
   if (!state.publishing) updatePublishButton();
+  notifyDirty();
 }
 
 function draftKey(path) {
@@ -709,22 +735,25 @@ function updatePublishButton() {
 }
 
 async function selectArticle(path) {
-  if (state.dirty && !confirm('当前文章有未保存修改，确定切换吗？')) return;
+  // 不再拦截切换：当前这篇的改动先进草稿缓冲，回头切回来内容还在，最后统一保存。
+  stashCurrentDraft();
+  const seq = ++state.selectSeq;
   const data = await api(`/api/article?path=${encodeURIComponent(path)}`);
+  if (seq !== state.selectSeq) return false; // 更晚的一次切换已经开始了，丢弃这次结果
   state.currentPath = data.path;
+  state.editorPath = data.path;
   state.content = data.content;
   state.undoStack = [];
   state.redoStack = [];
   state.pendingEdit = null;
-  let initialContent = data.content;
-  try {
-    const draft = JSON.parse(localStorage.getItem(draftKey(data.path)) || 'null');
-    if (draft?.content && draft.content !== data.content) {
-      const stamp = draft.savedAt ? new Date(draft.savedAt).toLocaleString() : '未知时间';
-      if (confirm(`发现 ${stamp} 的浏览器草稿，是否恢复？\n\n选择“取消”将使用 Rock 上已保存的版本。`)) initialContent = draft.content;
-      else removeDraft(data.path);
-    }
-  } catch { removeDraft(data.path); }
+  let initialContent = state.drafts.has(data.path) ? state.drafts.get(data.path) : data.content;
+  if (!state.drafts.has(data.path)) {
+    try {
+      const draft = JSON.parse(localStorage.getItem(draftKey(data.path)) || 'null');
+      // 浏览器草稿只当崩溃恢复用，不再弹窗打断；静默采用，切回来还能继续改。
+      if (draft?.content && draft.content !== data.content) initialContent = draft.content;
+    } catch { removeDraft(data.path); }
+  }
   editor.value = initialContent;
   $('#documentPath').textContent = `source/_posts/${data.path}`;
   $('#emptyState').classList.add('hidden');
@@ -760,6 +789,37 @@ async function saveArticle(showToast = true) {
   if (showToast) toast(data.warnings.length ? `已保存；发现 ${data.warnings.length} 项可能的敏感内容` : data.message);
   if (window.parent !== window) window.parent.postMessage({ type: 'studio-saved', path: savedPath }, location.origin);
   return data;
+}
+
+// 统一保存：把内存里所有草稿一次写盘，不再要求一篇篇点保存。
+async function saveAllArticles(showToast = true) {
+  stashCurrentDraft();
+  if (!state.drafts.size) {
+    if (showToast) toast('没有需要保存的改动。');
+    notifyDirty();
+    return { saved: 0, warnings: [] };
+  }
+  const entries = Array.from(state.drafts.entries());
+  let saved = 0;
+  const warnings = [];
+  for (const [articlePath, content] of entries) {
+    const data = await api('/api/save', { method: 'POST', body: JSON.stringify({ path: articlePath, content }) });
+    if (Array.isArray(data.warnings)) {
+      data.warnings.forEach((item) => warnings.push(Object.assign({ article: articlePath }, item)));
+    }
+    state.drafts.delete(articlePath);
+    if (articlePath === state.currentPath) {
+      state.content = content;
+      removeDraft(articlePath);
+    }
+    saved += 1;
+  }
+  if (state.currentPath) setDirty(editor.value !== state.content);
+  else notifyDirty();
+  await loadArticles();
+  if (window.parent !== window) window.parent.postMessage({ type: 'studio-saved', path: state.currentPath || '', saved: saved }, location.origin);
+  toast(warnings.length ? `已保存 ${saved} 篇；发现 ${warnings.length} 项可能的敏感内容` : `已保存 ${saved} 篇。`);
+  return { saved: saved, warnings: warnings };
 }
 
 function openRenameDialog() {
@@ -913,6 +973,7 @@ async function deleteArticle() {
       try { window.parent.postMessage({ type: 'rock-studio:article-deleted', path: path }, '*'); } catch (error) { /* 跨域时忽略 */ }
     }
     state.currentPath = '';
+  state.editorPath = '';
     state.content = '';
     state.dirty = false;
     state.dirtySince = null;
@@ -1396,7 +1457,7 @@ function showWarnings(warnings) {
 
 async function openPublishDialog() {
   try {
-    const result = await saveArticle(false);
+    const result = await saveAllArticles(false);
     $('#confirmPublish').disabled = false;
     const blocked = showWarnings(result.warnings);
     $('#commitMessage').value = 'docs(article): 更新保存后的文章';
@@ -1792,7 +1853,15 @@ async function init() {
     window.addEventListener('message', (event) => {
       if (event.origin !== location.origin) return;
       const data = event.data || {};
-      if (data.type === 'studio-save') saveArticle().catch((error) => toast(error.message, true));
+      if (data.type === 'studio-save' || data.type === 'studio-save-all') {
+        saveAllArticles().catch((error) => toast(error.message, true));
+      }
+      if (data.type === 'studio-flush') {
+        // 管理中心准备点「上线」：先落盘，再回话，避免把还没写进文件的内容漏掉。
+        saveAllArticles(false)
+          .then((result) => window.parent.postMessage({ type: 'studio-flushed', ok: true, saved: result.saved }, location.origin))
+          .catch((error) => window.parent.postMessage({ type: 'studio-flushed', ok: false, message: error.message }, location.origin));
+      }
       if (data.type === 'studio-publish') openPublishDialog();
       if (data.type === 'studio-open' && data.path) {
         openArticleFromParent(String(data.path)).catch((error) => toast(error.message, true));
@@ -2109,7 +2178,7 @@ document.addEventListener('keydown', (event) => {
     return;
   }
   if (state.publishing) return;
-  saveArticle().catch((error) => toast(error.message, true));
+  saveAllArticles().catch((error) => toast(error.message, true));
 });
 editor.addEventListener('paste', (event) => {
   const images = [...event.clipboardData.files].filter((file) => file.type.startsWith('image/'));
@@ -2246,7 +2315,7 @@ $('#closeMarkdownHelp').addEventListener('click', () => $('#markdownHelpDialog')
 $('#mobileMenuButton').addEventListener('click', () => document.body.classList.contains('article-panel-open') ? closeArticlePanel() : openArticlePanel());
 $('#panelBackdrop').addEventListener('click', closeArticlePanel);
 $('#closePanelButton').addEventListener('click', closeArticlePanel);
-window.addEventListener('beforeunload', (event) => { if (state.dirty) { event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', (event) => { if (state.dirty || state.drafts.size) { event.preventDefault(); event.returnValue = ''; } });
 try {
   initializeRichEditor();
   watchArticleHeadings();

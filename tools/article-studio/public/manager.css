@@ -489,3 +489,64 @@ body::before {
 .card .btn.tiny.danger { color: #b4443a; }
 
 .btn:disabled, .btn[disabled] { opacity: .4; cursor: not-allowed; }
+
+/* ══ Round 77：管理中心内置编辑器：左文档栏 + 右编辑器，保存/上传在顶栏 ══ */
+.editor-layout {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 236px minmax(0, 1fr);
+  /* 60 顶栏 + 18 上内边距 + 60 下内边距，正好铺满一屏且不出现外面的滚动条 */
+  height: calc(100vh - 138px);
+  min-height: 520px;
+}
+.doc-rail {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(31, 81, 71, .05);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.doc-rail-head {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 11px 13px;
+}
+.doc-rail-head strong { font-size: 13px; letter-spacing: .04em; }
+.doc-rail-list { flex: 1; min-height: 0; overflow: auto; padding: 6px; }
+.doc-item {
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  font-family: inherit;
+  gap: 3px;
+  padding: 9px 10px;
+  text-align: left;
+  width: 100%;
+}
+.doc-item:hover { background: var(--green-soft); }
+.doc-item.is-active { background: var(--green); color: var(--paper); }
+.doc-name { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-meta { font-size: 11.5px; opacity: .72; }
+.editor-pane { min-width: 0; min-height: 0; }
+.editor-pane .studio-host {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(31, 81, 71, .05);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+@media (max-width: 1100px) {
+  .editor-layout { grid-template-columns: 1fr; height: auto; }
+  .doc-rail { max-height: 240px; }
+  .editor-pane .studio-host { height: calc(100vh - 210px); min-height: 460px; }
+}
