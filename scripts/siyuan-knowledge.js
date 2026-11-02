@@ -30,8 +30,13 @@ const siyuanCssVersion = hashOf('source/css/siyuan-knowledge.css');
 const mainCssVersion = hashOf('source/_data/styles.styl');
 
 const style = `<link rel="stylesheet" href="${siteRoot}css/siyuan-knowledge.css?v=${siyuanCssVersion}">`;
-const shell = `<script src="${siteRoot}js/site-shell.js?v=20261038" defer></script>`;
-const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=20261037" defer></script><script src="${siteRoot}js/siyuan-knowledge.js?v=20261037" defer></script>`;
+// 这两个脚本也用内容指纹：以前写死 `?v=20261037`，每次改完都得手工 bump，
+// 忘了就是「改了没生效」；siyuan-data.js 还会在每次笔记同步时整体重写。
+const shellVersion = hashOf('source/js/site-shell.js');
+const knowledgeVersion = hashOf('source/js/siyuan-knowledge.js');
+const dataVersion = hashOf('source/js/siyuan-data.js');
+const shell = `<script src="${siteRoot}js/site-shell.js?v=${shellVersion}" defer></script>`;
+const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=${dataVersion}" defer></script><script src="${siteRoot}js/siyuan-knowledge.js?v=${knowledgeVersion}" defer></script>`;
 
 // 导航流畅化：浏览器预渲染（悬停即准备）+ 跨文档平滑过渡，纯原生零 JS 开销
 // 这一项不改变任何视觉样式，只影响页面切换手感
@@ -69,6 +74,60 @@ hexo.extend.filter.register('after_render:html', html => html.replace(
   /(<link[^>]+href=")([^"]*?css\/main\.css)(")/gi,
   (match, head, href, tail) => (/[?&]v=/.test(href) ? match : `${head}${href}?v=${mainCssVersion}${tail}`)
 ));
+
+/**
+ * 构建期统计。
+ *
+ * 首页右侧的「N 文章 / N 笔记」原来读的是 `source/js/siyuan-data.js` 里的
+ * `articleCount` —— 那是笔记同步脚本（每天 04:15 / 13:10）抓的快照。
+ * 文章是用工作台单独上传的，同步没跑，这个数字就一直停在旧值：
+ * 11-02 发了《岁月史书》，首页还写着 5 篇。
+ *
+ * 所以这里在构建时直接数：文章数取 Hexo 的 posts，笔记数数 `source/siyuan`
+ * 下生成的 index.md（排除 daily-note）。构建一次就一定是当次真实的数。
+ */
+function countSiteStats() {
+  const stats = { articles: 0, notes: 0, daily: 0 };
+  try {
+    stats.articles = hexo.locals.get('posts').length;
+  } catch (err) {
+    hexo.log.warn(`[stats] 读不到文章列表：${err.message}`);
+  }
+  const siyuanRoot = path.join(hexo.base_dir, 'source', 'siyuan');
+  try {
+    const walk = dir => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (entry.name === 'index.md') {
+          const relative = path.relative(siyuanRoot, full).split(path.sep).join('/');
+          if (relative.startsWith('daily-note/')) stats.daily += 1;
+          else stats.notes += 1;
+        }
+      }
+    };
+    walk(siyuanRoot);
+  } catch (err) {
+    hexo.log.warn(`[stats] 数不到笔记目录：${err.message}`);
+  }
+  return stats;
+}
+
+// 注意：脚本是在 Hexo 载入阶段执行的，那时 posts 还没读完，
+// `hexo.locals.get('posts').length` 会得到 0。所以必须等到真正渲染时才数，
+// 并且缓存第一次的结果，避免每页都去遍历一遍目录。
+let cachedStats = null;
+
+hexo.extend.filter.register('after_render:html', html => {
+  if (!cachedStats) {
+    cachedStats = countSiteStats();
+    hexo.log.info(`[stats] 文章 ${cachedStats.articles} 篇，笔记 ${cachedStats.notes} 篇（日记 ${cachedStats.daily} 篇）`);
+  }
+  const payload = JSON.stringify(cachedStats).replace(/</g, '\\u003c');
+  const tag = `<script>window.__SITE_STATS__=${payload};</script>`;
+  return html.includes('</head>') ? html.replace('</head>', `${tag}</head>`) : html;
+});
 
 // Defer below-the-fold content images without delaying the small profile avatar.
 hexo.extend.filter.register('after_render:html', html => html.replace(/<img\b(?![^>]*\bloading=)([^>]*?)>/gi, (tag, attrs) => {

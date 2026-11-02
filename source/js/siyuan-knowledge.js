@@ -78,7 +78,10 @@
       return documents.find(function (doc) { return doc.title === title; });
     }).filter(Boolean);
     var dailyCount = data.documents.filter(function (doc) { return doc.daily; }).length;
-    var articleCount = Number(data.articleCount);
+    var stats = window.__SITE_STATS__ || null;
+    // 构建期注入的真实数量优先；拿不到（例如脚本被单独打开）才退回数据快照。
+    var articleCount = stats ? Number(stats.articles) : Number(data.articleCount);
+    var noteCount = stats ? Number(stats.notes) : (data.documents.length - dailyCount);
     var postBlocks = Array.prototype.slice.call(homeMain.querySelectorAll(':scope > .post-block'));
 
     var hero = document.createElement('section');
@@ -126,7 +129,7 @@
 
     var rail = document.createElement('aside');
     rail.className = 'blog-home-rail';
-    rail.innerHTML = '<section class="blog-home-profile"><img src="/images/avatar-180.jpg" width="82" height="82" alt="YangHanLin"><h2>YangHanLin</h2><p>相遇是知识连接的开始。</p><div class="blog-home-stats"><a href="/archives/"><strong>' + (Number.isFinite(articleCount) ? articleCount : postBlocks.length) + '</strong><span>文章</span></a><a href="/siyuan/"><strong>' + (data.documents.length - dailyCount) + '</strong><span>笔记</span></a></div></section><section class="blog-home-side-card"><span class="blog-home-side-label">公告</span><p>保持好奇，尊重事实，让每次记录都能成为下一次思考的起点。</p></section><section class="blog-home-side-card"><span class="blog-home-side-label">标签</span><div class="sidebar-tags">' + tagsHtml + '</div></section><section class="blog-home-side-card"><span class="blog-home-side-label">归档</span><div class="sidebar-archives">' + archivesHtml + '</div></section>';
+    rail.innerHTML = '<section class="blog-home-profile"><img src="/images/avatar-180.jpg" width="82" height="82" alt="YangHanLin"><h2>YangHanLin</h2><p>相遇是知识连接的开始。</p><div class="blog-home-stats"><a href="/archives/"><strong>' + (Number.isFinite(articleCount) ? articleCount : postBlocks.length) + '</strong><span>文章</span></a><a href="/siyuan/"><strong>' + noteCount + '</strong><span>笔记</span></a></div></section><section class="blog-home-side-card"><span class="blog-home-side-label">公告</span><p>保持好奇，尊重事实，让每次记录都能成为下一次思考的起点。</p></section><section class="blog-home-side-card"><span class="blog-home-side-label">标签</span><div class="sidebar-tags">' + tagsHtml + '</div></section><section class="blog-home-side-card"><span class="blog-home-side-label">归档</span><div class="sidebar-archives">' + archivesHtml + '</div></section>';
 
     layout.appendChild(feed);
     layout.appendChild(rail);
@@ -534,7 +537,10 @@
       }).filter(Boolean);
       var hero = document.createElement('section');
       hero.className = 'siyuan-hero';
-      hero.innerHTML = '<div class="siyuan-hero-kicker">PERSONAL KNOWLEDGE BASE</div><h1>' + root.title + '</h1><p>沿着主题探索笔记，也可以顺着引用回到知识形成的上下文。这里与普通博客时间线相互独立。</p><div class="siyuan-stats"><div class="siyuan-stat"><strong>' + nonDaily.length + '</strong><span>主题文档</span></div><div class="siyuan-stat"><strong>' + docs.filter(function (d) { return d.daily; }).length + '</strong><span>日记文档</span></div><div class="siyuan-stat"><strong>' + root.children.length + '</strong><span>知识分区</span></div></div>';
+      var heroStats = window.__SITE_STATS__ || null;
+      var heroNotes = heroStats ? Number(heroStats.notes) : nonDaily.length;
+      var heroDaily = heroStats ? Number(heroStats.daily) : docs.filter(function (d) { return d.daily; }).length;
+      hero.innerHTML = '<div class="siyuan-hero-kicker">PERSONAL KNOWLEDGE BASE</div><h1>' + root.title + '</h1><p>沿着主题探索笔记，也可以顺着引用回到知识形成的上下文。这里与普通博客时间线相互独立。</p><div class="siyuan-stats"><div class="siyuan-stat"><strong>' + heroNotes + '</strong><span>主题文档</span></div><div class="siyuan-stat"><strong>' + heroDaily + '</strong><span>日记文档</span></div><div class="siyuan-stat"><strong>' + root.children.length + '</strong><span>知识分区</span></div></div>';
       var grid = document.createElement('div');
       grid.className = 'siyuan-home-grid';
       topNodes.forEach(function (node) {
