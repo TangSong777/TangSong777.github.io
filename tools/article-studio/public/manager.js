@@ -15,6 +15,9 @@
     comments: [],
     submissions: [],
     editing: null,
+    articleMode: 'edit',
+    reviewTab: 'pending',
+    privacyTab: 'notes',
     message: '',
     trashOpen: false,
     groupOpen: { notes: true, history: true },
@@ -200,14 +203,21 @@
   async function loadAll() {
     try {
       // Round 73：config 与其余接口并行（GET 请求不依赖 token，省一次串行往返）
+      // 每一个接口单独兜底：某个接口坏掉时只让对应模块空着，不要整页跟着白屏
+      var safe = function (promise, fallback) {
+        return promise.catch(function (error) {
+          if (error && error.message === 'unauthorized') throw error;
+          return fallback;
+        });
+      };
       var results = await Promise.all([
-        window.__configPromise || api('/api/config'),
-        api('/api/articles'),
-        api('/api/siyuan-privacy'),
-        api('/api/history-privacy'),
-        api('/api/admin/comments'),
-        api('/api/admin/submissions'),
-        api('/api/pending'),
+        safe(window.__configPromise || api('/api/config'), { token: '' }),
+        safe(api('/api/articles'), { articles: [] }),
+        safe(api('/api/siyuan-privacy'), { rules: state.rules, documents: [], notebook: '' }),
+        safe(api('/api/history-privacy'), { rules: state.historyRules, documents: [] }),
+        safe(api('/api/admin/comments'), { comments: [] }),
+        safe(api('/api/admin/submissions'), { submissions: [] }),
+        safe(api('/api/pending'), { articles: [], ahead: 0 }),
       ]);
       window.__configPromise = null;
       state.token = results[0].token || '';
@@ -235,37 +245,30 @@
 
   /* ---------------- 侧边栏 ---------------- */
   function sidebar() {
-    var pending = state.submissions.filter(function (s) { return (s.status || 'pending') === 'pending'; }).length;
-    var approved = state.submissions.filter(function (s) { return s.status === 'approved'; }).length;
-    var rejected = state.submissions.filter(function (s) { return s.status === 'rejected'; }).length;
+    var pending = state.submissions.filter(function (item) { return (item.status || 'pending') === 'pending'; }).length;
+    var pendingComments = state.comments.filter(function (item) { return (item.status || 'approved') === 'pending'; }).length;
     var excluded = (state.rules.excludedDocuments || []).length;
-    var orderedCount = state.articles.length;
 
     function item(view, label, count) {
       return '<button data-view="' + view + '" class="' + (state.view === view ? 'is-active' : '') + '">' +
         esc(label) + (count ? '<span class="badge">' + count + '</span>' : '') + '</button>';
     }
-    function group(key, label, items) {
-      var open = state.groupOpen[key] !== false;
-      return '<div class="side-group">' +
-        '<button class="side-group-title" data-group-toggle="' + key + '" type="button">' +
-        '<span>' + esc(label) + '</span><span class="caret">' + (open ? '▾' : '▸') + '</span></button>' +
-        '<div class="side-group-items"' + (open ? '' : ' hidden') + '>' + items + '</div></div>';
-    }
 
     return '<aside class="side">' +
       item('overview', '概览', 0) +
-      group('notes', '学习笔记',
-        item('articles', '文章', state.articles.length) +
-        item('pinned', '文章排序', orderedCount) +
-        item('privacy', '隐私规则', excluded)) +
-      group('history', '岁月史书',
-        item('submissions', '内容补充审核', pending) +
-        item('historyPrivacy', '隐私规则', (state.historyRules.excludedDocuments || []).length) +
-        item('approved', '已采纳', approved) +
-        item('trash', '垃圾桶', rejected) +
-        item('comments', '评论', state.comments.length)) +
+      item('articles', '文章', state.articles.length) +
+      item('review', '审核', pending + pendingComments) +
+      item('privacy', '隐私', excluded) +
       '</aside>';
+  }
+
+  // 页面内的页签：把「审核」「隐私」这类多子页收进同一个模块，左侧导航只留大块
+  function tabs(active, group, items) {
+    return '<div class="tabs">' + items.map(function (it) {
+      var cls = 'tab' + (it.key === active ? ' is-active' : '');
+      return '<button type="button" class="' + cls + '" data-tab="' + it.key + '" data-tab-group="' + group + '">' +
+        esc(it.label) + (it.count ? '<span class="badge">' + it.count + '</span>' : '') + '</button>';
+    }).join('') + '</div>';
   }
 
   function stat(value, label) {
@@ -274,24 +277,38 @@
 
   /* ---------------- 视图 ---------------- */
   function viewOverview() {
-    var pending = state.submissions.filter(function (s) { return (s.status || 'pending') === 'pending'; }).length;
-    var approved = state.submissions.filter(function (s) { return s.status === 'approved'; }).length;
-    return '<section class="card"><h2>概览</h2><div class="stats">' +
+    var pending = state.submissions.filter(function (item) { return (item.status || 'pending') === 'pending'; }).length;
+    var approved = state.submissions.filter(function (item) { return item.status === 'approved'; }).length;
+    var pendingComments = state.comments.filter(function (item) { return (item.status || 'approved') === 'pending'; }).length;
+    var drafts = state.studioDirty;
+    var unshipped = (state.pending && state.pending.articles || []).length;
+    var todos = [];
+    if (drafts) todos.push('<li><button class="link" data-action="save-all">先保存 ' + drafts + ' 篇有改动的文章</button></li>');
+    if (unshipped) todos.push('<li><button class="link" data-action="publish-all">' + unshipped + ' 篇文章改动还没上线</button></li>');
+    if (pending) todos.push('<li><button class="link" data-view="review">' + pending + ' 条内容补充申请待审核</button></li>');
+    if (pendingComments) todos.push('<li><button class="link" data-view="review">' + pendingComments + ' 条评论待审核</button></li>');
+    return '<section class="card"><div class="card-head"><h2>概览</h2>' +
+      '<div class="row-actions"><button class="btn" data-action="refresh">刷新数据</button></div></div><div class="stats">' +
       stat(state.articles.length, '博客文章') +
-      stat((state.rules.excludedDocuments || []).length, '隐私排除文档') +
-      stat(pending, '待处理申请') +
-      stat(approved, '已采纳申请') +
+      stat(state.rules && (state.rules.excludedDocuments || []).length, '笔记隐私排除') +
+      stat(pending, '待处理补充') +
+      stat(approved, '已采纳') +
       stat(state.comments.length, '评论') +
       '</div></section>' +
-      '<section class="card"><h2>快捷操作</h2><div class="row-actions">' +
-      '<button class="btn primary" data-action="publish-all">发布博客</button>' +
-      '<button class="btn" data-action="refresh">刷新数据</button>' +
+      '<section class="card"><div class="card-head"><h2>待办</h2></div>' +
+      (todos.length ? '<ul class="todo">' + todos.join('') + '</ul>'
+        : '<p class="empty">没有待处理的事，改动都已保存并上线。</p>') + '</section>' +
+      '<section class="card"><div class="card-head"><h2>去往</h2></div><div class="row-actions">' +
+      '<button class="btn" data-view="articles">文章与排序</button>' +
+      '<button class="btn" data-view="review">内容与评论审核</button>' +
+      '<button class="btn" data-view="privacy">两套隐私规则</button>' +
       '<a class="btn" href="https://blogs.yanghanlin.cn" target="_blank" rel="noopener">查看博客</a>' +
       '<a class="btn" href="https://history.yanghanlin.cn" target="_blank" rel="noopener">查看岁月史书</a>' +
       '</div></section>';
   }
 
   function viewArticles() {
+    if (state.articleMode === 'order') return viewPinned();
     if (state.editing) return viewEditor();
     var head = '<div class="card-head"><h2>文章（' + state.articles.length + '）</h2>' +
       '<button class="btn primary" data-action="new-article">新建文章</button></div>';
@@ -322,7 +339,8 @@
       : (pendingAhead ? '有 ' + pendingAhead + ' 个提交还没推送到 GitHub，点「立即上线」推送。' : '当前改动都已经上线。');
     var head = '<div class="card-head"><h2>文章排序（' + list.length + '）</h2><div class="card-actions">' +
       (pendingCount || pendingAhead ? '<button class="btn primary" data-action="publish-all">立即上线</button>' : '') +
-      '<button class="btn" data-action="order-reset">恢复按时间排序</button></div></div>';
+      '<button class="btn" data-action="order-reset">恢复按时间排序</button>' +
+      '<button class="btn" data-action="article-mode" data-mode="edit">返回文章</button></div></div>';
     if (!list.length) return '<section class="card">' + head + '<p class="empty">还没有文章</p></section>';
     return '<section class="card">' + head +
       '<p class="hint">从上到下就是博客首页的显示顺序，第 1 篇排在最前。默认按发布时间倒序；往上挪的文章会被固定住，其余文章继续按时间排列。改动立即写入文章文件，' + pendingNote + '</p>' +
@@ -395,7 +413,9 @@
     }).join('');
     return '<section class="editor-layout">' +
       '<aside class="doc-rail"><div class="doc-rail-head"><strong>文章（' + state.articles.length + '）</strong>' +
-      '<button class="btn tiny" data-action="new-article">新建</button></div>' +
+      '<span class="doc-rail-actions">' +
+      '<button class="btn tiny" data-action="article-mode" data-mode="order">排序</button>' +
+      '<button class="btn tiny" data-action="new-article">新建</button></span></div>' +
       '<div class="doc-rail-list">' + (rows || '<p class="empty">还没有文章</p>') + '</div></aside>' +
       '<div class="editor-pane"><div id="studioHost" class="studio-host"></div></div></section>';
   }
@@ -584,8 +604,9 @@
   }
 
   function viewComments() {
-    if (!state.comments.length) return '<section class="card"><h2>评论</h2><p class="empty">还没有评论</p></section>';
-    return '<section class="card"><h2>评论（' + state.comments.length + '）</h2>' + state.comments.map(function (item) {
+    if (!state.comments.length) return '<section class="card"><div class="card-head"><h2>评论</h2></div><p class="empty">还没有评论</p></section>';
+    return '<section class="card"><div class="card-head"><h2>评论（' + state.comments.length + '）</h2>' +
+      '<span class="hint">通过后才会显示在博客页面上</span></div>' + state.comments.map(function (item) {
       var status = commentStatus(item);
       var statusText = status === 'pending' ? '待审核' : status === 'rejected' ? '已驳回' : '已通过';
       var docName = commentDocName(item.page);
@@ -603,13 +624,42 @@
     }).join('') + '</section>';
   }
 
+  /* ---------------- 审核（补充 / 已采纳 / 垃圾桶 / 评论） ---------------- */
+  function viewReview() {
+    var pending = state.submissions.filter(function (item) { return (item.status || 'pending') === 'pending'; }).length;
+    var approved = state.submissions.filter(function (item) { return item.status === 'approved'; }).length;
+    var rejected = state.submissions.filter(function (item) { return item.status === 'rejected'; }).length;
+    var pendingComments = state.comments.filter(function (item) { return (item.status || 'approved') === 'pending'; }).length;
+    var tab = state.reviewTab || 'pending';
+    var body = tab === 'approved' ? viewApproved()
+      : tab === 'trash' ? viewTrash()
+      : tab === 'comments' ? viewComments()
+      : viewSubmissions();
+    return tabs(tab, 'review', [
+      { key: 'pending', label: '待处理', count: pending },
+      { key: 'approved', label: '已采纳', count: approved },
+      { key: 'trash', label: '垃圾桶', count: rejected },
+      { key: 'comments', label: '评论', count: pendingComments ? state.comments.length + ' · 待审 ' + pendingComments : state.comments.length },
+    ]) + body;
+  }
+
+  /* ---------------- 隐私（学习笔记 / 岁月史书） ---------------- */
+  function viewPrivacyHub() {
+    var tab = state.privacyTab || 'notes';
+    return tabs(tab, 'privacy', [
+      { key: 'notes', label: '学习笔记', count: (state.rules.excludedDocuments || []).length },
+      { key: 'history', label: '岁月史书', count: (state.historyRules.excludedDocuments || []).length },
+    ]) + (tab === 'history' ? viewHistoryPrivacy() : viewPrivacy());
+  }
+
   /* ---------------- 编辑器 ---------------- */
   function render() {
     detachStudio(); // Round 69：先把常驻 iframe 停回 park，避免 innerHTML 替换连它一起销毁
     var views = {
-      overview: viewOverview, articles: viewArticles, pinned: viewPinned, privacy: viewPrivacy, historyPrivacy: viewHistoryPrivacy,
-      submissions: viewSubmissions, approved: viewApproved, trash: viewTrash,
-      comments: viewComments,
+      overview: viewOverview,
+      articles: viewArticles,
+      review: viewReview,
+      privacy: viewPrivacyHub,
     };
     var pendingCount = (state.pending && state.pending.articles || []).length;
     var pendingAhead = (state.pending && state.pending.ahead) || 0;
@@ -722,11 +772,37 @@
       return;
     }
 
+    var tabButton = event.target.closest('[data-tab]');
+    if (tabButton) {
+      var tabGroup = tabButton.getAttribute('data-tab-group');
+      var tabKey = tabButton.getAttribute('data-tab');
+      if (tabGroup === 'review') state.reviewTab = tabKey;
+      else if (tabGroup === 'privacy') state.privacyTab = tabKey;
+      render();
+      return;
+    }
+
     var viewButton = event.target.closest('[data-view]');
     if (viewButton) {
-      state.view = viewButton.getAttribute('data-view');
+      // 旧入口（置顶排序 / 已采纳 / 垃圾桶 / 评论 / 岁月史书隐私）一律归到新模块
+      var legacy = {
+        pinned: ['articles', { articleMode: 'order' }],
+        submissions: ['review', { reviewTab: 'pending' }],
+        approved: ['review', { reviewTab: 'approved' }],
+        trash: ['review', { reviewTab: 'trash' }],
+        comments: ['review', { reviewTab: 'comments' }],
+        historyPrivacy: ['privacy', { privacyTab: 'history' }],
+      };
+      var wanted = viewButton.getAttribute('data-view');
+      if (legacy[wanted]) {
+        state.view = legacy[wanted][0];
+        Object.keys(legacy[wanted][1]).forEach(function (key) { state[key] = legacy[wanted][1][key]; });
+      } else {
+        state.view = wanted;
+      }
       state.editing = null;
-      if (state.view === 'articles') {
+      if (state.view === 'articles' && state.articleMode !== 'order') state.articleMode = 'edit';
+      if (state.view === 'articles' && state.articleMode !== 'order') {
         // Round 71：不再显示中间的文章列表卡片，点「文章」直接打开工作台看正文
         var lastPath = '';
         try { lastPath = localStorage.getItem('manager.last-path') || ''; } catch (error) {}
@@ -751,7 +827,18 @@
       if (action === 'pin-top' || action === 'pin-up' || action === 'pin-down' || action === 'order-reset') {
         return changePinOrder(action, target.getAttribute('data-path'));
       }
-      if (action === 'back-to-articles') { state.editing = null; state.view = 'overview'; render(); return; }
+      if (action === 'back-to-articles') { state.editing = null; state.view = 'articles'; state.articleMode = 'edit'; render(); return; }
+      if (action === 'article-mode') {
+        state.articleMode = target.getAttribute('data-mode') || 'edit';
+        if (state.articleMode === 'order') { state.editing = null; render(); return; }
+        // 回到编辑时直接打开上次那篇，少一次点击
+        var lastEdited = '';
+        try { lastEdited = localStorage.getItem('manager.last-path') || ''; } catch (error) {}
+        var reopen = state.articles.find(function (item) { return item.path === lastEdited; }) || state.articles[0];
+        if (reopen) { await openEditor(reopen.path); return; }
+        render();
+        return;
+      }
       if (action === 'save-all' || action === 'save-editor' || action === 'publish-editor') {
         var frame = document.querySelector('.studio-frame');
         if (!frame || !frame.contentWindow) return toast('编辑器还没加载完');
