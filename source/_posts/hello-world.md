@@ -4,7 +4,7 @@ date: 2026-09-01 12:00:00
 updated: 2026-09-01 12:00:00
 categories:
 tags:
-description: ""
+description: "我是不会删除这篇默认文档的口牙！！！"
 ---
 欢迎使用 [Hexo](https://hexo.io/)！这是你的第一篇文章。
 查看 [文档](https://hexo.io/docs/) 获取更多信息。
