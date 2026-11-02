@@ -808,10 +808,9 @@ async function saveAllArticles(showToast = true) {
       data.warnings.forEach((item) => warnings.push(Object.assign({ article: articlePath }, item)));
     }
     state.drafts.delete(articlePath);
-    if (articlePath === state.currentPath) {
-      state.content = content;
-      removeDraft(articlePath);
-    }
+    // 每一篇都清本地草稿，不然下次切回来会拿旧草稿「复活」已经落盘的内容
+    removeDraft(articlePath);
+    if (articlePath === state.currentPath) state.content = content;
     saved += 1;
   }
   if (state.currentPath) setDirty(editor.value !== state.content);
