@@ -1367,7 +1367,7 @@ async function openPublishDialog() {
     const result = await saveArticle(false);
     $('#confirmPublish').disabled = false;
     const blocked = showWarnings(result.warnings);
-    $('#commitMessage').value = `docs(article): 更新《${titleFromContent(editor.value, state.currentPath)}》`;
+    $('#commitMessage').value = 'docs(article): 更新保存后的文章';
     $('#publishLog').classList.add('hidden');
     $('#publishLog').textContent = '';
     $('#confirmPublish').disabled = blocked;
@@ -1389,12 +1389,11 @@ async function publishArticle(event) {
   $('#confirmPublish').textContent = '正在构建并上传…';
   const log = $('#publishLog');
   log.classList.remove('hidden');
-  log.textContent = '正在保存文章并执行 Hexo 构建检查，请稍候…';
+  log.textContent = '正在构建 Hexo 并上传所有已保存的文章，请稍候…';
   try {
     const data = await api('/api/publish', {
       method: 'POST',
       body: JSON.stringify({
-        path: state.currentPath, content: editor.value,
         message: $('#commitMessage').value, confirmWarnings,
       }),
     });

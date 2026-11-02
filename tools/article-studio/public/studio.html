@@ -26,7 +26,7 @@
       <span id="identityState" class="identity-state"></span>
       <span id="saveState" class="save-state">尚未选择文章</span>
       <button id="saveButton" class="button secondary" disabled>保存 <kbd>Ctrl S</kbd></button>
-      <button id="publishButton" class="button primary" disabled>上传文章</button>
+      <button id="publishButton" class="button primary" disabled>上传全部</button>
     </div>
   </header>
   <div class="loading-bar" id="loadingBar" aria-hidden="true"></div>
@@ -192,8 +192,8 @@
   <dialog id="publishDialog">
     <form id="publishForm" method="dialog">
       <span class="eyebrow">PUBLISH</span><h2>构建并上传</h2>
-      <p>将保存当前内容、执行 Hexo 构建检查，然后只提交当前文章及其图片并推送到 GitHub；仓库里其他未提交改动不会被提交或上传。</p>
-      <label>提交说明<input id="commitMessage" placeholder="docs(article): 更新《文章标题》"></label>
+      <p>先保存当前内容，然后把你保存过、还没上传的<strong>所有</strong>文章一起构建、提交并推送；仓库里与文章无关的改动不会被提交或上传。</p>
+      <label>提交说明<input id="commitMessage" placeholder="docs(article): 更新保存后的文章"></label>
       <div id="warningBox" class="warning-box hidden"></div>
       <label id="warningConfirmLabel" class="confirm-row hidden"><input id="warningConfirm" type="checkbox">我已检查并确认这些内容可以公开</label>
       <pre id="publishLog" class="publish-log hidden"></pre>
@@ -277,7 +277,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="/vendor/codemirror.bundle.js?v=21" defer></script>
   <script src="/js/typora-live-preview.js?v=27" defer></script>
-  <script src="/app.js?v=46" defer></script>
+  <script src="/app.js?v=47" defer></script>
   
 </body>
 </html>

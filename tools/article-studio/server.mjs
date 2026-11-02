@@ -949,6 +949,104 @@ async function pushPendingArticle() {
   return true;
 }
 
+/** 把已经准备好的文章改动提交并推送；单篇与批量发布共用这一段。 */
+async function finalizeArticlePublish({ pathspecs, allowedPaths, message, buildLog, pendingPushed, warnings, articlePath = '' }) {
+  let commit;
+  try {
+    await runChecked('git', ['add', '-A', '--', ...pathspecs], '暂存文章改动');
+    const stagedNames = await gitPaths('diff', '--cached', '--name-only', '-z', '--', ...pathspecs);
+    if (stagedNames.some((name) => !pathAllowed(name, allowedPaths))) {
+      await run('git', ['restore', '--staged', '--', ...pathspecs]);
+      throw new Error('暂存区包含当前文章白名单之外的文件。');
+    }
+    const diff = await run('git', ['diff', '--cached', '--quiet', '--', ...pathspecs]);
+    if (diff.code === 0) {
+      return {
+        committed: false, pendingPushed, warnings,
+        logs: [buildLog, pendingPushed ? '已补推送上次经过验证的文章提交。' : '没有需要提交的新改动。'].filter(Boolean).join('\n').trim(),
+      };
+    }
+    if (diff.code !== 1) throw new Error('无法检查文章 Git 改动。');
+    // Markdown trailing spaces can mean a hard line break. Only conflict
+    // markers, not code-style whitespace rules, should block publication.
+    await git(...articleDiffCheckArgs(pathspecs));
+    if (!/^(?:feat|fix|docs)\(article\):\s+\S/.test(message)) {
+      await run('git', ['restore', '--staged', '--', ...pathspecs]);
+      throw new Error('提交说明必须以 feat(article):、fix(article): 或 docs(article): 开头。');
+    }
+    commit = await runChecked('git', [
+      'commit', '--only', '-m', message,
+      '-m', '更新普通文章 Markdown 与关联图片；已通过敏感信息检查和 Hexo 构建。',
+      '--', ...pathspecs,
+    ], 'Git 提交');
+  } catch (error) {
+    await run('git', ['restore', '--staged', '--', ...pathspecs]);
+    throw error;
+  }
+  const commitHash = await git('rev-parse', 'HEAD');
+  await writeJsonAtomic(articlePendingFile, {
+    commit: commitHash, allowedPaths, articlePath, createdAt: new Date().toISOString(),
+  });
+  try {
+    const push = await runChecked('git', ['push', 'origin', 'HEAD:main'], 'Git 推送');
+    await unlink(articlePendingFile);
+    return {
+      committed: true, pendingPushed, commitHash, warnings,
+      logs: [buildLog, commit.stdout, push.stdout, push.stderr].filter(Boolean).join('\n').trim(),
+    };
+  } catch (error) {
+    error.message = `${error.message} 本地提交 ${commitHash.slice(0, 8)} 已保留；再次点击上传会先安全重试推送。`;
+    throw error;
+  }
+}
+
+/** 列出 source/_posts 下「保存过、还没提交」的文章（新增/修改/删除都算）。 */
+async function collectPendingArticleFiles() {
+  const output = (await runChecked('git', ['status', '--porcelain', '-z', '--', 'source/_posts'], '列出待上传文章')).stdout;
+  const parts = output.split('\0');
+  const files = [];
+  for (let index = 0; index < parts.length; index += 1) {
+    const entry = parts[index];
+    if (!entry || entry.length < 4) continue;
+    // 重命名/复制在 -z 输出里多一个旧路径字段，跳过它。
+    if (/^[RC]/.test(entry.slice(0, 1))) index += 1;
+    files.push(entry.slice(3));
+  }
+  return [...new Set(files)].filter((name) => name.startsWith('source/_posts/') && /\.md$/i.test(name));
+}
+
+async function publishPendingArticles(data) {
+  return withPublishLock(async () => {
+    const pendingPushed = await pushPendingArticle();
+    const files = await collectPendingArticleFiles();
+    if (!files.length) {
+      const message = pendingPushed ? '已补推送上次经过验证的文章提交。' : '没有需要上传的文章改动。';
+      return { committed: false, pendingPushed, warnings: [], articles: [], message, logs: message };
+    }
+    const articlePaths = files.map((name) => name.slice('source/_posts/'.length));
+    const allowedPaths = [...new Set(articlePaths.flatMap((path) => articleGitPaths(path)))];
+    const warnings = [];
+    for (const path of articlePaths) {
+      const target = resolveInside(postsDir, path, '.md');
+      if (!existsSync(target)) continue;
+      const found = await scanSensitive(await readFile(target, 'utf8'));
+      for (const item of found) warnings.push({ ...item, article: path });
+    }
+    if (warnings.some((item) => item.severity === 'block')) return { blocked: true, warnings };
+    if (warnings.length && !data.confirmWarnings) return { needsConfirm: true, warnings };
+
+    await verifyRepositoryForArticle();
+    await runChecked(npmCommand, ['run', 'clean'], '清理 Hexo 缓存');
+    const build = await runChecked(npmCommand, ['run', 'build'], 'Hexo 构建检查');
+    const fallback = `docs(article): 批量更新 ${articlePaths.length} 篇文章`;
+    const message = String(data.message || fallback).replace(/[\r\n]/g, ' ').trim();
+    const result = await finalizeArticlePublish({
+      pathspecs: files, allowedPaths, message, buildLog: build.stdout, pendingPushed, warnings, articlePath: '',
+    });
+    return { ...result, articles: articlePaths };
+  });
+}
+
 async function publishCurrentArticle(data, warnings) {
   return withPublishLock(async () => {
     const pendingPushed = await pushPendingArticle();
@@ -971,62 +1069,18 @@ async function publishCurrentArticle(data, warnings) {
         if ((await run('git', ['ls-files', '--error-unmatch', '--', name])).code === 0) pathspecs.push(name);
       }
     }
-
-    let commit;
-    try {
-    await runChecked('git', ['add', '-A', '--', ...pathspecs], '暂存当前文章');
-    const stagedNames = await gitPaths('diff', '--cached', '--name-only', '-z', '--', ...pathspecs);
-    if (stagedNames.some((name) => !pathAllowed(name, allowedPaths))) {
-      await run('git', ['restore', '--staged', '--', ...pathspecs]);
-      throw new Error('暂存区包含当前文章白名单之外的文件。');
-    }
-    const diff = await run('git', ['diff', '--cached', '--quiet', '--', ...pathspecs]);
-    if (diff.code === 0) {
-      return {
-        committed: false, pendingPushed, warnings,
-        logs: [build.stdout, pendingPushed ? '已补推送上次经过验证的文章提交。' : '没有需要提交的新改动。'].filter(Boolean).join('\n').trim(),
-      };
-    }
-    if (diff.code !== 1) throw new Error('无法检查文章 Git 改动。');
-    // Markdown trailing spaces can mean a hard line break. Only conflict
-    // markers, not code-style whitespace rules, should block publication.
-    await git(...articleDiffCheckArgs(pathspecs));
     const title = frontMatterValue(data.content, 'title') || articleSlug;
     const tracked = (await run('git', ['cat-file', '-e', `HEAD:${articleRepoPath}`])).code === 0;
     const fallback = tracked ? `docs(article): 更新《${title}》` : `feat(article): 发布《${title}》`;
     const message = String(data.message || fallback).replace(/[\r\n]/g, ' ').trim();
-    if (!/^(?:feat|fix|docs)\(article\):\s+\S/.test(message)) {
-      await run('git', ['restore', '--staged', '--', ...pathspecs]);
-      throw new Error('提交说明必须以 feat(article):、fix(article): 或 docs(article): 开头。');
-    }
-      commit = await runChecked('git', [
-        'commit', '--only', '-m', message,
-        '-m', '更新普通文章 Markdown 与关联图片；已通过敏感信息检查和 Hexo 构建。',
-        '--', ...pathspecs,
-      ], 'Git 提交');
-    } catch (error) {
-      await run('git', ['restore', '--staged', '--', ...pathspecs]);
-      throw error;
-    }
-    const commitHash = await git('rev-parse', 'HEAD');
-    await writeJsonAtomic(articlePendingFile, {
-      commit: commitHash, allowedPaths, articlePath, createdAt: new Date().toISOString(),
+    const result = await finalizeArticlePublish({
+      pathspecs, allowedPaths, message, buildLog: build.stdout, pendingPushed, warnings, articlePath,
     });
-    try {
-      const push = await runChecked('git', ['push', 'origin', 'HEAD:main'], 'Git 推送');
-      await unlink(articlePendingFile);
-      if (renameInfo) {
-        delete renameState[articlePath];
-        await writeRenameState(renameState);
-      }
-      return {
-        committed: true, pendingPushed, commitHash, warnings,
-        logs: [build.stdout, commit.stdout, push.stdout, push.stderr].filter(Boolean).join('\n').trim(),
-      };
-    } catch (error) {
-      error.message = `${error.message} 本地提交 ${commitHash.slice(0, 8)} 已保留；再次点击上传会先安全重试推送。`;
-      throw error;
+    if (result.committed && renameInfo) {
+      delete renameState[articlePath];
+      await writeRenameState(renameState);
     }
+    return result;
   });
 }
 
@@ -1433,6 +1487,25 @@ async function routeApi(req, res, url, identity) {
     publishRequestActive = true;
     try {
       const data = await readJson(req);
+      if (!data.path) {
+        const result = await publishPendingArticles(data);
+        if (result.blocked) {
+          return send(res, 422, { ok: false, code: 'SENSITIVE_BLOCK', message: '检测到禁止公开的敏感内容，必须删除后才能发布。', warnings: result.warnings });
+        }
+        if (result.needsConfirm) {
+          return send(res, 409, { ok: false, code: 'SENSITIVE_WARNING', message: '检测到可能的敏感内容，请检查后确认。', warnings: result.warnings });
+        }
+        const count = (result.articles || []).length;
+        return send(res, 200, {
+          ok: true,
+          message: result.message || (result.committed
+            ? `已构建、提交并推送 ${count} 篇文章，GitHub Actions 将继续部署。`
+            : '当前没有需要提交的新改动。'),
+          logs: result.logs,
+          warnings: result.warnings || [],
+          articles: result.articles || [],
+        });
+      }
       await saveArticle(data.path, data.content);
       const warnings = await scanSensitive(data.content);
       const blocked = warnings.filter((item) => item.severity === 'block');
