@@ -6,6 +6,7 @@
     view: 'overview',
     token: '',
     articles: [],
+    pending: { articles: [], ahead: 0 },
     rules: { excludedDocuments: [], privateValues: [] },
     documents: [],
     notebook: '',
@@ -130,7 +131,15 @@
     var response = await fetch(url, opts);
     if (response.status === 401) { renderLogin(); throw new Error('unauthorized'); }
     var data = await response.json().catch(function () { return {}; });
-    if (!response.ok) throw new Error(data.error || data.message || ('HTTP ' + response.status));
+    if (!response.ok) {
+      // 把服务端的 code / warnings / details 一起带出去，
+      // 上传被敏感内容拦住时才能知道是哪几篇、该把用户带到哪一篇。
+      var failure = new Error(data.error || data.message || ('HTTP ' + response.status));
+      failure.code = data.code;
+      failure.warnings = data.warnings || [];
+      failure.details = data.details;
+      throw failure;
+    }
     return data;
   }
 
@@ -173,6 +182,7 @@
         api('/api/history-privacy'),
         api('/api/admin/comments'),
         api('/api/admin/submissions'),
+        api('/api/pending'),
       ]);
       window.__configPromise = null;
       state.token = results[0].token || '';
@@ -184,6 +194,7 @@
       state.historyDocs = results[3].documents || [];
       state.comments = results[4].comments || [];
       state.submissions = results[5].submissions || [];
+      state.pending = results[6] || { articles: [], ahead: 0 };
       render();
       // Round 69：页面数据就绪后空闲预热工作台 iframe，点「编辑」时零等待
       if ('requestIdleCallback' in window) {
@@ -279,11 +290,17 @@
 
   function viewPinned() {
     var list = orderedArticles();
-    var head = '<div class="card-head"><h2>文章排序（' + list.length + '）</h2>' +
-      '<button class="btn" data-action="order-reset">恢复按时间排序</button></div>';
+    var pendingCount = (state.pending && state.pending.articles || []).length;
+    var pendingAhead = (state.pending && state.pending.ahead) || 0;
+    var pendingNote = pendingCount
+      ? '<strong>还有 ' + pendingCount + ' 篇改动没上线</strong>，点下面的按钮或右上角「立即上线」才会更新到博客。'
+      : (pendingAhead ? '有 ' + pendingAhead + ' 个提交还没推送到 GitHub，点「立即上线」推送。' : '当前改动都已经上线。');
+    var head = '<div class="card-head"><h2>文章排序（' + list.length + '）</h2><div class="card-actions">' +
+      (pendingCount || pendingAhead ? '<button class="btn primary" data-action="publish-all">立即上线</button>' : '') +
+      '<button class="btn" data-action="order-reset">恢复按时间排序</button></div></div>';
     if (!list.length) return '<section class="card">' + head + '<p class="empty">还没有文章</p></section>';
     return '<section class="card">' + head +
-      '<p class="hint">从上到下就是博客首页的显示顺序，第 1 篇排在最前。默认按发布时间倒序；往上挪的文章会被固定住，其余文章继续按时间排列。改完立即写入文章并生效（下次构建后上线）。</p>' +
+      '<p class="hint">从上到下就是博客首页的显示顺序，第 1 篇排在最前。默认按发布时间倒序；往上挪的文章会被固定住，其余文章继续按时间排列。改动立即写入文章文件，' + pendingNote + '</p>' +
       list.map(function (item, index) {
         var pinned = Number(item.sticky) > 0;
         return '<div class="article-row pin-row"><div class="article-main">' +
@@ -566,8 +583,15 @@
       submissions: viewSubmissions, approved: viewApproved, trash: viewTrash,
       comments: viewComments,
     };
+    var pendingCount = (state.pending && state.pending.articles || []).length;
+    var pendingAhead = (state.pending && state.pending.ahead) || 0;
+    var pendingText = pendingCount ? pendingCount + ' 篇未上线' : (pendingAhead ? pendingAhead + ' 个提交待推送' : '');
+    var pendingChip = pendingText
+      ? '<button class="top-btn top-btn-accent" data-action="publish-all" title="把这些改动构建并推送到线上">' +
+        pendingText + ' · 立即上线</button>'
+      : '';
     app.innerHTML = '<header class="topbar"><div class="brand">管理中心<span>学习笔记 · 博客 · 岁月史书</span></div>' +
-      '<div class="top-actions"><button class="top-btn" data-action="refresh">刷新</button>' +
+      '<div class="top-actions">' + pendingChip + '<button class="top-btn" data-action="refresh">刷新</button>' +
       '<button class="top-btn" data-action="logout">退出</button></div></header>' +
       '<div class="layout">' + sidebar() + '<main class="content">' + (views[state.view] || views.overview)() + '</main></div>' +
       '<div id="toast" class="toast"></div>';
@@ -674,10 +698,28 @@
       }
 
       if (action === 'publish-all') {
+        var publishLabel = target.textContent;
         target.disabled = true;
-        await api('/api/publish', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
-        toast('已触发发布');
-        target.disabled = false;
+        target.textContent = '正在构建并上线…';
+        try {
+          var published = await api('/api/publish', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+          toast(published.message || '已上线');
+        } catch (publishError) {
+          // 敏感内容要逐篇确认，管理中心这边给不出勾选框，直接把用户带到那篇文章。
+          var flagged = (publishError.warnings || []).map(function (item) { return item.article; })
+            .filter(function (article) { return Boolean(article); })
+            .filter(function (article, index, list) { return list.indexOf(article) === index; });
+          if ((publishError.code === 'SENSITIVE_WARNING' || publishError.code === 'SENSITIVE_BLOCK') && flagged.length) {
+            toast('有 ' + flagged.length + ' 篇文章含敏感内容待确认，正在打开第一篇。', true);
+            await openEditor(flagged[0]);
+          } else {
+            toast(publishError.message, true);
+          }
+        } finally {
+          target.disabled = false;
+          target.textContent = publishLabel;
+          await loadAll();
+        }
         return;
       }
 

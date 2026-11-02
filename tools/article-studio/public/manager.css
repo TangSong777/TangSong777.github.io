@@ -70,6 +70,9 @@ a:hover { text-decoration: underline; }
 .top-actions { display: flex; align-items: center; gap: 8px; }
 .top-btn { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: var(--green-soft); cursor: pointer; font-family: inherit; font-size: 12px; padding: 5px 13px; }
 .top-btn:hover { background: rgba(255,255,255,.2); }
+.top-btn-accent { background: rgba(255,214,120,.26); border-color: rgba(255,214,120,.5); color: #ffe9b8; }
+.top-btn-accent:hover { background: rgba(255,214,120,.4); }
+.card-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 .layout { display: grid; gap: 20px; grid-template-columns: 200px minmax(0, 1fr); margin: 0 auto; max-width: 1560px; padding: 18px clamp(12px, 3vw, 24px) 60px; }
 .side { align-self: start; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 8px; position: sticky; top: 76px; }

@@ -293,6 +293,7 @@ if (mobileKeyFromUrl) {
 
 const state = {
   token: '', articles: [], currentPath: '', content: '', dirty: false, publishing: false,
+  pending: 0, pendingAhead: 0,
   undoStack: [], redoStack: [], pendingEdit: null, applyingEdit: false,
   identity: null, draftTimer: null, autoSaveTimer: null, autoSaving: false,
   autoSaveMinutes: 3, dirtySince: null,
@@ -603,6 +604,7 @@ function setDirty(dirty) {
   $('#saveState').textContent = state.currentPath ? (dirty ? `有未保存修改 · ${state.autoSaveMinutes} 分钟后自动保存` : '已保存到本地') : '尚未选择文章';
   $('#saveButton').disabled = !state.currentPath || !dirty || state.publishing;
   $('#publishButton').disabled = !state.currentPath || state.publishing;
+  if (!state.publishing) updatePublishButton();
 }
 
 function draftKey(path) {
@@ -686,10 +688,24 @@ async function openArticleQuickInfo(path) {
 }
 
 async function loadArticles() {
-  const data = await api('/api/articles');
+  const [data, pending] = await Promise.all([
+    api('/api/articles'),
+    api('/api/pending').catch(() => ({ articles: [], ahead: 0 })),
+  ]);
   state.articles = data.articles;
+  state.pending = (pending.articles || []).length;
+  state.pendingAhead = pending.ahead || 0;
   renderList();
   renderOutlineArticleSwitcher();
+  updatePublishButton();
+}
+
+// 上传按钮上直接写清楚还有几篇没传，省得点了「保存」却不知道要不要再点上传。
+function updatePublishButton() {
+  const button = $('#publishButton');
+  if (!button) return;
+  const count = state.pending || 0;
+  button.textContent = count > 0 ? `上传全部（${count}）` : '上传全部';
 }
 
 async function selectArticle(path) {

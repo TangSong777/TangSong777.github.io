@@ -10,7 +10,7 @@ import { SSO_COOKIE, createSsoToken, ssoCookie, verifySsoToken } from '../shared
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { networkInterfaces } from 'node:os';
 import Hexo from 'hexo';
-import { readSticky, planArticleOrder } from './pin-order.mjs';
+import { readSticky, writeSticky, planArticleOrder } from './pin-order.mjs';
 
 const studioDir = dirname(fileURLToPath(import.meta.url));
 const toolRepoDir = resolve(studioDir, '..', '..');
@@ -1089,7 +1089,17 @@ async function saveArticle(articlePath, content) {
   if (typeof content !== 'string' || content.length === 0) throw new Error('文章内容不能为空。');
   if (Buffer.byteLength(content, 'utf8') > 4 * 1024 * 1024) throw new Error('单篇 Markdown 不能超过 4 MB。');
   await mkdir(dirname(target), { recursive: true });
-  await writeAtomic(target, content.replace(/\r?\n/g, '\n'));
+  let finalContent = content.replace(/\r?\n/g, '\n');
+  // 排序保护：编辑器缓冲可能是「文章排序」页改过顺序之前的版本，
+  // 直接落盘会把磁盘上新的 sticky 冲掉，导致刚调好的顺序悄悄复位。
+  // 提交内容里没有 sticky 行、而磁盘上有，就以磁盘为准补回去。
+  if (existsSync(target)) {
+    const diskSticky = readSticky(await readFile(target, 'utf8'));
+    if (diskSticky !== null && readSticky(finalContent) === null) {
+      finalContent = writeSticky(finalContent, diskSticky);
+    }
+  }
+  await writeAtomic(target, finalContent);
   return target;
 }
 
@@ -1290,6 +1300,23 @@ async function routeApi(req, res, url, identity) {
 
   if (req.method === 'GET' && url.pathname === '/api/articles') {
     return send(res, 200, { ok: true, articles: await walkMarkdown(postsDir) });
+  }
+
+  // 还没上线的改动：本机改过但没提交的文章 + 已提交但没推的提交数。
+  // 前端用它显示「N 篇未上线」，让排序/保存之后知道还差最后一步。
+  if (req.method === 'GET' && url.pathname === '/api/pending') {
+    const files = await collectPendingArticleFiles();
+    let ahead = 0;
+    try {
+      ahead = Number(await git('rev-list', '--count', 'origin/main..HEAD')) || 0;
+    } catch {
+      ahead = 0;
+    }
+    return send(res, 200, {
+      ok: true,
+      articles: files.map((name) => name.replace(/^source\/_posts\//, '')),
+      ahead,
+    });
   }
 
   if (req.method === 'GET' && url.pathname === '/api/siyuan-privacy') {
