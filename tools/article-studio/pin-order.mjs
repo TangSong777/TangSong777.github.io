@@ -76,3 +76,55 @@ export function planPinOrder(entries, order) {
   }
   return updates;
 }
+
+/* ---------- 全站排序（所有文章可自由调整） ---------- */
+
+function timeOf(entry) {
+  const value = String((entry && (entry.date || entry.updatedAt)) || '');
+  const parsed = Date.parse(value.includes('T') ? value : value.replace(' ', 'T'));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function keyOfPath(entries, path) {
+  const entry = entries.find((item) => item.path === path);
+  return timeOf(entry || {});
+}
+
+/**
+ * 按「希望的前后顺序」推算每篇文章该写的 sticky。
+ *
+ * Hexo 的 index 生成器只按 sticky 降序稳定排序（其余保持发布时间倒序），
+ * 所以「手排的头部」用 sticky 固定住，最长的、本身已按时间倒序的尾巴留空即可，
+ * 这样以后新写的文章会自动落在尾巴最前面，不需要每次重排。
+ *
+ * order: 全部文章路径，按希望的显示顺序排列。
+ */
+export function planArticleOrder(entries, order) {
+  const pool = (entries || []).filter((item) => item && item.path);
+  const byPath = new Map(pool.map((item) => [item.path, item]));
+  const wanted = [];
+  for (const path of order || []) {
+    const normalized = String(path);
+    if (byPath.has(normalized) && !wanted.includes(normalized)) wanted.push(normalized);
+  }
+  if (!wanted.length) return [];
+
+  let tailStart = wanted.length;
+  for (let index = wanted.length - 1; index >= 1; index -= 1) {
+    if (keyOfPath(pool, wanted[index - 1]) >= keyOfPath(pool, wanted[index])) tailStart = index - 1;
+    else break;
+  }
+
+  const ranks = new Map();
+  for (let index = 0; index < tailStart; index += 1) ranks.set(wanted[index], tailStart - index);
+
+  const updates = [];
+  for (const entry of pool) {
+    const wantedRank = ranks.has(entry.path) ? ranks.get(entry.path) : null;
+    const current = readSticky(entry.content);
+    if (wantedRank === current) continue;
+    const content = writeSticky(entry.content, wantedRank);
+    if (content !== entry.content) updates.push({ path: entry.path, content });
+  }
+  return updates;
+}

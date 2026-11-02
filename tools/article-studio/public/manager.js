@@ -203,7 +203,7 @@
     var approved = state.submissions.filter(function (s) { return s.status === 'approved'; }).length;
     var rejected = state.submissions.filter(function (s) { return s.status === 'rejected'; }).length;
     var excluded = (state.rules.excludedDocuments || []).length;
-    var pinnedCount = state.articles.filter(function (item) { return Number(item.sticky) > 0; }).length;
+    var orderedCount = state.articles.length;
 
     function item(view, label, count) {
       return '<button data-view="' + view + '" class="' + (state.view === view ? 'is-active' : '') + '">' +
@@ -221,7 +221,7 @@
       item('overview', '概览', 0) +
       group('notes', '学习笔记',
         item('articles', '文章', state.articles.length) +
-        item('pinned', '置顶排序', pinnedCount) +
+        item('pinned', '文章排序', orderedCount) +
         item('privacy', '隐私规则', excluded)) +
       group('history', '岁月史书',
         item('submissions', '内容补充审核', pending) +
@@ -268,39 +268,64 @@
     }).join('') + '</section>';
   }
 
-  function pinnedArticles() {
-    return state.articles
-      .map(function (item) { return { path: item.path, title: item.title, sticky: Number(item.sticky) || 0 }; })
-      .filter(function (item) { return item.sticky > 0; })
-      .sort(function (a, b) { return b.sticky - a.sticky; });
+  function orderedArticles() {
+    return state.articles.slice().sort(function (a, b) {
+      var sa = Number(a.sticky) || 0;
+      var sb = Number(b.sticky) || 0;
+      if (sa !== sb) return sb - sa;
+      return String(b.date || '').localeCompare(String(a.date || '')) || String(a.path).localeCompare(String(b.path));
+    });
   }
 
   function viewPinned() {
-    var pinned = pinnedArticles();
-    var head = '<div class="card-head"><h2>置顶排序（' + pinned.length + '）</h2></div>';
-    if (!pinned.length) {
-      return '<section class="card">' + head + '<p class="empty">还没有置顶文章。打开一篇文章的「信息」勾选「置顶到首页最前」即可。</p></section>';
-    }
+    var list = orderedArticles();
+    var head = '<div class="card-head"><h2>文章排序（' + list.length + '）</h2>' +
+      '<button class="btn" data-action="order-reset">恢复按时间排序</button></div>';
+    if (!list.length) return '<section class="card">' + head + '<p class="empty">还没有文章</p></section>';
     return '<section class="card">' + head +
-      '<p class="hint">从上到下就是博客首页的显示顺序，第 1 篇排在最前。改完立即写入文章并生效（下次构建后上线）。</p>' +
-      pinned.map(function (item, index) {
+      '<p class="hint">从上到下就是博客首页的显示顺序，第 1 篇排在最前。默认按发布时间倒序；往上挪的文章会被固定住，其余文章继续按时间排列。改完立即写入文章并生效（下次构建后上线）。</p>' +
+      list.map(function (item, index) {
+        var pinned = Number(item.sticky) > 0;
         return '<div class="article-row pin-row"><div class="article-main">' +
-          '<span class="row-title"><span class="pin-rank">' + (index + 1) + '</span>' + esc(item.title) + '</span>' +
-          '<span class="row-meta">' + esc(item.path) + '</span>' +
+          '<span class="row-title"><span class="pin-rank">' + (index + 1) + '</span>' + (pinned ? '<span class="pin-badge">固定</span>' : '') + esc(item.title) + '</span>' +
+          '<span class="row-meta">' + esc(item.date || fmt(item.updatedAt)) + ' · ' + esc(item.path) + '</span>' +
           '</div><div class="pin-actions">' +
+          '<button class="btn tiny" data-action="pin-top" data-path="' + esc(item.path) + '"' + (index === 0 ? ' disabled' : '') + '>置顶</button>' +
           '<button class="btn tiny" data-action="pin-up" data-path="' + esc(item.path) + '"' + (index === 0 ? ' disabled' : '') + '>上移</button>' +
-          '<button class="btn tiny" data-action="pin-down" data-path="' + esc(item.path) + '"' + (index === pinned.length - 1 ? ' disabled' : '') + '>下移</button>' +
-          '<button class="btn tiny danger" data-action="pin-off" data-path="' + esc(item.path) + '">取消置顶</button>' +
+          '<button class="btn tiny" data-action="pin-down" data-path="' + esc(item.path) + '"' + (index === list.length - 1 ? ' disabled' : '') + '>下移</button>' +
           '</div></div>';
       }).join('') + '</section>';
   }
 
+  async function saveArticleOrder(order, message) {
+    await api('/api/pin-order', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ order: order }),
+    });
+    var latest = await api('/api/articles');
+    state.articles = latest.articles || [];
+    render();
+    toast(message);
+  }
+
   async function changePinOrder(action, path) {
-    var order = pinnedArticles().map(function (item) { return item.path; });
+    if (action === 'order-reset') {
+      var byDate = state.articles.slice().sort(function (a, b) {
+        return String(b.date || '').localeCompare(String(a.date || '')) || String(a.path).localeCompare(String(b.path));
+      }).map(function (item) { return item.path; });
+      try {
+        await saveArticleOrder(byDate, '已恢复按发布时间排序。');
+      } catch (error) {
+        toast(error.message, true);
+      }
+      return;
+    }
+    var order = orderedArticles().map(function (item) { return item.path; });
     var index = order.indexOf(path);
     if (index < 0) return;
-    if (action === 'pin-off') {
+    if (action === 'pin-top' && index > 0) {
       order.splice(index, 1);
+      order.unshift(path);
     } else if (action === 'pin-up' && index > 0) {
       order.splice(index, 1);
       order.splice(index - 1, 0, path);
@@ -311,14 +336,7 @@
       return;
     }
     try {
-      await api('/api/pin-order', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ order: order }),
-      });
-      var latest = await api('/api/articles');
-      state.articles = latest.articles || [];
-      render();
-      toast(action === 'pin-off' ? '已取消置顶。' : '置顶顺序已更新。');
+      await saveArticleOrder(order, '显示顺序已更新。');
     } catch (error) {
       toast(error.message, true);
     }
@@ -644,7 +662,7 @@
         return;
       }
       if (action === 'refresh') { loadAll(); return; }
-      if (action === 'pin-up' || action === 'pin-down' || action === 'pin-off') {
+      if (action === 'pin-top' || action === 'pin-up' || action === 'pin-down' || action === 'order-reset') {
         return changePinOrder(action, target.getAttribute('data-path'));
       }
       if (action === 'back-to-articles') { state.editing = null; state.view = 'overview'; render(); return; }

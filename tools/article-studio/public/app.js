@@ -755,11 +755,10 @@ function openRenameDialog() {
   $('#renameFileName').select();
 }
 
-function pinnedArticleOrder() {
+function fullPathOrder() {
   return state.articles
-    .map((item) => ({ path: item.path, sticky: Number(item.sticky) || 0 }))
-    .filter((item) => item.sticky > 0)
-    .sort((a, b) => b.sticky - a.sticky)
+    .map((item) => ({ path: item.path, sticky: Number(item.sticky) || 0, date: String(item.date || '') }))
+    .sort((a, b) => (b.sticky - a.sticky) || b.date.localeCompare(a.date) || a.path.localeCompare(b.path))
     .map((item) => item.path);
 }
 
@@ -773,15 +772,17 @@ function openMetadataDialog() {
   $('#metadataCategories').value = metadata.categories.join(', ');
   $('#metadataTags').value = metadata.tags.join(', ');
   $('#metadataDescription').value = metadata.description;
-  const pinnedOrder = pinnedArticleOrder();
-  const listWithCurrent = pinnedOrder.includes(state.currentPath) ? pinnedOrder : [...pinnedOrder, state.currentPath];
-  const currentRank = articleMetadata.readSticky(editor.value) ? Math.max(1, listWithCurrent.indexOf(state.currentPath) + 1) : 0;
+  // 排序现在覆盖全部文章：下拉里列的是「全部文章的位置」，勾选才真的写 sticky。
+  const fullOrder = fullPathOrder();
+  const listWithCurrent = fullOrder.includes(state.currentPath) ? fullOrder : [...fullOrder, state.currentPath];
+  const currentRank = Math.max(1, listWithCurrent.indexOf(state.currentPath) + 1);
+  const isFixed = Boolean(articleMetadata.readSticky(editor.value));
   const rankSelect = $('#metadataPinRank');
-  const rankTotal = Math.max(1, pinnedOrder.filter((path) => path !== state.currentPath).length + 1);
+  const rankTotal = Math.max(1, listWithCurrent.length);
   rankSelect.innerHTML = Array.from({ length: rankTotal }, (_, index) => `<option value="${index + 1}">第 ${index + 1} 位</option>`).join('');
-  rankSelect.value = String(currentRank || 1);
-  rankSelect.disabled = currentRank === 0;
-  $('#metadataPinned').checked = currentRank > 0;
+  rankSelect.value = String(currentRank);
+  rankSelect.disabled = !isFixed;
+  $('#metadataPinned').checked = isFixed;
   $('#metadataDialog').showModal();
   $('#metadataTitle').focus();
   $('#metadataTitle').select();
@@ -805,20 +806,35 @@ async function updateArticleMetadata(event) {
     // 再把服务端算好的 sticky 值写回编辑器缓冲，避免随后的 Ctrl+S 把它覆盖掉。
     const wantedPinned = Boolean($('#metadataPinned').checked);
     const wantedRank = Math.max(1, Number($('#metadataPinRank').value) || 1);
-    const currentOrder = pinnedArticleOrder();
-    const nextOrder = currentOrder.filter((path) => path !== state.currentPath);
-    if (wantedPinned) nextOrder.splice(Math.min(wantedRank - 1, nextOrder.length), 0, state.currentPath);
+    const beforeOrder = fullPathOrder();
+    const nextOrder = beforeOrder.filter((path) => path !== state.currentPath);
+    if (wantedPinned) {
+      nextOrder.splice(Math.min(wantedRank - 1, nextOrder.length), 0, state.currentPath);
+    } else {
+      // 取消固定：按发布时间插回去，服务端会把「已按时间排好的尾巴」的 sticky 自动清掉。
+      const currentDate = String(articleMetadata.read(value).date || '');
+      let insertAt = nextOrder.length;
+      for (let index = 0; index < nextOrder.length; index += 1) {
+        const item = state.articles.find((candidate) => candidate.path === nextOrder[index]);
+        if (!item) continue;
+        if (!(Number(item.sticky) > 0) && String(item.date || '') < currentDate) {
+          insertAt = index;
+          break;
+        }
+      }
+      nextOrder.splice(insertAt, 0, state.currentPath);
+    }
     let finalValue = value;
-    if (currentOrder.join('\n') !== nextOrder.join('\n')) {
-      const pinned = await api('/api/pin-order', {
+    if (beforeOrder.join('\n') !== nextOrder.join('\n')) {
+      await api('/api/pin-order', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ order: nextOrder }),
       });
-      const assigned = (pinned.pinned || []).find((item) => item.path === state.currentPath);
-      finalValue = articleMetadata.setSticky(value, assigned ? assigned.sticky : null);
-      const stickyByPath = new Map((pinned.pinned || []).map((item) => [item.path, item.sticky]));
-      state.articles = state.articles.map((item) => ({ ...item, sticky: stickyByPath.has(item.path) ? stickyByPath.get(item.path) : null }));
+      const latest = await api('/api/articles');
+      state.articles = latest.articles || [];
+      const mine = state.articles.find((item) => item.path === state.currentPath);
+      finalValue = articleMetadata.setSticky(value, mine && Number(mine.sticky) > 0 ? Number(mine.sticky) : null);
     }
     const newBodyStart = articleMetadata.splitDocument(finalValue).bodyStart;
     const movePosition = (position) => position >= oldBodyStart ? newBodyStart + position - oldBodyStart : Math.min(position, newBodyStart);
