@@ -203,6 +203,7 @@
     var approved = state.submissions.filter(function (s) { return s.status === 'approved'; }).length;
     var rejected = state.submissions.filter(function (s) { return s.status === 'rejected'; }).length;
     var excluded = (state.rules.excludedDocuments || []).length;
+    var pinnedCount = state.articles.filter(function (item) { return Number(item.sticky) > 0; }).length;
 
     function item(view, label, count) {
       return '<button data-view="' + view + '" class="' + (state.view === view ? 'is-active' : '') + '">' +
@@ -220,6 +221,7 @@
       item('overview', '概览', 0) +
       group('notes', '学习笔记',
         item('articles', '文章', state.articles.length) +
+        item('pinned', '置顶排序', pinnedCount) +
         item('privacy', '隐私规则', excluded)) +
       group('history', '岁月史书',
         item('submissions', '内容补充审核', pending) +
@@ -260,10 +262,66 @@
     if (!state.articles.length) return '<section class="card">' + head + '<p class="empty">还没有文章</p></section>';
     return '<section class="card">' + head + state.articles.map(function (item) {
       return '<div class="article-row"><div class="article-main">' +
-        '<span class="row-title">' + esc(item.title) + '</span>' +
+        '<span class="row-title">' + (Number(item.sticky) > 0 ? '<span class="pin-badge">置顶</span>' : '') + esc(item.title) + '</span>' +
         '<span class="row-meta">' + fmt(item.updatedAt) + ' · ' + esc(item.path) + '</span>' +
         '</div><button class="btn pill" data-action="edit" data-path="' + esc(item.path) + '">编辑</button></div>';
     }).join('') + '</section>';
+  }
+
+  function pinnedArticles() {
+    return state.articles
+      .map(function (item) { return { path: item.path, title: item.title, sticky: Number(item.sticky) || 0 }; })
+      .filter(function (item) { return item.sticky > 0; })
+      .sort(function (a, b) { return b.sticky - a.sticky; });
+  }
+
+  function viewPinned() {
+    var pinned = pinnedArticles();
+    var head = '<div class="card-head"><h2>置顶排序（' + pinned.length + '）</h2></div>';
+    if (!pinned.length) {
+      return '<section class="card">' + head + '<p class="empty">还没有置顶文章。打开一篇文章的「信息」勾选「置顶到首页最前」即可。</p></section>';
+    }
+    return '<section class="card">' + head +
+      '<p class="hint">从上到下就是博客首页的显示顺序，第 1 篇排在最前。改完立即写入文章并生效（下次构建后上线）。</p>' +
+      pinned.map(function (item, index) {
+        return '<div class="article-row pin-row"><div class="article-main">' +
+          '<span class="row-title"><span class="pin-rank">' + (index + 1) + '</span>' + esc(item.title) + '</span>' +
+          '<span class="row-meta">' + esc(item.path) + '</span>' +
+          '</div><div class="pin-actions">' +
+          '<button class="btn tiny" data-action="pin-up" data-path="' + esc(item.path) + '"' + (index === 0 ? ' disabled' : '') + '>上移</button>' +
+          '<button class="btn tiny" data-action="pin-down" data-path="' + esc(item.path) + '"' + (index === pinned.length - 1 ? ' disabled' : '') + '>下移</button>' +
+          '<button class="btn tiny danger" data-action="pin-off" data-path="' + esc(item.path) + '">取消置顶</button>' +
+          '</div></div>';
+      }).join('') + '</section>';
+  }
+
+  async function changePinOrder(action, path) {
+    var order = pinnedArticles().map(function (item) { return item.path; });
+    var index = order.indexOf(path);
+    if (index < 0) return;
+    if (action === 'pin-off') {
+      order.splice(index, 1);
+    } else if (action === 'pin-up' && index > 0) {
+      order.splice(index, 1);
+      order.splice(index - 1, 0, path);
+    } else if (action === 'pin-down' && index < order.length - 1) {
+      order.splice(index, 1);
+      order.splice(index + 1, 0, path);
+    } else {
+      return;
+    }
+    try {
+      await api('/api/pin-order', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ order: order }),
+      });
+      var latest = await api('/api/articles');
+      state.articles = latest.articles || [];
+      render();
+      toast(action === 'pin-off' ? '已取消置顶。' : '置顶顺序已更新。');
+    } catch (error) {
+      toast(error.message, true);
+    }
   }
 
   function viewEditor() {
@@ -486,7 +544,7 @@
   function render() {
     detachStudio(); // Round 69：先把常驻 iframe 停回 park，避免 innerHTML 替换连它一起销毁
     var views = {
-      overview: viewOverview, articles: viewArticles, privacy: viewPrivacy, historyPrivacy: viewHistoryPrivacy,
+      overview: viewOverview, articles: viewArticles, pinned: viewPinned, privacy: viewPrivacy, historyPrivacy: viewHistoryPrivacy,
       submissions: viewSubmissions, approved: viewApproved, trash: viewTrash,
       comments: viewComments,
     };
@@ -586,6 +644,9 @@
         return;
       }
       if (action === 'refresh') { loadAll(); return; }
+      if (action === 'pin-up' || action === 'pin-down' || action === 'pin-off') {
+        return changePinOrder(action, target.getAttribute('data-path'));
+      }
       if (action === 'back-to-articles') { state.editing = null; state.view = 'overview'; render(); return; }
       if (action === 'save-editor' || action === 'publish-editor') {
         var frame = document.querySelector('.studio-frame');

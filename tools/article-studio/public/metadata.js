@@ -1,7 +1,10 @@
-/* Round 80：/api/config 预取——尽早与静态脚本并行发出。 */
-window.__configPromise = fetch('/api/config')
-  .then(function (r) { return r.ok ? r.json() : null; })
-  .catch(function () { return null; });
+/* Round 80：/api/config 预取——尽早与静态脚本并行发出。
+   注意：metadata.test.mjs 会在 Node 里直接 import 本文件，那里没有 window，跳过预取。 */
+if (typeof window !== 'undefined') {
+  window.__configPromise = fetch('/api/config')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; });
+}
 
 (function attachArticleMetadata(global) {
   const knownKeys = new Set(['title', 'date', 'updated', 'categories', 'tags', 'description']);
@@ -245,5 +248,42 @@ window.__configPromise = fetch('/api/config')
     return `---${separator}${output.join(separator)}${separator}---${bodyPrefix}${document.body}`;
   }
 
-  global.ArticleMetadata = Object.freeze({ splitDocument, read, update, toDateTimeLocal, currentLocalDateTime, fromDateTimeLocal });
+  function readSticky(markdown) {
+    const match = String(markdown || '').match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/);
+    if (!match) return null;
+    const line = match[1].split(/\r?\n/).find((item) => /^sticky[ \t]*:/.test(item));
+    if (!line) return null;
+    const raw = line.replace(/^sticky[ \t]*:[ \t]*/, '').trim().replace(/^['"]|['"]$/g, '');
+    if (!raw || raw === 'null' || raw === '~' || raw === 'false') return null;
+    if (raw === 'true') return 1;
+    const value = Number(raw);
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
+  function setSticky(markdown, value) {
+    const text = String(markdown || '');
+    const newline = text.includes('\r\n') ? '\r\n' : '\n';
+    const lines = text.split(/\r?\n/);
+    if ((lines[0] || '').trim() !== '---') throw new Error('文章缺少 front matter，无法设置置顶。');
+    let end = -1;
+    for (let index = 1; index < lines.length; index += 1) {
+      if (lines[index].trim() === '---') { end = index; break; }
+    }
+    if (end < 0) throw new Error('文章的 front matter 没有闭合，无法设置置顶。');
+    const block = lines.slice(1, end);
+    const position = block.findIndex((line) => /^sticky[ \t]*:/.test(line));
+    const wanted = Number(value);
+    const next = Number.isFinite(wanted) && wanted > 0 ? `sticky: ${Math.trunc(wanted)}` : null;
+    if (position >= 0) {
+      if (next) block[position] = next;
+      else block.splice(position, 1);
+    } else if (next) {
+      block.push(next);
+    } else {
+      return text;
+    }
+    return ['---', ...block, '---', ...lines.slice(end + 1)].join(newline);
+  }
+
+  global.ArticleMetadata = Object.freeze({ splitDocument, read, update, readSticky, setSticky, toDateTimeLocal, currentLocalDateTime, fromDateTimeLocal });
 }(globalThis));

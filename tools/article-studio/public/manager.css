@@ -478,3 +478,11 @@ body::before {
   z-index: 3;
   pointer-events: none;
 }
+
+.pin-badge { display: inline-block; margin-right: 6px; padding: 1px 7px; border-radius: 999px; background: rgba(0, 0, 0, .07); font-size: 11px; vertical-align: 1px; }
+.pin-row .pin-rank { display: inline-block; width: 20px; height: 20px; margin-right: 8px; border-radius: 50%; background: rgba(0, 0, 0, .07); font-size: 12px; line-height: 20px; text-align: center; vertical-align: 1px; }
+.pin-row .pin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.card .hint { margin: 0 0 12px; font-size: 13px; opacity: .72; }
+.card .btn.tiny.danger { color: #b4443a; }
+
+.btn:disabled, .btn[disabled] { opacity: .4; cursor: not-allowed; }

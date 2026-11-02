@@ -10,6 +10,7 @@ import { SSO_COOKIE, createSsoToken, ssoCookie, verifySsoToken } from '../shared
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { networkInterfaces } from 'node:os';
 import Hexo from 'hexo';
+import { readSticky, planPinOrder } from './pin-order.mjs';
 
 const studioDir = dirname(fileURLToPath(import.meta.url));
 const toolRepoDir = resolve(studioDir, '..', '..');
@@ -388,6 +389,7 @@ async function walkMarkdown(dir, base = dir) {
         path: toPosix(relative(base, full)),
         title: frontMatterValue(content, 'title') || item.name.replace(/\.md$/i, ''),
         date: frontMatterValue(content, 'date'),
+        sticky: readSticky(content),
         updatedAt: info.mtime.toISOString(),
       });
     }
@@ -1315,6 +1317,35 @@ async function routeApi(req, res, url, identity) {
     const data = await readJson(req);
     await saveArticle(data.path, data.content);
     return send(res, 200, { ok: true, message: '文章已保存到本地。', warnings: await scanSensitive(data.content) });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/pin-order') {
+    const data = await readJson(req);
+    if (!Array.isArray(data.order)) return fail(res, 400, '置顶列表格式不正确。');
+    if (data.order.length > 60) return fail(res, 400, '置顶的文章太多了。');
+    const order = [];
+    for (const item of data.order) {
+      try {
+        order.push(normalizeArticlePath(String(item)));
+      } catch {
+        return fail(res, 400, '置顶列表里有不合法的文章路径。');
+      }
+    }
+    const articles = await walkMarkdown(postsDir);
+    const known = new Set(articles.map((item) => item.path));
+    const missing = order.find((path) => !known.has(path));
+    if (missing) return fail(res, 404, `置顶列表里的文章不存在：${missing}`);
+    const entries = [];
+    for (const item of articles) {
+      entries.push({ path: item.path, content: await readFile(join(postsDir, item.path), 'utf8') });
+    }
+    const updates = planPinOrder(entries, order);
+    for (const update of updates) await saveArticle(update.path, update.content);
+    return send(res, 200, {
+      ok: true,
+      updated: updates.map((item) => item.path),
+      pinned: order.map((path, index) => ({ path, sticky: order.length - index })),
+    });
   }
 
   if (req.method === 'POST' && url.pathname === '/api/delete') {

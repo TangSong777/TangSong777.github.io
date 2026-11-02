@@ -489,6 +489,11 @@ dialog label small { display: block; margin-top: 5px; color: var(--muted); font-
   dialog form { padding: 22px 18px; }
   .markdown-help-content { grid-template-columns: 1fr; padding: 18px; }
   .markdown-help-content section:last-child { grid-column: auto; }
+.pin-field .pin-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pin-field .pin-line input[type="checkbox"] { width: 16px; height: 16px; margin: 0; }
+.pin-field .pin-line select { min-width: 104px; }
+.pin-field .pin-line select:disabled { opacity: .55; }
+
   .metadata-grid { grid-template-columns: 1fr; }
   .metadata-grid .full-field { grid-column: auto; }
   .toast { right: 12px; bottom: 12px; left: 12px; max-width: none; }

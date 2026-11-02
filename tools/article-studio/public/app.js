@@ -244,7 +244,45 @@ window.__configPromise = fetch('/api/config')
     return `---${separator}${output.join(separator)}${separator}---${bodyPrefix}${document.body}`;
   }
 
-  global.ArticleMetadata = Object.freeze({ splitDocument, read, update, toDateTimeLocal, currentLocalDateTime, fromDateTimeLocal });
+  /** 置顶（Hexo front-matter sticky）读写：数值越大越靠前，没有该字段表示不置顶。 */
+  function readSticky(markdown) {
+    const match = String(markdown || '').match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/);
+    if (!match) return null;
+    const line = match[1].split(/\r?\n/).find((item) => /^sticky[ \t]*:/.test(item));
+    if (!line) return null;
+    const raw = line.replace(/^sticky[ \t]*:[ \t]*/, '').trim().replace(/^['"]|['"]$/g, '');
+    if (!raw || raw === 'null' || raw === '~' || raw === 'false') return null;
+    if (raw === 'true') return 1;
+    const value = Number(raw);
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
+  function setSticky(markdown, value) {
+    const text = String(markdown || '');
+    const newline = text.includes('\r\n') ? '\r\n' : '\n';
+    const lines = text.split(/\r?\n/);
+    if ((lines[0] || '').trim() !== '---') throw new Error('文章缺少 front matter，无法设置置顶。');
+    let end = -1;
+    for (let index = 1; index < lines.length; index += 1) {
+      if (lines[index].trim() === '---') { end = index; break; }
+    }
+    if (end < 0) throw new Error('文章的 front matter 没有闭合，无法设置置顶。');
+    const block = lines.slice(1, end);
+    const position = block.findIndex((line) => /^sticky[ \t]*:/.test(line));
+    const wanted = Number(value);
+    const next = Number.isFinite(wanted) && wanted > 0 ? `sticky: ${Math.trunc(wanted)}` : null;
+    if (position >= 0) {
+      if (next) block[position] = next;
+      else block.splice(position, 1);
+    } else if (next) {
+      block.push(next);
+    } else {
+      return text;
+    }
+    return ['---', ...block, '---', ...lines.slice(end + 1)].join(newline);
+  }
+
+  global.ArticleMetadata = Object.freeze({ splitDocument, read, update, readSticky, setSticky, toDateTimeLocal, currentLocalDateTime, fromDateTimeLocal });
 }(globalThis));
 
 const mobileKeyFromUrl = new URLSearchParams(location.search).get('key');
@@ -717,6 +755,14 @@ function openRenameDialog() {
   $('#renameFileName').select();
 }
 
+function pinnedArticleOrder() {
+  return state.articles
+    .map((item) => ({ path: item.path, sticky: Number(item.sticky) || 0 }))
+    .filter((item) => item.sticky > 0)
+    .sort((a, b) => b.sticky - a.sticky)
+    .map((item) => item.path);
+}
+
 function openMetadataDialog() {
   if (!state.currentPath) return;
   const metadata = articleMetadata.read(editor.value);
@@ -727,12 +773,21 @@ function openMetadataDialog() {
   $('#metadataCategories').value = metadata.categories.join(', ');
   $('#metadataTags').value = metadata.tags.join(', ');
   $('#metadataDescription').value = metadata.description;
+  const pinnedOrder = pinnedArticleOrder();
+  const listWithCurrent = pinnedOrder.includes(state.currentPath) ? pinnedOrder : [...pinnedOrder, state.currentPath];
+  const currentRank = articleMetadata.readSticky(editor.value) ? Math.max(1, listWithCurrent.indexOf(state.currentPath) + 1) : 0;
+  const rankSelect = $('#metadataPinRank');
+  const rankTotal = Math.max(1, pinnedOrder.filter((path) => path !== state.currentPath).length + 1);
+  rankSelect.innerHTML = Array.from({ length: rankTotal }, (_, index) => `<option value="${index + 1}">第 ${index + 1} 位</option>`).join('');
+  rankSelect.value = String(currentRank || 1);
+  rankSelect.disabled = currentRank === 0;
+  $('#metadataPinned').checked = currentRank > 0;
   $('#metadataDialog').showModal();
   $('#metadataTitle').focus();
   $('#metadataTitle').select();
 }
 
-function updateArticleMetadata(event) {
+async function updateArticleMetadata(event) {
   event.preventDefault();
   if (!state.currentPath) return;
   try {
@@ -746,11 +801,30 @@ function updateArticleMetadata(event) {
       tags: $('#metadataTags').value,
       description: $('#metadataDescription').value,
     });
-    const newBodyStart = articleMetadata.splitDocument(value).bodyStart;
+    // 置顶顺序是跨文章的：这里先把「目标顺序」算出来，变了才调接口，
+    // 再把服务端算好的 sticky 值写回编辑器缓冲，避免随后的 Ctrl+S 把它覆盖掉。
+    const wantedPinned = Boolean($('#metadataPinned').checked);
+    const wantedRank = Math.max(1, Number($('#metadataPinRank').value) || 1);
+    const currentOrder = pinnedArticleOrder();
+    const nextOrder = currentOrder.filter((path) => path !== state.currentPath);
+    if (wantedPinned) nextOrder.splice(Math.min(wantedRank - 1, nextOrder.length), 0, state.currentPath);
+    let finalValue = value;
+    if (currentOrder.join('\n') !== nextOrder.join('\n')) {
+      const pinned = await api('/api/pin-order', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ order: nextOrder }),
+      });
+      const assigned = (pinned.pinned || []).find((item) => item.path === state.currentPath);
+      finalValue = articleMetadata.setSticky(value, assigned ? assigned.sticky : null);
+      const stickyByPath = new Map((pinned.pinned || []).map((item) => [item.path, item.sticky]));
+      state.articles = state.articles.map((item) => ({ ...item, sticky: stickyByPath.has(item.path) ? stickyByPath.get(item.path) : null }));
+    }
+    const newBodyStart = articleMetadata.splitDocument(finalValue).bodyStart;
     const movePosition = (position) => position >= oldBodyStart ? newBodyStart + position - oldBodyStart : Math.min(position, newBodyStart);
 
     state.applyingEdit = true;
-    editor.value = value;
+    editor.value = finalValue;
     editor.setSelectionRange(movePosition(before.start), movePosition(before.end));
     state.applyingEdit = false;
     const after = editorSnapshot();
@@ -758,7 +832,7 @@ function updateArticleMetadata(event) {
     refreshEditorState();
     $('#metadataDialog').close();
     editor.focus({ preventScroll: true });
-    toast(before.value === value ? '文章信息没有变化。' : '文章信息已更新；按 Ctrl+S 保存。');
+    toast(before.value === finalValue ? '文章信息没有变化。' : '文章信息已更新；按 Ctrl+S 保存。');
   } catch (error) {
     toast(error.message, true);
   }
@@ -2077,6 +2151,9 @@ $('#saveButton').addEventListener('click', () => saveArticle().catch((error) => 
 $('#publishButton').addEventListener('click', openPublishDialog);
 $('#metadataButton').addEventListener('click', openMetadataDialog);
 $('#metadataForm').addEventListener('submit', updateArticleMetadata);
+$('#metadataPinned').addEventListener('change', () => {
+  $('#metadataPinRank').disabled = !$('#metadataPinned').checked;
+});
 $('#cancelMetadata').addEventListener('click', () => $('#metadataDialog').close());
 document.addEventListener('selectionchange', updateCursorPosition);
 $('#deleteArticleButton').addEventListener('click', deleteArticle);
