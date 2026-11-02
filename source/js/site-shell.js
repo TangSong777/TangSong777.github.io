@@ -172,3 +172,19 @@
     parentList.removeChild(item);
   });
 })();
+
+/* 目录为空时（例如索引页：整页唯一的 h1 就是标题本身，被判重逻辑删掉后一条不剩），
+   右侧栏只剩一个标题为「文章目录」的空面板，看上去像加载失败。
+   这种情况下把侧栏切到「站点概览」，并把空的目录标签隐藏掉。 */
+(function () {
+  'use strict';
+  if (document.body.className.indexOf('siyuan-mode') < 0) return;
+  var nav = document.querySelector('.post-toc .nav');
+  if (!nav || nav.children.length) return;
+  var inner = document.querySelector('.sidebar-inner');
+  if (!inner) return;
+  inner.classList.remove('sidebar-toc-active');
+  inner.classList.add('sidebar-overview-active');
+  var tocTab = inner.querySelector('.sidebar-nav-toc');
+  if (tocTab) tocTab.style.display = 'none';
+})();
