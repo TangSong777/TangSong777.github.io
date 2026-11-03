@@ -692,6 +692,43 @@ body.blog-post-mode .post-body mjx-container[display="true"] {
   .blog-home-profile img:hover { transform: none; }
 }
 
+/* ==== 16.1 目录条目：hover 底纹 + 当前项左侧标记（对齐参考站观感） ==== */
+body.siyuan-mode .post-toc .nav-item,
+body.blog-post-mode .post-toc .nav-item {
+  margin: 1px 0;
+}
+
+body.siyuan-mode .post-toc .nav-link,
+body.blog-post-mode .post-toc .nav-link {
+  display: block;
+  padding: 4px 9px;
+  border-radius: 7px;
+  line-height: 1.55;
+  transition: background-color .18s ease, color .18s ease;
+}
+
+body.siyuan-mode .post-toc .nav-link:hover,
+body.blog-post-mode .post-toc .nav-link:hover {
+  background: var(--green-wash, #f0f6f4);
+  color: var(--green-deep);
+}
+
+body.siyuan-mode .post-toc .nav-link.siyuan-toc-current,
+body.blog-post-mode .post-toc .nav-link.siyuan-toc-current,
+body.siyuan-mode .post-toc .nav-link.active,
+body.blog-post-mode .post-toc .nav-link.active {
+  background: var(--green-soft, #e6efee);
+  color: var(--green-deep);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--green);
+}
+
+/* 二级/三级条目缩进一点，层级一眼能看出来 */
+body.siyuan-mode .post-toc .nav-level-2 > .nav-link,
+body.blog-post-mode .post-toc .nav-level-2 > .nav-link { padding-left: 18px; }
+body.siyuan-mode .post-toc .nav-level-3 > .nav-link,
+body.blog-post-mode .post-toc .nav-level-3 > .nav-link { padding-left: 30px; font-size: 0.92em; }
+
 /* ==== 16. ==高亮== 渲染成 <mark> 后的样式 ==== */
 /* 思源用 ==文字== 表示高亮。标记在 after_post_render 里换成 <mark>，
    这里补一层与管理中心、思源编辑器观感接近的底色。 */
