@@ -35,6 +35,10 @@ const style = `<link rel="stylesheet" href="${siteRoot}css/siyuan-knowledge.css?
 const shellVersion = hashOf('source/js/site-shell.js');
 const knowledgeVersion = hashOf('source/js/siyuan-knowledge.js');
 const dataVersion = hashOf('source/js/siyuan-data.js');
+const polishCssVersion = hashOf('source/css/polish.css');
+const polishJsVersion = hashOf('source/js/polish.js');
+const polishStyle = `<link rel="stylesheet" href="${siteRoot}css/polish.css?v=${polishCssVersion}">`;
+const polishScript = `<script src="${siteRoot}js/polish.js?v=${polishJsVersion}" defer></script>`;
 const shell = `<script src="${siteRoot}js/site-shell.js?v=${shellVersion}" defer></script>`;
 const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=${dataVersion}" defer></script><script src="${siteRoot}js/siyuan-knowledge.js?v=${knowledgeVersion}" defer></script>`;
 
@@ -59,7 +63,9 @@ const navEnhance = [
 ['home', 'post', 'page', 'archive', 'tag', 'category'].forEach(type => {
   hexo.extend.injector.register('head_end', navEnhance, type);
   hexo.extend.injector.register('head_end', style, type);
+  hexo.extend.injector.register('head_end', polishStyle, type);
   hexo.extend.injector.register('body_end', shell, type);
+  hexo.extend.injector.register('body_end', polishScript, type);
 });
 
 // 首页与笔记页都要 siyuan-knowledge.js：它不只做笔记页的 TOC 高亮/引用聚焦，

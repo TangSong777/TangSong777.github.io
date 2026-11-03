@@ -1,0 +1,387 @@
+/* ─────────────────────────────────────────────────────────────
+   视觉润色层（polish）
+   动效、悬浮、玻璃质感与若干细节。单独成文件，出问题删掉这一条
+   <link> 就能整体回退，不影响 siyuan-knowledge.css 里的布局规则。
+
+   原则：
+   - 所有动效都包在 prefers-reduced-motion 保护里，用户关掉动画就一动不动
+   - 不做「入场加载动画」以外的夸张效果，滚动时不重排、不闪烁
+   - 颜色全部取自已有的设计变量（--green / --amber / --pop-rose）
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --polish-ease: cubic-bezier(.22, .61, .36, 1);
+  --polish-fast: .18s;
+  --polish-base: .34s;
+  --polish-slow: .62s;
+}
+
+/* ── 1. 平滑滚动与锚点偏移 ──────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* 顶栏一旦吸顶，锚点跳转会被盖住一截 */
+.post-body h1, .post-body h2, .post-body h3, .post-body h4,
+.siyuan-content h1, .siyuan-content h2, .siyuan-content h3 {
+  scroll-margin-top: 92px;
+}
+
+/* ── 2. 滚动揭示 ────────────────────────────────────────────── */
+/* 只有 JS 把 .js-reveal 挂到 html 上、并且给元素打了 data-reveal 时才会隐藏，
+   JS 挂了或者被禁用，内容照常显示。 */
+.js-reveal [data-reveal] {
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+.js-reveal [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--polish-slow) var(--polish-ease) var(--reveal-delay, 0ms),
+    transform var(--polish-slow) var(--polish-ease) var(--reveal-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-reveal [data-reveal] { opacity: 1 !important; transform: none !important; }
+}
+
+/* ── 3. 吸顶玻璃导航 ────────────────────────────────────────── */
+@media (min-width: 992px) {
+  body.blog-home-mode .header,
+  body.blog-post-mode .header,
+  body.archive-mode .header,
+  body.siyuan-mode .header {
+    position: sticky;
+    top: 0;
+    z-index: 130;
+    transition:
+      background var(--polish-base) var(--polish-ease),
+      box-shadow var(--polish-base) var(--polish-ease),
+      backdrop-filter var(--polish-base) var(--polish-ease);
+  }
+
+  /* 文章页的 header 在 siyuan-knowledge.css 里被写死成 position: relative（为了压住 fixed 侧栏的 z-index），
+   这里用同等特异度 + 更靠后的加载顺序把它改回 sticky，否则只有首页/归档能吸顶。 */
+body.blog-post-mode header.header {
+  position: sticky;
+  top: 0;
+}
+
+body.is-scrolled .header {
+    background: rgba(250, 252, 251, .82);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5);
+    backdrop-filter: blur(18px) saturate(1.5);
+    box-shadow: 0 12px 32px rgba(35, 66, 58, .10);
+  }
+}
+
+/* 导航项：悬停时从中心展开的下划线 */
+.site-nav .menu-item > a {
+  position: relative;
+}
+
+.site-nav .menu-item > a::after {
+  background: currentColor;
+  border-radius: 2px;
+  bottom: -2px;
+  content: '';
+  height: 2px;
+  left: 50%;
+  opacity: 0;
+  position: absolute;
+  transform: translateX(-50%) scaleX(.35);
+  transition: opacity var(--polish-fast) var(--polish-ease), transform var(--polish-base) var(--polish-ease);
+  width: calc(100% - 8px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-nav .menu-item > a:hover::after,
+  .site-nav .menu-item.menu-item-active > a::after {
+    opacity: .55;
+    transform: translateX(-50%) scaleX(1);
+  }
+}
+
+/* ── 4. 首页 hero ──────────────────────────────────────────── */
+@keyframes hero-flow {
+  from { background-position: 0% 50%; }
+  to   { background-position: 220% 50%; }
+}
+
+@keyframes hero-drift {
+  0%   { transform: translate3d(-4%, -3%, 0) scale(1); opacity: .55; }
+  100% { transform: translate3d(6%, 4%, 0) scale(1.15); opacity: .85; }
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  @media (prefers-reduced-motion: no-preference) {
+    body.blog-home-mode .blog-home-hero h1 {
+      background-image: linear-gradient(100deg, #ffffff 0%, #d5ece5 24%, #ffe2bb 48%, #ffffff 72%, #d5ece5 100%);
+      background-size: 220% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: hero-flow 16s linear infinite;
+    }
+  }
+}
+
+body.blog-home-mode .blog-home-hero::after {
+  background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, .18), transparent 52%);
+  content: '';
+  inset: -30%;
+  pointer-events: none;
+  position: absolute;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body.blog-home-mode .blog-home-hero::after { animation: hero-drift 20s ease-in-out infinite alternate; }
+}
+
+/* 轨道环：让外圈两道虚线慢慢转 */
+body.blog-home-mode .blog-home-orbit::before {
+  border-style: dashed;
+  opacity: .7;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes orbit-spin { to { transform: rotate(360deg); } }
+  body.blog-home-mode .blog-home-orbit::before { animation: orbit-spin 40s linear infinite; }
+  body.blog-home-mode .blog-home-orbit::after { animation: orbit-spin 64s linear infinite reverse; }
+}
+
+/* 主按钮：悬停抬起 + 一道扫光 */
+body.blog-home-mode .blog-home-actions a {
+  overflow: hidden;
+  position: relative;
+  transition: transform var(--polish-base) var(--polish-ease), box-shadow var(--polish-base) var(--polish-ease), background var(--polish-fast) var(--polish-ease);
+}
+
+body.blog-home-mode .blog-home-actions a::before {
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .55) 50%, transparent 80%);
+  content: '';
+  inset: 0;
+  position: absolute;
+  transform: translateX(-120%);
+  transition: transform .7s var(--polish-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body.blog-home-mode .blog-home-actions a:hover {
+    box-shadow: 0 12px 26px rgba(6, 26, 20, .28);
+    transform: translateY(-2px);
+  }
+
+  body.blog-home-mode .blog-home-actions a:hover::before { transform: translateX(120%); }
+}
+
+/* ── 5. 卡片悬浮 ───────────────────────────────────────────── */
+body.blog-home-mode .blog-home-feed > .post-block {
+  transition:
+    transform var(--polish-base) var(--polish-ease),
+    box-shadow var(--polish-base) var(--polish-ease),
+    border-color var(--polish-base) var(--polish-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body.blog-home-mode .blog-home-feed > .post-block:hover {
+    border-color: var(--green-line);
+    box-shadow: 0 26px 58px rgba(38, 63, 55, .16);
+    transform: translateY(-4px);
+  }
+}
+
+body.blog-home-mode .blog-home-note-card,
+body.blog-home-mode .blog-home-side-card {
+  transition:
+    transform var(--polish-base) var(--polish-ease),
+    box-shadow var(--polish-base) var(--polish-ease),
+    border-color var(--polish-base) var(--polish-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body.blog-home-mode .blog-home-note-card:hover,
+  body.blog-home-mode .blog-home-side-card:hover {
+    box-shadow: 0 18px 38px rgba(38, 63, 55, .13);
+    transform: translateY(-3px);
+  }
+
+  body.blog-home-mode .blog-home-note-card:hover .blog-home-note-index {
+    transform: scale(1.1) rotate(-4deg);
+  }
+}
+
+body.blog-home-mode .blog-home-note-index {
+  display: inline-block;
+  transition: transform var(--polish-base) var(--polish-ease);
+}
+
+/* 「阅读全文 →」的箭头在悬停时右移一点 */
+body.blog-home-mode .blog-home-readmore {
+  display: inline-block;
+  transition: transform var(--polish-base) var(--polish-ease), color var(--polish-fast) var(--polish-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body.blog-home-mode .post-block:hover .blog-home-readmore { transform: translateX(4px); }
+}
+
+/* ── 6. 文章页 ─────────────────────────────────────────────── */
+body.blog-post-mode .post-block {
+  transition: box-shadow var(--polish-base) var(--polish-ease);
+}
+
+/* 代码块：右上角复制按钮，默认淡出，悬停浮现 */
+body.blog-post-mode figure.highlight {
+  position: relative;
+}
+
+.code-copy-btn {
+  align-items: center;
+  background: rgba(255, 255, 255, .92);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(35, 66, 58, .10);
+  color: var(--green-deep);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  gap: 4px;
+  letter-spacing: .04em;
+  opacity: 0;
+  padding: 5px 9px;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  transition: opacity var(--polish-fast) var(--polish-ease), background var(--polish-fast) var(--polish-ease), color var(--polish-fast) var(--polish-ease);
+  z-index: 2;
+}
+
+body.blog-post-mode figure.highlight:hover .code-copy-btn,
+.code-copy-btn:focus-visible { opacity: 1; }
+
+.code-copy-btn:hover { background: var(--green-soft); }
+
+.code-copy-btn.is-done {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .code-copy-btn { opacity: 1; }
+}
+
+/* 表格行悬停：长表格里读一行时不再串行 */
+body.blog-post-mode .post-body tbody tr,
+.siyuan-content .post-body tbody tr {
+  transition: background var(--polish-fast) var(--polish-ease);
+}
+
+body.blog-post-mode .post-body tbody tr:hover,
+.siyuan-content .post-body tbody tr:hover {
+  background: var(--green-wash);
+}
+
+/* 正文图片：轻微放大 + 阴影加深，暗示可以点开 */
+body.blog-post-mode .post-body img {
+  transition: transform var(--polish-base) var(--polish-ease), box-shadow var(--polish-base) var(--polish-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body.blog-post-mode .post-body img:hover {
+    box-shadow: 0 16px 40px rgba(35, 66, 58, .18);
+    transform: scale(1.012);
+  }
+}
+
+/* 标签胶囊 */
+.post-tags a,
+.tag-cloud a {
+  transition: transform var(--polish-fast) var(--polish-ease), background var(--polish-fast) var(--polish-ease), border-color var(--polish-fast) var(--polish-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .post-tags a:hover,
+  .tag-cloud a:hover { transform: translateY(-1px); }
+}
+
+/* 阅读时长：由 polish.js 注入 */
+.post-reading-time {
+  color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+/* ── 7. 阅读进度条与回顶 ────────────────────────────────────── */
+.reading-progress-bar {
+  background: linear-gradient(90deg, var(--green) 0%, var(--pop-amber) 62%, var(--pop-rose) 100%) !important;
+  box-shadow: 0 0 12px rgba(106, 141, 140, .45);
+}
+
+.back-to-top {
+  transition: transform var(--polish-base) var(--polish-ease), box-shadow var(--polish-base) var(--polish-ease), opacity var(--polish-base) var(--polish-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .back-to-top:hover {
+    box-shadow: 0 14px 30px rgba(35, 66, 58, .22);
+    transform: translateY(-3px);
+  }
+}
+
+/* ── 8. 细节 ───────────────────────────────────────────────── */
+::selection {
+  background: rgba(106, 141, 140, .26);
+  color: var(--ink-deep);
+}
+
+/* 滚动条（WebKit / Chromium / Edge / Safari） */
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(77, 117, 114, .26);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(77, 117, 114, .46); background-clip: padding-box; }
+
+/* Firefox */
+html { scrollbar-color: rgba(77, 117, 114, .32) transparent; scrollbar-width: thin; }
+
+/* 标签页 / 分类页的条目也做一点抬升 */
+@media (prefers-reduced-motion: no-preference) {
+  body.archive-mode .post-block:hover {
+    box-shadow: 0 18px 40px rgba(38, 63, 55, .12);
+    transform: translateY(-2px);
+  }
+}
+
+body.archive-mode .post-block {
+  transition: transform var(--polish-base) var(--polish-ease), box-shadow var(--polish-base) var(--polish-ease);
+}
+
+/* 页脚链接 */
+.footer a { transition: color var(--polish-fast) var(--polish-ease); }
+.footer a:hover { color: var(--green); }
+
+/* ── 3b. 吸顶的真正落点：header 的父级 .column 只有 164px 高，
+   sticky 在它自己身上不会超出父盒，滚两屏就跟走了。把 .column 设为 sticky
+   （它的父级是整页高的 .main），整块顶栏才会一直贴住视口顶部。 */
+@media (min-width: 992px) {
+  body.blog-home-mode .main > .column,
+  body.blog-post-mode .main > .column,
+  body.archive-mode .main > .column,
+  body.siyuan-mode .main > .column {
+    position: sticky;
+    top: 0;
+    z-index: 130;
+  }
+}

@@ -12,7 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const TARGETS = ['css/siyuan-knowledge.css', 'css/main.css'];
+const TARGETS = ['css/siyuan-knowledge.css', 'css/main.css', 'css/polish.css'];
 
 function minifyCss(input) {
   let out = '';
