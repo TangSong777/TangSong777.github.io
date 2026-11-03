@@ -691,3 +691,20 @@ body.blog-post-mode .post-body mjx-container[display="true"] {
   .blog-home-profile img { transition: none; }
   .blog-home-profile img:hover { transform: none; }
 }
+
+/* ==== 16. ==高亮== 渲染成 <mark> 后的样式 ==== */
+/* 思源用 ==文字== 表示高亮。标记在 after_post_render 里换成 <mark>，
+   这里补一层与管理中心、思源编辑器观感接近的底色。 */
+body.siyuan-mode .post-body mark,
+body.blog-post-mode .post-body mark {
+  background: #fff3c4;
+  color: inherit;
+  padding: 0.05em 0.25em;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+body.siyuan-mode .post-body mark,
+body.blog-post-mode .post-body mark { transition: background-color .25s ease; }
+body.siyuan-mode .post-body mark:hover,
+body.blog-post-mode .post-body mark:hover { background: #ffe89a; }

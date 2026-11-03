@@ -1,61 +1,59 @@
 'use strict';
 
 /**
- * 渲染前的两处 Markdown 清理（只改渲染输入，不写回源文件）。
+ * 思源导出的 Markdown 预处理 + 高亮补转
  *
- * 1) `$$ … $$` 压成单行
- *    hexo-renderer-marked 会把跨行的 $$ 块拆成 <p>$$<br>…<br>$$</p>，
- *    而 hexo-filter-mathjax 在 after_post_render 阶段按文本节点找定界符，
- *    夹进 <br> 之后就认不出来，公式只能以源码形式露出来。
- *    这里在 before_post_render 阶段把块内换行压成空格。
- *
- * 2) 去掉零宽空格 U+200B
- *    思源导出会在标题/正文里塞零宽空格（例如 `## **2.**​[链接]`），
- *    它会把 Markdown 的强调语法切断，页面上就显示成 `**2.**` 这样的字面星号。
- *
- * 代码块（``` 围栏 / 缩进代码）内的内容一律跳过，避免破坏示例。
+ * 1) before_post_render：去掉 U+200B 零宽空格（思源导出会插在 ** 与 [ 之间，
+ *    切断 Markdown 强调语法，页面会露出字面 **2.**）；
+ *    把跨行 $$ … $$ 压成单行（hexo-filter-mathjax 在 after_post_render 跑，
+ *    多行公式被 marked 插进 <br> 后就认不出定界符了）；
+ *    清掉思源 `**注意：**​**==…==**` 这类拼接留下的 ****。
+ * 2) after_post_render（priority 10，排在 mathjax 的 5 之后）：
+ *    把 ==高亮== 转成 <mark>。放在 HTML 阶段做，MathJax 就完全看不到 <mark>，
+ *    避免之前在源文本里插入 HTML 标签导致 MathJax 抛
+ *    "Can't find handler for document" 的问题。
  */
-hexo.extend.filter.register('before_post_render', function (data) {
-  var text = data.content;
-  if (typeof text !== 'string' || !text) return data;
 
-  var lines = text.split('\n');
-  var out = [];
-  var inFence = false;
-  var fence = '';
+var CJK = /[\u4e00-\u9fa5\u3000-\u303f\uff00-\uffef]/;
 
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i];
-    var trimmed = line.trim();
-
-    if (inFence) {
-      if (trimmed.indexOf(fence) === 0) inFence = false;
-      out.push(line);
-      continue;
-    }
-
-    var m = /^(```+|~~~+)/.exec(trimmed);
-    if (m) {
-      inFence = true;
-      fence = m[1];
-      out.push(line);
-      continue;
-    }
-
-    out.push(line.split('\u200b').join(''));
-  }
-
-  var cleaned = out.join('\n');
-
-  // 压平 $$ … $$ 块（跳过围栏内内容由上面的循环保证：这里再按同样的围栏切一遍）
-  var parts = cleaned.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/);
-  for (var k = 0; k < parts.length; k++) {
-    if (k % 2 === 1) continue; // 奇数下标是围栏块
-    parts[k] = parts[k].replace(/\$\$([\s\S]*?)\$\$/g, function (whole, body) {
+function flattenDisplayMath(text) {
+  var parts = text.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/);
+  for (var i = 0; i < parts.length; i++) {
+    if (i % 2 === 1) continue;
+    parts[i] = parts[i].replace(/\$\$([\s\S]*?)\$\$/g, function (whole, body) {
       return '$$' + body.replace(/\s*\n\s*/g, ' ').trim() + '$$';
     });
   }
+  return parts.join('');
+}
 
-  data.content = parts.join('');
+function convertHighlights(html) {
+  // 代码块 / 行内代码里不能改；按标签切段，只处理文本段
+  var chunks = String(html).split(/(<pre[\s\S]*?<\/pre>|<code[\s\S]*?<\/code>)/i);
+  for (var i = 0; i < chunks.length; i++) {
+    if (i % 2 === 1) continue;
+    chunks[i] = chunks[i].replace(/==([^=\n<][^\n<]{0,200}?)==/g, function (whole, body) {
+      if (body.indexOf('==') !== -1) return whole;
+      if (!CJK.test(body)) return whole;
+      return '<mark>' + body + '</mark>';
+    });
+  }
+  return chunks.join('');
+}
+
+hexo.extend.filter.register('before_post_render', function (data) {
+  var text = data.content;
+  if (typeof text !== 'string' || !text) return data;
+  text = text.split('\u200b').join('');
+  text = flattenDisplayMath(text);
+  text = text.replace(/\*{4,}/g, '');
+  data.content = text;
   return data;
 });
+
+hexo.extend.filter.register('after_post_render', function (data) {
+  if (typeof data.content !== 'string') return data;
+  if (data.content.indexOf('==') === -1) return data;
+  data.content = convertHighlights(data.content);
+  return data;
+}, 10);
