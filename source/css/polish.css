@@ -448,3 +448,48 @@ body.archive-mode .post-block {
   .blog-home-rail .sidebar-tags a,
   .blog-home-rail .sidebar-archives a { transition: none; }
 }
+
+/* ── 12. 正文：标题左侧短竖条、图片圆角、行内代码底色 ───────── */
+body.blog-post-mode .post-body h2,
+body.siyuan-mode .post-body h2 {
+  padding-left: 12px;
+  position: relative;
+}
+
+body.blog-post-mode .post-body h2::before,
+body.siyuan-mode .post-body h2::before {
+  background: linear-gradient(180deg, var(--green) 0%, var(--pop-amber) 100%);
+  border-radius: 2px;
+  bottom: .18em;
+  content: "";
+  left: 0;
+  position: absolute;
+  top: .18em;
+  width: 3px;
+}
+
+body.blog-post-mode .post-body img,
+body.siyuan-mode .post-body img {
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(35, 66, 58, .10);
+  height: auto;
+}
+
+body.blog-post-mode .post-body p > code,
+body.blog-post-mode .post-body li > code,
+body.siyuan-mode .post-body p > code,
+body.siyuan-mode .post-body li > code {
+  background: var(--green-wash);
+  border: 1px solid var(--green-line);
+  border-radius: 5px;
+  color: var(--green-deep);
+  font-size: .92em;
+  padding: .12em .38em;
+}
+
+/* 表格首列稍微强调一下，长表格更好扫读 */
+body.blog-post-mode .post-body tbody td:first-child,
+body.siyuan-mode .post-body tbody td:first-child {
+  color: var(--green-deep);
+  font-weight: 600;
+}
