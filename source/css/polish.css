@@ -450,13 +450,17 @@ body.archive-mode .post-block {
 }
 
 /* ── 12. 正文：标题左侧短竖条、图片圆角、行内代码底色 ───────── */
+body.blog-post-mode .post-body h1,
 body.blog-post-mode .post-body h2,
+body.siyuan-mode .post-body h1,
 body.siyuan-mode .post-body h2 {
   padding-left: 12px;
   position: relative;
 }
 
+body.blog-post-mode .post-body h1::before,
 body.blog-post-mode .post-body h2::before,
+body.siyuan-mode .post-body h1::before,
 body.siyuan-mode .post-body h2::before {
   background: linear-gradient(180deg, var(--green) 0%, var(--pop-amber) 100%);
   border-radius: 2px;
@@ -492,4 +496,198 @@ body.blog-post-mode .post-body tbody td:first-child,
 body.siyuan-mode .post-body tbody td:first-child {
   color: var(--green-deep);
   font-weight: 600;
+}
+
+/* ── 13. 吸顶后的顶栏收紧 ─────────────────────────────────────
+   首页/文章页的 header 是「品牌带 96px + 导航 68px」两段共 164px，
+   吸顶后一直占掉六分之一屏高。滚动后把品牌带折起来，只留导航条，
+   回到顶部再展开——和参考站那种「滚动时导航变窄」是同一件事。 */
+@media (min-width: 992px) {
+  body.blog-home-mode .site-brand-container,
+  body.blog-post-mode .site-brand-container,
+  body.archive-mode .site-brand-container,
+  body.siyuan-mode .site-brand-container {
+    max-height: 96px;
+    overflow: hidden;
+    transition:
+      max-height var(--polish-base) var(--polish-ease),
+      opacity var(--polish-base) var(--polish-ease),
+      padding var(--polish-base) var(--polish-ease);
+  }
+
+  body.is-scrolled .site-brand-container {
+    max-height: 0;
+    opacity: 0;
+    padding-bottom: 0;
+    padding-top: 0;
+    pointer-events: none;
+  }
+
+  body.is-scrolled .header {
+    box-shadow: 0 10px 26px rgba(35, 66, 58, .10);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .site-brand-container { transition: none !important; }
+}
+
+/* ── 14. 首页卡片内部间距收紧 ─────────────────────────────────
+   主题给 .post-header 留了 margin-bottom:60px（列表页两篇之间的呼吸感），
+   搬进卡片后就是一句话标题和正文之间空出半张卡。卡片里改成紧凑的一行。 */
+body.blog-home-mode .blog-home-feed .post-header {
+  margin-bottom: 16px;
+}
+
+body.blog-home-mode .blog-home-feed .post-meta {
+  margin-top: 8px;
+}
+
+/* 卡片正文限高后，跟「阅读全文」之间也不用再顶 22px */
+body.blog-home-mode .blog-home-feed .blog-home-readmore {
+  margin-top: 16px;
+}
+
+/* ==========================================================================
+   Round 15：笔记页正文渲染修复 + 右侧「目录」卡片（参考 yhblogs.cn 的 #card-toc）
+   ========================================================================== */
+
+/* --- 15.1 侧栏面板宽度 ---
+   主题的 .sidebar-panel-container 是 display:grid，每个 .sidebar-panel 占 grid-area 1/1。
+   面板本身没有 min-width:0，而目录链接又是 white-space:nowrap，于是网格被内容撑到
+   586px（侧栏只有 320px），整块 TOC 向右溢出、文字被 ellipsis 截掉。 */
+body.siyuan-mode .sidebar-panel,
+body.blog-post-mode .sidebar-panel,
+body.archive-mode .sidebar-panel {
+  min-width: 0;
+  width: 100%;
+}
+
+body.siyuan-mode .post-toc-wrap.sidebar-panel,
+body.blog-post-mode .post-toc-wrap.sidebar-panel {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* --- 15.2 目录卡片 --- */
+body.siyuan-mode .post-toc-wrap,
+body.blog-post-mode .post-toc-wrap {
+  background: var(--surface, #fff);
+  border: 1px solid var(--sy-line, #e3ece8);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(35, 66, 58, .05);
+  margin-top: 2px;
+  padding: 0;
+  width: 100%;
+}
+
+body.siyuan-mode .toc-card-head,
+body.blog-post-mode .toc-card-head {
+  align-items: center;
+  border-bottom: 1px solid var(--sy-line, #e3ece8);
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 8px;
+  letter-spacing: .02em;
+  padding: 12px 14px 11px;
+}
+
+body.siyuan-mode .toc-card-head .toc-card-icon,
+body.blog-post-mode .toc-card-head .toc-card-icon {
+  color: var(--green, #4d7572);
+  display: inline-flex;
+}
+
+body.siyuan-mode .toc-card-head .toc-percentage,
+body.blog-post-mode .toc-card-head .toc-percentage {
+  color: var(--muted, #7a8f8b);
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+body.siyuan-mode .post-toc,
+body.blog-post-mode .post-toc {
+  max-height: calc(100vh - 230px);
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  padding: 8px 8px 12px;
+  scrollbar-color: var(--line-strong, #cfe0da) transparent;
+  scrollbar-width: thin;
+}
+
+body.siyuan-mode .post-toc::-webkit-scrollbar,
+body.blog-post-mode .post-toc::-webkit-scrollbar { width: 5px; }
+body.siyuan-mode .post-toc::-webkit-scrollbar-thumb,
+body.blog-post-mode .post-toc::-webkit-scrollbar-thumb {
+  background: var(--line-strong, #cfe0da);
+  border-radius: 5px;
+}
+
+/* 目录条目：允许折行，不再 ellipsis 截断 */
+body.siyuan-mode .post-toc .nav-link,
+body.blog-post-mode .post-toc .nav-link {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
+}
+
+body.siyuan-mode .post-toc .nav-child,
+body.blog-post-mode .post-toc .nav-child {
+  margin-left: 9px;
+  padding-left: 8px;
+}
+
+/* --- 15.3 正文列表层级 ---
+   原来：外层 li 没有左边距、内层 ul 只让 12px，标记（outside 定位）会顶到竖线上。
+   现在：整条 ul/ol 留出 1.7em 让标记有落点；嵌套列表的竖线退到标记右侧。 */
+body.siyuan-mode .post-body ul,
+body.siyuan-mode .post-body ol {
+  margin: 8px 0;
+  padding-left: 1.7em;
+}
+
+body.siyuan-mode .post-body li {
+  line-height: 1.78;
+  margin: 4px 0;
+  padding-left: .1em;
+}
+
+body.siyuan-mode .post-body li > ul,
+body.siyuan-mode .post-body li > ol {
+  border-left: 2px solid var(--sy-line, #e3ece8);
+  margin: 4px 0 4px 6px;
+  padding-left: 14px;
+}
+
+body.siyuan-mode .post-body li > p { margin: 0; }
+body.siyuan-mode .post-body li::marker { color: var(--green, #4d7572); }
+
+/* --- 15.4 MathJax 公式 --- */
+body.siyuan-mode .post-body mjx-container[display="true"],
+body.blog-post-mode .post-body mjx-container[display="true"] {
+  margin: 14px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+
+/* --- 15.5 首页头像悬浮旋转（参考 yhblogs.cn 的 .avatar-img img:hover） --- */
+.blog-home-profile img {
+  border-radius: 50%;
+  transition: filter .3s ease, transform .55s ease;
+}
+
+.blog-home-profile img:hover,
+.blog-home-profile img:focus-visible {
+  filter: brightness(1.06);
+  transform: rotate(360deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-home-profile img { transition: none; }
+  .blog-home-profile img:hover { transform: none; }
 }

@@ -143,6 +143,47 @@
   }
 
   /* ── 4. 阅读时长 ─────────────────────────────────────────── */
+  /* 右侧目录卡片：补一个带百分比的卡头，并随滚动更新百分比。
+     主题的 TOC 面板没有卡头，条目在窄栏里又被 ellipsis 截断，
+     参考 yhblogs.cn 的 #card-toc 做了这一层。 */
+  function setupTocCard() {
+    var wrap = document.querySelector(".post-toc-wrap");
+    var toc = wrap && wrap.querySelector(".post-toc");
+    if (!wrap || !toc || wrap.querySelector(".toc-card-head")) return;
+
+    var head = document.createElement("div");
+    head.className = "toc-card-head";
+    head.innerHTML =
+      '<span class="toc-card-icon" aria-hidden="true">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+      '<path d="M4 6h16M4 12h10M4 18h13"/></svg></span>' +
+      "<span>目录</span>" +
+      '<span class="toc-percentage">0%</span>';
+    wrap.insertBefore(head, toc);
+
+    var pct = head.querySelector(".toc-percentage");
+    var body = document.querySelector(".post-body");
+    if (!body || !pct) return;
+
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var rect = body.getBoundingClientRect();
+      var total = body.offsetHeight - window.innerHeight;
+      var done = total > 0 ? (-rect.top) / total : 1;
+      done = Math.max(0, Math.min(1, done));
+      pct.textContent = Math.round(done * 100) + "%";
+    }
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update();
+  }
+
   function setupReadingTime() {
     var body = document.querySelector('body.blog-post-mode .post-body');
     if (!body) return;
@@ -180,5 +221,6 @@
     setupStickyHeader();
     setupCodeCopy();
     setupReadingTime();
+    setupTocCard();
   });
 })();

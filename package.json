@@ -42,6 +42,7 @@
     "@lezer/highlight": "^1.2.5",
     "@toast-ui/editor": "^3.2.2",
     "hexo": "^8.0.0",
+    "hexo-filter-mathjax": "^0.11.1",
     "hexo-generator-archive": "^2.0.0",
     "hexo-generator-category": "^2.0.0",
     "hexo-generator-index": "^4.0.0",
