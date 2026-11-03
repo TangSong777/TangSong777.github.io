@@ -287,7 +287,6 @@ Flow Control 设置
 ### 反向引用
 - [其他笔记](/siyuan/其他笔记/)
 - [学习笔记](/siyuan/)
-- [c2026-11-03](/siyuan/daily-card/c2026/c2026-11/c2026-11-03/)
 - [Moonlight专项](/siyuan/其他笔记/Rock5B+/Moonlight专项/)
 
 </section>
