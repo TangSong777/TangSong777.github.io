@@ -16,7 +16,6 @@ categories:
 
 
 
-  - [思源笔记中写 LaTeX 公式](/siyuan/待学习/思源笔记中写-LaTeX-公式/)
 - [Python笔记](/siyuan/Python笔记/)
 
   - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
@@ -60,7 +59,6 @@ categories:
   - [Rock5B+](/siyuan/其他笔记/Rock5B+/)
 
     - [Moonlight专项](/siyuan/其他笔记/Rock5B+/Moonlight专项/)
-    - [串流方案](/siyuan/其他笔记/Rock5B+/串流方案/)
 - [4 小时彻底掌握 C 指针](/siyuan/4-小时彻底掌握-C-指针/)
 - [一口气学完CNN的卷积层、池化层、激活函数、全连接层、输出层](/siyuan/一口气学完CNN的卷积层、池化层、激活函数、全连接层、输出层/)
 
@@ -106,4 +104,3 @@ categories:
   - [NumPy基础练习（已归档）](/siyuan/已归档/NumPy基础练习（已归档）/)
   - [Python容器学习（已归档）](/siyuan/已归档/Python容器学习（已归档）/)
   - [Python文件操作学习（已归档）](/siyuan/已归档/Python文件操作学习（已归档）/)
-- [手册](/siyuan/手册/)

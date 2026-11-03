@@ -50,14 +50,13 @@ categories:
 - 🧱 [Rock5B+](/siyuan/其他笔记/Rock5B+/)
 
   - 🌙 [Moonlight专项](/siyuan/其他笔记/Rock5B+/Moonlight专项/)
-  - 🎮 [串流方案](/siyuan/其他笔记/Rock5B+/串流方案/)
+  - 🎮 串流方案
 
 <section class="siyuan-references" aria-label="文档引用">
 
 ## 文档关系
 
 ### 本文引用
-- [串流方案](/siyuan/其他笔记/Rock5B+/串流方案/)
 - [基于OpenWrt与ZeroTier的个人组网](/siyuan/其他笔记/计算机网络/OpenWrt-+-ZeroTier-个人组网完整方案/基于OpenWrt与ZeroTier的个人组网/)
 - [计算机网络](/siyuan/其他笔记/计算机网络/)
 - [计算机网络专项](/siyuan/其他笔记/计算机网络/学习文档/计算机网络专项/)
