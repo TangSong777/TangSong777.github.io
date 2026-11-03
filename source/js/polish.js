@@ -146,7 +146,46 @@
   /* 右侧目录卡片：补一个带百分比的卡头，并随滚动更新百分比。
      主题的 TOC 面板没有卡头，条目在窄栏里又被 ellipsis 截断，
      参考 yhblogs.cn 的 #card-toc 做了这一层。 */
+  // 思源导出的文末「文档关系 / 本文引用 / 反向引用」也是 h2/h3，会被 NexT 收进目录。
+  // 它们不是正文大纲，留在目录里既占位置又让人以为「大纲没了」。这里把它们摘掉；
+  // 摘完如果一条不剩（说明这篇正文没有任何标题），就把右栏切回「站点概览」，
+  // 免得留一个只有三条元信息的空目录。
+  function pruneReferenceToc() {
+    var toc = document.querySelector(".post-toc .nav");
+    if (!toc) return;
+    var refIds = {};
+    Array.prototype.forEach.call(
+      document.querySelectorAll(".post-body .siyuan-references [id]"),
+      function (el) { refIds[el.id] = true; }
+    );
+    var removed = 0;
+    Array.prototype.forEach.call(toc.querySelectorAll("li"), function (li) {
+      var a = li.querySelector("a[href^='#']");
+      if (!a) return;
+      var id = a.getAttribute("href").slice(1);
+      try { id = decodeURIComponent(id); } catch (e) {}
+      if (!refIds[id]) return;
+      if (li.parentNode) { li.parentNode.removeChild(li); removed += 1; }
+    });
+    if (!removed) return;
+
+    // 删完可能出现空的分组 <ol>，一并收掉
+    Array.prototype.forEach.call(toc.querySelectorAll("ol"), function (ol) {
+      if (!ol.querySelector("li") && ol !== toc && ol.parentNode) ol.parentNode.removeChild(ol);
+    });
+
+    if (toc.querySelector("li")) return;
+    var inner = document.querySelector(".sidebar-inner");
+    if (!inner) return;
+    inner.classList.remove("sidebar-toc-active");
+    inner.classList.add("sidebar-overview-active");
+    var tocTab = inner.querySelector(".sidebar-nav-toc");
+    if (tocTab) tocTab.style.display = "none";
+  }
+
   function setupTocCard() {
+    pruneReferenceToc();
+
     var wrap = document.querySelector(".post-toc-wrap");
     var toc = wrap && wrap.querySelector(".post-toc");
     if (!wrap || !toc || wrap.querySelector(".toc-card-head")) return;
