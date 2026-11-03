@@ -183,7 +183,20 @@
     if (tocTab) tocTab.style.display = "none";
   }
 
+  // 思源导出的标题常是 `## **1.卷积运算**`，NexT 的目录会连 <strong> 一起搬过去，
+  // 于是目录里二级标题加粗、三级不加粗，看着像乱掉的层级。这里把 strong/em 拆掉，
+  // 只保留纯文本，粗细交给 CSS（当前项加粗）。
+  function normalizeTocText() {
+    Array.prototype.forEach.call(document.querySelectorAll(".post-toc .nav-link"), function (a) {
+      Array.prototype.forEach.call(a.querySelectorAll("strong, b, em, i, code"), function (el) {
+        while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
+        el.parentNode.removeChild(el);
+      });
+    });
+  }
+
   function setupTocCard() {
+    normalizeTocText();
     pruneReferenceToc();
 
     var wrap = document.querySelector(".post-toc-wrap");
