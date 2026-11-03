@@ -385,3 +385,66 @@ body.archive-mode .post-block {
     z-index: 130;
   }
 }
+
+/* 首页的 .column 在 siyuan-knowledge.css:256 被写死成 static !important，
+   sticky 元素不能越出父盒，所以首页顶栏原本吸不住；这里按同样的选择器加回来。 */
+@media (min-width: 992px) {
+  body.blog-home-mode .main > .column {
+    position: sticky !important;
+    top: 0;
+    z-index: 130;
+  }
+}
+
+/* ── 9. 首页分区标题：加一条渐变短线，让「最近文章 / 学习笔记精选」有个起点 ── */
+.blog-home-section-title h2 {
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.blog-home-section-title h2::after {
+  background: linear-gradient(90deg, var(--green) 0%, var(--pop-amber) 68%, var(--pop-rose) 100%);
+  border-radius: 2px;
+  bottom: 0;
+  content: "";
+  height: 3px;
+  left: 0;
+  position: absolute;
+  width: 34px;
+  transition: width var(--polish-base) var(--polish-ease);
+}
+
+.blog-home-feed:hover .blog-home-section-title h2::after,
+.blog-home-knowledge:hover .blog-home-section-title h2::after {
+  width: 56px;
+}
+
+/* ── 10. 右侧栏的标签/归档：hover 时左移一点并变色 ── */
+.blog-home-rail .sidebar-tags a,
+.blog-home-rail .sidebar-archives a {
+  display: inline-block;
+  transition: color var(--polish-fast) ease, transform var(--polish-fast) var(--polish-ease);
+}
+
+.blog-home-rail .sidebar-tags a:hover,
+.blog-home-rail .sidebar-archives a:hover {
+  color: var(--green-deep);
+  transform: translateX(2px);
+}
+
+/* ── 11. 页脚：顶部一条淡渐变线，和正文分开 ── */
+.footer::before {
+  background: linear-gradient(90deg, transparent, var(--green-line) 22%, var(--pop-amber-line) 62%, transparent);
+  content: "";
+  display: block;
+  height: 1px;
+  margin: 0 auto 18px;
+  max-width: 760px;
+  opacity: .8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-home-section-title h2::after { transition: none; }
+  .blog-home-rail .sidebar-tags a,
+  .blog-home-rail .sidebar-archives a { transition: none; }
+}
