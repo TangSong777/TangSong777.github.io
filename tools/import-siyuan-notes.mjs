@@ -360,7 +360,7 @@ async function main() {
     const rules = JSON.parse(await fs.readFile(options.privacyRulesFile, 'utf8'));
     for (const value of Array.isArray(rules.privateValues) ? rules.privateValues : []) {
       const normalized = String(value).trim();
-      if (normalized.length >= 4 && !privateValues.includes(normalized)) privateValues.push(normalized);
+      if (normalized.length >= 3 && !privateValues.includes(normalized)) privateValues.push(normalized);
     }
     for (const document of Array.isArray(rules.excludedDocuments) ? rules.excludedDocuments : []) {
       const normalized = String(document).trim().replaceAll('\\', '/');
@@ -407,6 +407,7 @@ async function main() {
       return '[已隐藏邮箱]';
     });
 
+    text = text.replace(/(- \u771f\u540d\uff1a)([^\n|]+)/gu, (m, p1) => { redactionCount += 1; return p1 + '\u2588\u2588\u2588\u2588'; });
     for (const value of privateValues) {
       text = replaceSensitive(text, new RegExp(escapeRegExp(value), 'giu'), '████');
     }
@@ -630,8 +631,11 @@ async function main() {
     );
 
     body = body.replace(/\uE000SIYUAN_CODE_(\d+)\uE001/gu, (_match, index) => codeFragments[Number(index)]);
-    // 私密链接整段移除后，可能留下空的列表项
-    body = body.replace(/^[ \t]*[-*+][ \t]*(?:📄[ \t]*)?\$/gmu, '');
+    // 私密链接整段移除后，可能留下「只有项目符号 + $」的空列表项。
+    // 必须锚定行尾：不锚定时会把「列表项以内联公式开头」的正常内容也吃掉开头的 `- $`，
+    // 公式就失去配对的 $（CNN 那篇的 `- $W^{l}$ 为卷积核参数。` 就是这么坏的）。
+    body = body.replace(/^[ \t]*[-*+][ \t]*(?:📄[ \t]*)?\$[ \t]*$/gmu, '');
+
     body = body.replace(/\n{3,}/g, '\n\n');
     // 目录里的纯文本列表项：整行命中私密标题则删除
     const privateListTitles = new Set(privateDocuments.map((item) => key(item.split('/').pop().replace(/\.md$/i, ''))));
