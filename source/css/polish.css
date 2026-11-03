@@ -745,3 +745,30 @@ body.siyuan-mode .post-body mark,
 body.blog-post-mode .post-body mark { transition: background-color .25s ease; }
 body.siyuan-mode .post-body mark:hover,
 body.blog-post-mode .post-body mark:hover { background: #ffe89a; }
+
+/* 16.2 目录层级字重
+   思源笔记的正文结构是「# 一级」+「## 二级」，但原样式只给二级加了 font-weight:600，
+   一级保持 400，结果子项比父项还粗，看着像层级错乱。这里按层级重新分配：
+   一级最粗、二级常规、三级常规且更小更淡，靠缩进和字号建立层级而不是全是粗体。 */
+body.siyuan-mode .post-toc .nav-level-1 > .nav-link,
+body.blog-post-mode .post-toc .nav-level-1 > .nav-link {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+body.siyuan-mode .post-toc .nav-level-2 > .nav-link,
+body.blog-post-mode .post-toc .nav-level-2 > .nav-link {
+  font-weight: 400;
+}
+body.siyuan-mode .post-toc .nav-level-3 > .nav-link,
+body.blog-post-mode .post-toc .nav-level-3 > .nav-link {
+  font-weight: 400;
+  color: var(--gray);
+}
+body.siyuan-mode .post-toc .nav-level-3 > .nav-link:hover,
+body.blog-post-mode .post-toc .nav-level-3 > .nav-link:hover {
+  color: var(--green);
+}
+
+/* 16.3 当前项始终加粗（上面的层级字重会盖掉原来的 active 规则） */
+body.siyuan-mode .post-toc .active > .nav-link,
+body.blog-post-mode .post-toc .active > .nav-link { font-weight: 600; }
