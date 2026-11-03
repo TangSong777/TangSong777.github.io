@@ -22,6 +22,7 @@
     trashOpen: false,
     groupOpen: { notes: true, history: true },
     studioDirty: 0,
+    taskStatus: '',
   };
 
   function esc(value) {
@@ -66,6 +67,54 @@
     var el = document.getElementById('toast');
     if (el) { el.textContent = text; el.classList.add('is-on'); }
     setTimeout(function () { if (el) el.classList.remove('is-on'); }, 2600);
+  }
+
+  /* 隐私规则保存后的重新发布/重新生成是后台任务，必须自己盯着状态，
+     否则用户点完只看到一句「已保存」，失败也无从得知。 */
+  var taskPollTimer = null;
+  function setTaskStatus(text) {
+    state.taskStatus = text || '';
+    var el = document.getElementById('task-status');
+    if (el) el.textContent = state.taskStatus;
+  }
+
+  function watchTask(kind, started) {
+    var url = kind === 'notes' ? '/api/siyuan-privacy/status' : '/api/history-privacy/status';
+    if (taskPollTimer) { clearTimeout(taskPollTimer); taskPollTimer = null; }
+    var tick = async function () {
+      var status;
+      try { status = await api(url); } catch (error) { return; }
+      var task = kind === 'notes' ? status.republish : status.sync;
+      if (!task) return;
+      if (task.running) {
+        setTaskStatus(task.message || '正在重新导入并构建…');
+        taskPollTimer = setTimeout(tick, 1500);
+        return;
+      }
+      taskPollTimer = null;
+      if (task.ok === true) {
+        setTaskStatus(task.message || '已完成');
+        toast(task.message || '已重新发布');
+      } else if (task.ok === false) {
+        var tail = String(task.tail || '').trim().split('\n').filter(Boolean).slice(-1)[0] || '';
+        setTaskStatus((task.message || '发布失败') + (tail ? '：' + tail : ''));
+        toast((task.message || '发布失败') + (tail ? '：' + tail : ''), true);
+      } else {
+        setTaskStatus('');
+      }
+      await loadAll();
+    };
+    if (!started) {
+      // started=false 有两种情况：已有任务在跑，或启动失败。先看状态再决定。
+      api(url).then(function (status) {
+        var task = kind === 'notes' ? status.republish : status.sync;
+        if (task && task.running) { setTaskStatus(task.message || '已有任务正在运行…'); taskPollTimer = setTimeout(tick, 1500); }
+        else toast('已保存');
+      }).catch(function () { toast('已保存'); });
+      return;
+    }
+    setTaskStatus('正在重新导入并构建…');
+    taskPollTimer = setTimeout(tick, 1500);
   }
 
 
@@ -488,7 +537,8 @@
     var head = '<div class="card-head"><h2>学习笔记隐私（排除 ' + excluded.size + ' / 共 ' + docs.length + '）</h2>' +
       '<div class="row-actions">' +
       '<button class="btn" data-action="privacy-expand">全部展开</button>' +
-      '<button class="btn primary" data-action="save-privacy">保存并重新发布</button></div></div>';
+      '<button class="btn primary" data-action="save-privacy">保存并重新发布</button></div></div>' +
+      '<p class="hint task-status" id="task-status">' + esc(state.taskStatus) + '</p>';
     if (!docs.length) return '<section class="card">' + head + '<p class="empty">没有找到学习笔记文档</p></section>';
     var tree = buildDocTree(docs, state.notebook);
     return '<section class="card">' + head +
@@ -525,7 +575,8 @@
     var head = '<div class="card-head"><h2>岁月史书隐私（排除 ' + excluded.size + ' / 共 ' + docs.length + '）</h2>' +
       '<div class="row-actions">' +
       '<button class="btn" data-action="history-privacy-expand">全部展开</button>' +
-      '<button class="btn primary" data-action="save-history-privacy">保存并重新生成</button></div></div>';
+      '<button class="btn primary" data-action="save-history-privacy">保存并重新生成</button></div></div>' +
+      '<p class="hint task-status" id="task-status">' + esc(state.taskStatus) + '</p>';
     if (!docs.length) return '<section class="card">' + head + '<p class="empty">没有找到岁月史书文档（确认 /srv/blog/history-source 存在）</p></section>';
     var tree = buildDocTree(docs, '岁月史书');
     return '<section class="card">' + head +
@@ -920,7 +971,8 @@
           body: JSON.stringify({ excludedDocuments: checked, privateValues: state.rules.privateValues || [] }),
         });
         state.rules = result.rules || state.rules;
-        toast(result.republish && result.republish.started ? '已保存，正在重新发布' : '已保存');
+        render();
+        watchTask('notes', Boolean(result.republish && result.republish.started));
         return;
       }
 
@@ -939,8 +991,9 @@
           body: JSON.stringify({ excludedDocuments: checked, privateValues: state.historyRules.privateValues || [] }),
         });
         state.historyRules = hresult.rules || state.historyRules;
+        state.taskStatus = '';
         render();
-        toast(hresult.sync && hresult.sync.started ? '已保存，正在重新生成岁月史书' : '已保存');
+        watchTask('history', Boolean(hresult.sync && hresult.sync.started));
         return;
       }
 

@@ -3,6 +3,7 @@
 // 只触碰生成目录（source/siyuan、source/images/siyuan、source/js/siyuan-data.js），
 // 不会提交仓库中的其他改动。
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -26,6 +27,9 @@ await withRepositoryLock(async () => {
   run(process.execPath, ['tools/import-siyuan-notes.mjs']);
   run('npm', ['run', 'clean']);
   run('npm', ['run', 'build']);
+  // 检查器要求私密值清单权限 600；这份文件被 gitignore，权限不随仓库走，
+  // 换机器或被复制后很容易变成 644，导致整条重新发布在这里无声失败。先自愈再校验。
+  try { await fs.chmod(path.join(repo, 'tools', 'siyuan-private-values.txt'), 0o600); } catch {}
   run(process.execPath, ['tools/check-siyuan-knowledge-base.mjs', '--require-public']);
 
   run('git', ['add', '-A', ...generated]);

@@ -568,3 +568,7 @@ body::before {
 
 /* ---- 文档栏标题右侧两个小按钮 ---- */
 .doc-rail-actions { display: flex; gap: 6px; align-items: center; }
+
+/* 隐私规则保存后的任务状态行：没有内容时不占位 */
+.task-status { margin: 0 0 10px; }
+.task-status:empty { display: none; }
