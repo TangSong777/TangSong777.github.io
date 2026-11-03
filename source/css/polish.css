@@ -772,3 +772,30 @@ body.blog-post-mode .post-toc .nav-level-3 > .nav-link:hover {
 /* 16.3 当前项始终加粗（上面的层级字重会盖掉原来的 active 规则） */
 body.siyuan-mode .post-toc .active > .nav-link,
 body.blog-post-mode .post-toc .active > .nav-link { font-weight: 600; }
+
+/* ==== 17. 右栏吸顶：避开折叠后的顶栏，矮视口内部滚动 ==== */
+/* 首页右栏 .blog-home-rail 原本 top:22px，而吸顶导航折叠后仍占 0–68px，
+   卡片顶端被压在毛玻璃导航条底下——看着像"分块错位"。统一改到导航条下方 16px。 */
+@media (min-width: 992px) {
+  body.blog-home-mode .blog-home-rail { top: 84px; }
+  body.blog-home-mode .blog-home-rail > * { scroll-margin-top: 84px; }
+}
+
+/* 右栏七张卡片合计约 778px，视口可用高度不足时下半截永远滚不出来，
+   改成侧栏内部滚动（细滚动条，悬停才明显）。 */
+@media (min-width: 992px) and (max-height: 900px) {
+  body.blog-home-mode .blog-home-rail {
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sy-line, #e3ece8) transparent;
+  }
+  body.blog-home-mode .blog-home-rail::-webkit-scrollbar { width: 6px; }
+  body.blog-home-mode .blog-home-rail::-webkit-scrollbar-thumb {
+    background: var(--sy-line, #e3ece8);
+    border-radius: 3px;
+  }
+  body.blog-home-mode .blog-home-rail::-webkit-scrollbar-track { background: transparent; }
+}
