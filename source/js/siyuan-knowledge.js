@@ -530,27 +530,12 @@
     var postBody = document.querySelector('.post-body');
     if (postBody) {
       var nonDaily = docs.filter(function (doc) { return !doc.daily; });
-      var knowledgeHomeTitles = ['Python笔记', '计算机网络', '命令行', '嵌入式'];
-      var allTreeNodes = Object.keys(nodes).map(function (key) { return nodes[key]; });
-      var topNodes = knowledgeHomeTitles.map(function (title) {
-        return allTreeNodes.find(function (node) { return node.title === title; });
-      }).filter(Boolean);
       var hero = document.createElement('section');
       hero.className = 'siyuan-hero';
       var heroStats = window.__SITE_STATS__ || null;
       var heroNotes = heroStats ? Number(heroStats.notes) : nonDaily.length;
       var heroDaily = heroStats ? Number(heroStats.daily) : docs.filter(function (d) { return d.daily; }).length;
       hero.innerHTML = '<div class="siyuan-hero-kicker">PERSONAL KNOWLEDGE BASE</div><h1>' + root.title + '</h1><p>沿着主题探索笔记，也可以顺着引用回到知识形成的上下文。这里与普通博客时间线相互独立。</p><div class="siyuan-stats"><div class="siyuan-stat"><strong>' + heroNotes + '</strong><span>主题文档</span></div><div class="siyuan-stat"><strong>' + heroDaily + '</strong><span>日记文档</span></div><div class="siyuan-stat"><strong>' + root.children.length + '</strong><span>知识分区</span></div></div>';
-      var grid = document.createElement('div');
-      grid.className = 'siyuan-home-grid';
-      topNodes.forEach(function (node) {
-        var card = document.createElement('a');
-        card.className = 'siyuan-home-card';
-        card.href = node.url || '#';
-        card.innerHTML = '<strong>' + node.title + '</strong><span>' + node.children.length + ' 个子文档 · 打开主题</span>';
-        grid.appendChild(card);
-      });
-      postBody.insertBefore(grid, postBody.firstChild);
 
       // hero 里已经有 <h1>页面名</h1>，页面上方那个居中的同名大标题纯属重复。
       // 只在文字完全一致时才收起来，避免误伤有独立标题的页面。
@@ -559,7 +544,7 @@
         var ownHeader = ownTitle.closest('.post-header');
         if (ownHeader) ownHeader.style.display = 'none';
       }
-      postBody.insertBefore(hero, grid);
+      postBody.insertBefore(hero, postBody.firstChild);
     }
   }
 })();

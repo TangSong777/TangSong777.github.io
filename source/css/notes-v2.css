@@ -663,3 +663,32 @@ body.siyuan-mode .siyuan-tree-overlay.is-open { opacity: 1; pointer-events: auto
   body.siyuan-mode .post-title { font-size: 24px; }
   body.siyuan-mode .post-body h1 { font-size: 21px; }
 }
+
+/* ── 11. 学习笔记首页：左侧全文档目录常驻 ──────────────────────────────
+   首页（/siyuan/）进门就该看见「有哪些文档」，所以把目录从抽屉改成常驻栏，
+   版心和顶栏整体右移 300px；其它笔记页仍然是 ☰ 抽屉。
+   窄屏（≤1100）保持抽屉 —— 手机上常驻栏会把正文挤没。 */
+@media (min-width: 1101px) {
+  body.siyuan-mode.is-knowledge-home .siyuan-tree-panel {
+    box-shadow: 4px 0 24px rgba(35, 66, 58, .04);
+    transform: none;
+  }
+  body.siyuan-mode.is-knowledge-home .siyuan-tree-overlay { display: none !important; }
+  body.siyuan-mode.is-knowledge-home #nv2-nav { left: 300px; }
+  body.siyuan-mode.is-knowledge-home #nv2-nav .nv2-toggle { display: none; }
+  /* 用 padding 而不是 margin：.main 本身是 100% 宽，
+     加 margin-left 会把整块推出视口（横向滚动条）。 */
+  body.siyuan-mode.is-knowledge-home .main,
+  body.siyuan-mode.is-knowledge-home .footer {
+    box-sizing: border-box;
+    margin-left: 0 !important;
+    padding-left: 300px !important;
+    width: 100% !important;
+  }
+  body.siyuan-mode.is-knowledge-home .main-inner {
+    margin: 0 auto !important;
+    max-width: 1200px !important;
+    padding: 40px 15px 0 !important;
+    width: auto !important;
+  }
+}

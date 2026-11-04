@@ -315,7 +315,15 @@
   }
 
   /* ── 启动 ────────────────────────────────────────────────────────────── */
+  /* 学习笔记首页（/siyuan/）默认把左侧全文档目录当成常驻栏列出来，
+     其它页面还是抽屉（点 ☰ 才出来）。 */
+  function markKnowledgeHome() {
+    var p = location.pathname.replace(/\/index\.html$/, '/');
+    if (p === '/siyuan/' || p === '/siyuan') document.body.classList.add('is-knowledge-home');
+  }
+
   function run() {
+    markKnowledgeHome();
     buildNav();
     buildHeader();
     var toc = buildAside();
