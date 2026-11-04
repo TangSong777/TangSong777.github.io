@@ -369,12 +369,11 @@
       var href = raw[i].getAttribute('href');
       if (label && href && !tags.some(function (t) { return t.href === href; })) tags.push({ label: label, href: href });
     }
-    if (!tags.length) {
-      tags = [
-        { label: '学习笔记', href: '/tags/学习笔记/' },
-        { label: '知识库', href: '/tags/知识库/' }
-      ];
-    }
+    /* 早期版本在没有真实标签时编了「学习笔记 / 知识库」两个兜底，
+       但它们对应的 /tags/学习笔记/ 与 /tags/知识库/ 页面并不存在，
+       点进去就是 404。没有标签就不显示这一行。 */
+    if (!tags.length) return;
+
     var wrap = el('div', 'nv2-tags');
     tags.forEach(function (t) {
       var a = el('a', null, t.label);
