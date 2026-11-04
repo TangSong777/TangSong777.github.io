@@ -221,6 +221,13 @@
   function syncInert() {
     var open = panel.classList.contains('is-open');
     panel.inert = !open && !railIsPermanent();
+    // 抽屉打开时是「遮罩 + 侧边栏」的模态交互：底下的正文要移出 Tab 序列，
+    // 否则键盘能在遮罩后面乱跳；顶栏保留可聚焦，☰ 就地就是关闭按钮。
+    var modal = open && !railIsPermanent();
+    var main = document.querySelector('main.main');
+    var footer = document.querySelector('.footer');
+    if (main) main.inert = modal;
+    if (footer) footer.inert = modal;
   }
 
   var lastFocus = null;
