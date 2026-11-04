@@ -231,7 +231,9 @@
   // Build a useful knowledge-home first viewport from the actual imported tree.
   if (currentPath === normalize(root.url)) {
     var postBody = document.querySelector('.post-body');
-    if (postBody) {
+    /* hero 现在由构建脚本（scripts/siyuan-knowledge.js 的 injectKnowledgeHero）
+       直接写进 HTML，这里只在缺失时兜底补一个，避免出现两个。 */
+    if (postBody && !postBody.querySelector('.siyuan-hero')) {
       var nonDaily = docs.filter(function (doc) { return !doc.daily; });
       var hero = document.createElement('section');
       hero.className = 'siyuan-hero';

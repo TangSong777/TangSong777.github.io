@@ -88,7 +88,18 @@ hexo.extend.injector.register('head_end', notesStyle, 'page');
    site-shell.js 在 body_end 才加 —— 首帧会先画一遍 NexT 的旧布局
    （顶栏、侧栏、正文位置），随后整块挪位，实测 CLS 0.17。
    这里在 <body> 一打开就同步加类，样式从第一帧就生效。 */
-const notesModeClass = '<script>if(location.pathname.indexOf("/siyuan/")===0){document.body.className+=" siyuan-mode";}</script>';
+/* 笔记版式全部挂在 body.siyuan-mode 下，这个类必须<b>首帧就有</b>：
+   等到 body_end 的 site-shell.js 再加，会先画一遍 NexT 旧布局再整块挪位（CLS 0.17）。
+   学习笔记首页还要额外挂 is-knowledge-home —— 左侧目录改成常驻栏、
+   版心右移 300px 全靠它，晚加一次就是一次整页横移。 */
+const notesModeClass = '<script>(function(){'
+  + 'var p=location.pathname;'
+  + 'if(p!=="/siyuan"&&p.indexOf("/siyuan/")!==0)return;'
+  + 'document.body.className+=" siyuan-mode";'
+  + 'var rest=p.slice(8);'
+  + 'if(rest===""||rest==="/"||rest==="index.html"||rest==="/index.html"){'
+  + 'document.body.className+=" is-knowledge-home";}'
+  + '})();</script>';
 hexo.extend.injector.register('body_begin', notesModeClass, 'page');
 
 hexo.extend.injector.register('body_end', notesScript, 'page');
@@ -128,6 +139,9 @@ function countSiteStats() {
           walk(full);
         } else if (entry.name === 'index.md') {
           const relative = path.relative(siyuanRoot, full).split(path.sep).join('/');
+          /* 首页自身（relative === 'index.md'）不算一个分区。 */
+          const top = relative.indexOf('/') > 0 ? relative.split('/')[0] : '';
+          if (top) (stats.partitions = stats.partitions || {})[top] = true;
           /* 日记只算「按天」的那层：daily-note/2026/08/2026-08-03/index.md。
              daily-note/、daily-note/2026/、daily-note/2026/08/ 是目录枢纽页，
              算进「日记文档」会让首页数字比实际日记条数多。 */
@@ -142,6 +156,7 @@ function countSiteStats() {
   } catch (err) {
     hexo.log.warn(`[stats] 数不到笔记目录：${err.message}`);
   }
+  stats.partitions = Object.keys(stats.partitions || {}).length;
   return stats;
 }
 
@@ -150,14 +165,50 @@ function countSiteStats() {
 // 并且缓存第一次的结果，避免每页都去遍历一遍目录。
 let cachedStats = null;
 
-hexo.extend.filter.register('after_render:html', html => {
+/**
+ * 学习笔记首页的 hero 在构建期就写进 HTML。
+ *
+ * 原来这块是 `source/js/siyuan-knowledge.js` 在 DOMContentLoaded 之后插到
+ * `.post-body` 最前面的 —— 插入的瞬间正文整体下移上百像素，是笔记首页
+ * CLS 的主要来源（实测 0.12）。改成构建期注入后首帧就是最终布局。
+ * 同时把这个页面上与 hero 重复的 `<header class="post-header">` 直接隐藏，
+ * 免得客户端再隐藏一次又跳一下。
+ */
+function injectKnowledgeHero(html, locals) {
+  if (html.indexOf('class="siyuan-hero"') >= 0) return html;
+  const stats = cachedStats || { notes: 0, daily: 0, partitions: 0 };
+  const title = (locals.page && locals.page.title) || '学习笔记';
+  const hero = `<section class="siyuan-hero">`
+    + `<div class="siyuan-hero-kicker">PERSONAL KNOWLEDGE BASE</div>`
+    + `<h1>${title}</h1>`
+    + `<p>沿着主题探索笔记，也可以顺着引用回到知识形成的上下文。这里与普通博客时间线相互独立。</p>`
+    + `<div class="siyuan-stats">`
+    + `<div class="siyuan-stat"><strong>${stats.notes}</strong><span>主题文档</span></div>`
+    + `<div class="siyuan-stat"><strong>${stats.daily || 0}</strong><span>日记文档</span></div>`
+    + `<div class="siyuan-stat"><strong>${stats.partitions || 0}</strong><span>知识分区</span></div>`
+    + `</div></section>`;
+
+  let out = html;
+  const open = /<div\b[^>]*class="[^"]*\bpost-body\b[^"]*"[^>]*>/.exec(out);
+  if (open) {
+    const at = open.index + open[0].length;
+    out = out.slice(0, at) + hero + out.slice(at);
+  }
+  out = out.replace(/<header\b([^>]*class="[^"]*\bpost-header\b[^"]*"[^>]*)>/,
+    '<header$1 style="display:none">');
+  return out;
+}
+
+hexo.extend.filter.register('after_render:html', (html, locals) => {
   if (!cachedStats) {
     cachedStats = countSiteStats();
-    hexo.log.info(`[stats] 文章 ${cachedStats.articles} 篇，笔记 ${cachedStats.notes} 篇（日记 ${cachedStats.daily} 篇）`);
+    hexo.log.info(`[stats] 文章 ${cachedStats.articles} 篇，笔记 ${cachedStats.notes} 篇（日记 ${cachedStats.daily} 篇，知识分区 ${cachedStats.partitions} 个）`);
   }
   const payload = JSON.stringify(cachedStats).replace(/</g, '\\u003c');
   const tag = `<script>window.__SITE_STATS__=${payload};</script>`;
-  return html.includes('</head>') ? html.replace('</head>', `${tag}</head>`) : html;
+  let out = html.includes('</head>') ? html.replace('</head>', `${tag}</head>`) : html;
+  if (locals && locals.path === 'siyuan/index.html') out = injectKnowledgeHero(out, locals);
+  return out;
 });
 
 // Defer below-the-fold content images without delaying the small profile avatar.
