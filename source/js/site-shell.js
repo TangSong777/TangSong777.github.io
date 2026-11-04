@@ -188,3 +188,16 @@
   var tocTab = inner.querySelector('.sidebar-nav-toc');
   if (tocTab) tocTab.style.display = 'none';
 })();
+
+/* 分类/标签索引页（Round 76 的 taxonomy-index.js 把统计块插在 .post-body 之前），
+   于是页面自带的说明文字被挤到网格下面，读起来像「先看表、后看说明」。
+   这里把统计块挪到正文之后：标题 → 正文说明 → 分类/标签网格。 */
+(function () {
+  'use strict';
+  var index = document.querySelector('.post-block .tag-index, main .tag-index');
+  var body = document.querySelector('.post-block .post-body, main .post-body');
+  if (!index || !body || index.parentNode !== body.parentNode) return;
+  // 已经排在正文后面就什么都不做
+  if (body.compareDocumentPosition(index) & Node.DOCUMENT_POSITION_FOLLOWING) return;
+  body.parentNode.insertBefore(index, body.nextSibling);
+})();

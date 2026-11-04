@@ -21,7 +21,8 @@ const TAXONOMIES = {
   categories: {
     path: 'categories/index.html',
     label: '分类',
-    lead: (n, p) => `共 ${n} 个分类、${p} 篇文章。分类比标签粗一档，适合从大块入手。`,
+    // 分类页自带说明文字（source/categories/index.md），这里只报数量，免得两句话重复。
+    lead: (n, p) => `共 ${n} 个分类、${p} 篇文章。`,
     link: (root) => `想按关键词看？<a class="taxonomy-link" href="${root}tags/">按标签浏览 →</a>`,
   },
 };
