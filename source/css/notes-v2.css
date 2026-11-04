@@ -665,8 +665,17 @@ body.siyuan-mode .siyuan-tree-overlay.is-open { opacity: 1; pointer-events: auto
 /* ── 10. 响应式 ───────────────────────────────────────────────────────── */
 @media (max-width: 1180px) {
   body.siyuan-mode #aside-content { display: none; }
-  body.siyuan-mode .post-block { max-width: none; }
   body.siyuan-mode .main-inner { grid-template-columns: minmax(0, 1fr); }
+  /* 侧栏收起后版心别一路撑到 1000px：1024 屏上正文会拉成 60+ 字一行，
+     读起来很累。保持和宽屏一致的行宽，卡片居中。
+     注意用 justify-self 而不是 margin:auto —— 网格项一旦有 auto 外边距就
+     不再 stretch，宽度会退化成 max-content（390 屏上实测撑到 649px 溢出）。 */
+  body.siyuan-mode .post-block {
+    justify-self: center;
+    margin: 0 !important;
+    max-width: 866px;
+    width: 100%;
+  }
 }
 @media (max-width: 767px) {
   #nv2-nav { padding: 0 16px; }
