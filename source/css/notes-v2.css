@@ -692,3 +692,78 @@ body.siyuan-mode .siyuan-tree-overlay.is-open { opacity: 1; pointer-events: auto
     width: auto !important;
   }
 }
+
+/* ── 12. 左侧全文档目录（重写版，参考站侧栏的条目语言） ──────────────
+   面板外壳沿用上一版的 .siyuan-tree-panel / header / search / scroll，
+   列表条目换成：折叠箭头 · 文本 · 缩进，hover 底色、当前项左侧色条。 */
+body.siyuan-mode .nt-tree,
+body.siyuan-mode .nt-kids {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+body.siyuan-mode .nt-item { position: relative; }
+body.siyuan-mode .nt-row {
+  align-items: center;
+  border-radius: 8px;
+  display: flex;
+  gap: 2px;
+  transition: background .16s ease;
+}
+body.siyuan-mode .nt-row:hover { background: var(--green-wash); }
+body.siyuan-mode .nt-row.is-current {
+  background: var(--green-soft);
+  box-shadow: inset 3px 0 0 var(--green);
+}
+body.siyuan-mode .nt-chev {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: var(--sy-muted);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 20px;
+  height: 20px;
+  justify-content: center;
+  padding: 0;
+  transition: transform .18s ease, color .16s ease;
+  width: 20px;
+}
+body.siyuan-mode .nt-chev svg { height: 12px; width: 12px; }
+body.siyuan-mode .nt-chev:hover { color: var(--green-deep); }
+body.siyuan-mode .nt-item.is-open > .nt-row > .nt-chev { transform: rotate(90deg); }
+/* 叶子节点的圆点：flex-basis 会盖掉 width，所以用伪元素画 */
+body.siyuan-mode .nt-dot {
+  flex: 0 0 20px;
+  height: 20px;
+  position: relative;
+}
+body.siyuan-mode .nt-dot::before {
+  background: var(--line-strong);
+  border-radius: 50%;
+  content: "";
+  height: 4px;
+  left: 8px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+}
+body.siyuan-mode .nt-link {
+  border-bottom: 0;
+  color: var(--sy-ink);
+  flex: 1 1 auto;
+  font-size: 13.5px;
+  line-height: 1.5;
+  min-width: 0;
+  overflow: hidden;
+  padding: 6px 8px 6px 2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.siyuan-mode .nt-row:hover .nt-link { color: var(--green-deep); }
+body.siyuan-mode .nt-row.is-current .nt-link { color: var(--green-deep); font-weight: 600; }
+body.siyuan-mode .nt-kids { margin-left: 14px; padding-left: 8px; border-left: 1px solid var(--sy-line); }
+body.siyuan-mode .nt-kids[hidden] { display: none; }
+body.siyuan-mode .nt-item[hidden] { display: none; }

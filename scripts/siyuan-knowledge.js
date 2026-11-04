@@ -43,6 +43,8 @@ const notesCssVersion = hashOf('source/css/notes-v2.css');
 const notesJsVersion = hashOf('source/js/notes-v2.js');
 const notesStyle = `<link rel="stylesheet" href="${siteRoot}css/notes-v2.css?v=${notesCssVersion}">`;
 const notesScript = `<script src="${siteRoot}js/notes-v2.js?v=${notesJsVersion}" defer></scr` + 'ipt>';
+const treeJsVersion = hashOf('source/js/notes-tree.js');
+const treeScript = `<script src="${siteRoot}js/notes-tree.js?v=${treeJsVersion}" defer></scr` + 'ipt>';
 const shell = `<script src="${siteRoot}js/site-shell.js?v=${shellVersion}" defer></script>`;
 const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=${dataVersion}" defer></script><script src="${siteRoot}js/siyuan-knowledge.js?v=${knowledgeVersion}" defer></script>`;
 
@@ -83,6 +85,8 @@ hexo.extend.injector.register('body_end', knowledge, 'page');
 // 规则全部限定 body.siyuan-mode，首页/文章页/归档页不受影响。
 hexo.extend.injector.register('head_end', notesStyle, 'page');
 hexo.extend.injector.register('body_end', notesScript, 'page');
+// 左侧全文档目录（重写版）：纯链接 + 整页跳转，不再做前端路由
+hexo.extend.injector.register('body_end', treeScript, 'page');
 
 // 给主题自己输出的 main.css 补上同样的缓存指纹（NexT 模板不改，只在渲染结果里替换）。
 hexo.extend.filter.register('after_render:html', html => html.replace(

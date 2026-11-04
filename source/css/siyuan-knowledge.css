@@ -618,38 +618,6 @@ body.siyuan-mode {
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
-.siyuan-tree, .siyuan-tree ul { list-style: none; margin: 0; padding: 0; }
-.siyuan-tree ul { margin-left: 13px; padding-left: 10px; border-left: 1px solid var(--sy-line); }
-.siyuan-tree li { margin: 2px 0; }
-
-.siyuan-tree-row { align-items: center; display: flex; min-width: 0; }
-.siyuan-tree-expander {
-  background: transparent;
-  border: 0;
-  color: var(--sy-muted);
-  cursor: pointer;
-  flex: 0 0 22px;
-  font-size: 11px;
-  padding: 7px 2px;
-  transform: rotate(0);
-  transition: transform .16s ease;
-}
-.siyuan-tree-expander[aria-expanded="true"] { transform: rotate(90deg); }
-.siyuan-tree-expander.is-leaf { cursor: default; opacity: .35; }
-.siyuan-tree-link {
-  border-radius: 7px;
-  color: var(--muted);
-  flex: 1;
-  font-size: 13px;
-  overflow: hidden;
-  padding: 7px 8px;
-  text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.siyuan-tree-link:hover { background: var(--green-wash); color: var(--green-deep); }
-.siyuan-tree-link.is-current { background: var(--sy-accent-soft); color: var(--green-deep); font-weight: 700; }
-.siyuan-tree-children[hidden] { display: none; }
 .siyuan-tree-empty { color: var(--sy-muted); font-size: 13px; padding: 20px; text-align: center; }
 
 body.siyuan-mode .header,
@@ -1621,36 +1589,9 @@ body.siyuan-mode .site-brand-container .site-subtitle {
    border-bottom: 1px solid rgb(135,218,255)（浅蓝）——
    文章页那批规则的作用域是 body.blog-post-mode，/siyuan/ 页面命中不到。
    ───────────────────────────────────────────────────────────────────────── */
-body.siyuan-mode .siyuan-tree-link,
 body.siyuan-mode .siyuan-tree-home,
 body.siyuan-mode .post-toc .nav-link {
   border: 0;
-}
-
-/* NexT 的 a 规则优先级压过了 .siyuan-tree-link 自己的 color，
-   实测树里的文字是 #999 灰，而不是我们设的次级墨色。 */
-body.siyuan-mode .siyuan-tree-link {
-  color: var(--muted);
-}
-
-body.siyuan-mode .siyuan-tree-link:hover {
-  background: var(--green-wash);
-  color: var(--green-deep);
-}
-
-body.siyuan-mode .siyuan-tree-link.is-current {
-  background: var(--green-soft);
-  box-shadow: inset 3px 0 0 var(--green);
-  color: var(--green-deep);
-  font-weight: 700;
-}
-
-/* 树的层级引导线：原来只有一根淡直线，父子关系靠缩进猜。
-   收窄并调淡，避免和目录项抢注意力。 */
-body.siyuan-mode .siyuan-tree ul {
-  border-left: 1px solid var(--sy-line);
-  margin-left: 14px;
-  padding-left: 8px;
 }
 
 /* 右侧目录卡片：与文章页同一套视觉（胶囊页签 + 圆点 + 书签条） */
