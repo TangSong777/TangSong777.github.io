@@ -216,3 +216,49 @@ hexo.extend.filter.register('after_render:html', html => html.replace(/<img\b(?!
   if (/\/images\/avatar\.(?:jpe?g|png|webp)/i.test(attrs)) return tag;
   return `<img loading="lazy" decoding="async"${attrs}>`;
 }));
+
+/**
+ * 同名文档消歧。
+ * 思源里允许两个目录下各有一篇同名文档（例如「嵌入式/STM32/知识点大纲」和
+ * 「嵌入式/ESP32/知识点大纲」），导出来就是两个 <title>知识点大纲 | 学习与思考</title>：
+ * 浏览器标签、收藏夹、搜索结果里完全分不清是谁。这里给重复的标题补上父级名称，
+ * 变成「知识点大纲 · STM32 | 学习与思考」；只改 <title> 和 og:title，正文标题不动。
+ */
+let duplicateTitleMap = null;
+function loadDuplicateTitles() {
+  if (duplicateTitleMap) return duplicateTitleMap;
+  duplicateTitleMap = new Map();
+  try {
+    const file = path.join(hexo.base_dir, 'source/js/siyuan-data.js');
+    const raw = fs.readFileSync(file, 'utf8');
+    const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
+    const byTitle = new Map();
+    (data.documents || []).forEach(doc => {
+      const list = byTitle.get(doc.title) || [];
+      list.push(doc);
+      byTitle.set(doc.title, list);
+    });
+    byTitle.forEach((docs, title) => { if (docs.length > 1) duplicateTitleMap.set(title, docs); });
+    if (duplicateTitleMap.size) {
+      hexo.log.info(`[notes] 同名文档 ${duplicateTitleMap.size} 组，已按父级补全标题`);
+    }
+  } catch (err) {
+    hexo.log.warn(`[notes] 同名标题检测跳过：${err.message}`);
+  }
+  return duplicateTitleMap;
+}
+
+hexo.extend.filter.register('after_render:html', (html, locals) => {
+  const p = (locals && locals.path) || '';
+  if (p.indexOf('siyuan/') !== 0) return html;
+  const dups = loadDuplicateTitles();
+  if (!dups.size) return html;
+  const pageUrl = '/' + p.replace(/index\.html$/, '');
+  let hit = null;
+  dups.forEach(docs => docs.forEach(doc => { if (doc.url === pageUrl) hit = doc; }));
+  if (!hit || !hit.parts || hit.parts.length < 2) return html;
+  const suffix = ' · ' + hit.parts[hit.parts.length - 2];
+  return html
+    .replace(/<title>([^<|]*?)(\s*\|)/, (m, t, bar) => `<title>${t.trim()}${suffix}${bar}`)
+    .replace(/(property="og:title"\s+content=")([^"]*)(")/, (m, a, t, b) => a + t + suffix + b);
+});
