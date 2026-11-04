@@ -270,17 +270,26 @@
       var first = li.firstChild;
       if (first && first.nodeType === 1 && first.tagName === 'P') first = first.firstChild;
       if (first && first.nodeType === 3) {
-        var head = first.nodeValue.replace(/^\s+/, '').charAt(0);
         // 只剥「这是一篇文档」这一类的标记，换成统一的灰色文档图标：
         //   📄 单篇文档、📑 目录/索引、📁 分组、📘 手册
-        // 主题图标（🔗 🔐 🐧 🖥 🧩 ⚙ …）保留，它们各自代表内容主题，不是「文档」的同义符号。
-        var DOC_MARKS = '\uD83D\uDCC4\uD83D\uDCD1\uD83D\uDCC1\uD83D\uDCD8';
-        var idx = DOC_MARKS.indexOf(head);
-        if (idx >= 0 && idx % 2 === 0) {
+        // 主题图标（📜 🔗 🔐 🐧 🖥 🧩 ⚙ …）保留，它们各自代表内容主题，不是「文档」的同义符号。
+        //
+        // 注意：emoji 是代理对。早先用 charAt(0) 取「第一个字符」，拿到的是高代理 U+D83D；
+        // 再拿它去 DOC_MARKS（同样以 U+D83D 开头）里 indexOf，任何 U+D83D 开头的 emoji
+        // （📜 📅 🗂 📋 …）都会命中下标 0，于是被当作文档标记剥掉 —— 一页目录里所有图标
+        // 就都变成了同一个灰色文档图标。必须按码点比较。
+        var DOC_MARKS = [0x1F4C4, 0x1F4D1, 0x1F4C1, 0x1F4D8];
+        var trimmed = first.nodeValue.replace(/^\s+/, '');
+        var cp = trimmed.codePointAt(0);
+        if (DOC_MARKS.indexOf(cp) >= 0) {
+          // 统一换成灰色文档图标
           li.className = (li.className ? li.className + ' ' : '') + 'doc-link';
-          // 注意：emoji 是代理对占两个 code unit，[\s\S] 只吃一个会把低代理留在文本里，
-          // 渲染成一个小方块。必须精确吃两个。
-          first.nodeValue = first.nodeValue.replace(/^\s*[\s\S]{2}\s*/, '');
+          var lead = first.nodeValue.length - trimmed.length;
+          first.nodeValue = first.nodeValue.slice(lead + String.fromCodePoint(cp).length);
+        } else if (cp >= 0x1F000 && cp <= 0x1FAFF) {
+          // 其它 emoji（📜 📅 🗂 📋 …）保留，但去掉项目符号：
+          // 一个列表项前面同时有「圆点 + emoji」两个标记显得很挤。
+          li.className = (li.className ? li.className + ' ' : '') + 'emoji-link';
         }
       }
     }

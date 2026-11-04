@@ -853,3 +853,11 @@ body.siyuan-mode .post-body .table-container::-webkit-scrollbar-thumb {
   border-radius: 6px;
 }
 body.siyuan-mode .post-body .table-container table { margin-bottom: 0; }
+
+/* 列表项以 emoji 开头时（📜 📅 🗂 📋 …），emoji 本身就是图标，
+   再叠一个项目符号会显得挤，这里去掉圆点、左移对齐。 */
+body.siyuan-mode .post-body li.emoji-link {
+  list-style: none;
+  padding-left: 2px;
+}
+body.siyuan-mode .post-body li.emoji-link > p { margin: 0; }
