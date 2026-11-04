@@ -922,7 +922,23 @@ body.siyuan-mode .note-rail .sidebar-archive:hover { border-bottom: 0; }
 
 
 @media (min-width: 992px) {
-  /* sidebar-static-width */
+  /* sidebar-static-width：侧栏的显隐是「right: -320px → 0」的 0.4s 过渡
+     （NexT 的 +sidebar() 用 transition-property: left, right），
+     right 是布局属性，所以这 0.4s 一直在触发 layout shift（实测 0.06~0.11）。
+     确定的两种模式在桌面上本来就常显，直接从首帧给最终位置。 */
   body.blog-post-mode .sidebar,
-  body.archive-mode .sidebar { width: 320px !important; }
+  body.archive-mode .sidebar {
+    right: 0 !important;
+    width: 320px !important;
+  }
+}
+
+
+@media (min-width: 992px) {
+  /* footer-static：内容不满一屏时 NexT 会把页脚 fixed 到视口底部（body.footer-fixed），
+     等侧栏/标签云把页面撑长，又改回文档流 —— 这一下位移 0.06。
+     我们的页面都带背景纹理，页脚落不落在视口底部差别不大，直接让它始终跟文档走。 */
+  body.blog-home-mode .footer,
+  body.blog-post-mode .footer,
+  body.archive-mode .footer { position: static !important; }
 }
