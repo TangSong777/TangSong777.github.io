@@ -105,42 +105,23 @@ body.is-scrolled .header {
 }
 
 /* ── 4. 首页 hero ──────────────────────────────────────────── */
-@keyframes hero-flow {
-  from { background-position: 0% 50%; }
-  to   { background-position: 220% 50%; }
-}
-
-/* 原来位移 ±5% / 缩放 1.15 / 透明度 .55→.85 / 20s，白光在整块 hero 上来回扫，
-   一眼就能看出「有东西在动」。改成小幅度、低透明度、慢周期，只留一点呼吸感。 */
-@keyframes hero-drift {
-  0%   { transform: translate3d(-1.6%, -1%, 0) scale(1); opacity: .26; }
-  100% { transform: translate3d(1.6%, 1%, 0) scale(1.03); opacity: .40; }
-}
-
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  @media (prefers-reduced-motion: no-preference) {
-    body.blog-home-mode .blog-home-hero h1 {
-      background-image: linear-gradient(100deg, #ffffff 0%, #d5ece5 24%, #ffe2bb 48%, #ffffff 72%, #d5ece5 100%);
-      background-size: 220% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      animation: hero-flow 36s linear infinite;
-    }
+  /* 标题原来是 220% 宽的 白→浅青 →暖白 渐变，用 hero-flow 16s/36s 横向滚，
+     效果就是一行字反复在「绿 → 白」之间变，是页面上最显眼的一处流动
+     （用户反馈「这个绿色变成白色的最明显」）。现在改成静态的近白色微光：
+     只在右侧带一点点冷调，不再移动，也不再出现明显的绿色。 */
+  body.blog-home-mode .blog-home-hero h1 {
+    background-image: linear-gradient(100deg, #ffffff 0%, #ffffff 46%, #eaf5f0 78%, #ffffff 100%);
+    background-size: 100% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
 
-body.blog-home-mode .blog-home-hero::after {
-  background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, .12), transparent 52%);
-  content: '';
-  inset: -30%;
-  pointer-events: none;
-  position: absolute;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  body.blog-home-mode .blog-home-hero::after { animation: hero-drift 48s ease-in-out infinite alternate; }
-}
+/* 曾经这里还有一层会呼吸的白色光斑（hero-drift 48s）。它的效果是在深绿底上
+   扫出一块「绿 → 白」的渐变，是全站最显眼的动效，已经整块移除：
+   hero 的底色由 .blog-home-hero 的静态渐变 + 角落暖色光斑承担，不再有任何移动的色块。 */
 
 /* 轨道环：让外圈两道虚线慢慢转 */
 body.blog-home-mode .blog-home-orbit::before {
