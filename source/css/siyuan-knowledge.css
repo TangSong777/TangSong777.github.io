@@ -2834,12 +2834,13 @@ body.siyuan-mode .post-body p {
     max-width: 780px;
   }
 
-  /* 笔记页列表更密，稍微窄一点更聚拢 */
+  /* 笔记页列表更密，但 740px 在 1440 视口下两边空太多；
+     右侧栏固定 320px，正文可用区 1120px，取 860px 与参考站的文章卡（866px）相当。 */
   body.siyuan-mode .post-block {
     box-sizing: border-box;
     margin-left: auto;
     margin-right: auto;
-    max-width: 740px;
+    max-width: 860px;
   }
 }
 

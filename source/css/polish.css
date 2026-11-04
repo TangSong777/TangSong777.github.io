@@ -778,3 +778,112 @@ body.blog-post-mode .post-toc .active > .nav-link { font-weight: 600; }
   }
   body.blog-home-mode .blog-home-rail::-webkit-scrollbar-track { background: transparent; }
 }
+
+/* ── 18. 笔记页右栏：主页式卡片 + 常驻大纲 ─────────────────────
+   原来是「文章目录 / 站点概览」两个页签，笔记页几乎只想看大纲。
+   现在拆成：头像卡 → 标签卡 → 归档卡 → 大纲卡，大纲卡吃满剩余高度并自己滚动，
+   侧栏本身 fixed，所以页面滚到哪儿大纲都在。卡片外观直接复用主页的
+   .blog-home-profile / .blog-home-side-card（那两条规则没有 body 作用域）。 */
+body.siyuan-mode .note-rail {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 2px 10px;
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+body.siyuan-mode .note-rail::-webkit-scrollbar { width: 6px; }
+body.siyuan-mode .note-rail::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 6px;
+}
+
+body.siyuan-mode .note-rail .blog-home-profile,
+body.siyuan-mode .note-rail .blog-home-side-card {
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(45, 67, 59, .05);
+  flex: 0 0 auto;
+  padding: 16px 18px;
+}
+body.siyuan-mode .note-rail .blog-home-profile img { height: 72px; width: 72px; }
+body.siyuan-mode .note-rail .blog-home-profile h2 { font-size: 17px; margin: 10px 0 4px; }
+body.siyuan-mode .note-rail .blog-home-stats { margin-top: 14px; padding-top: 12px; }
+body.siyuan-mode .note-rail .blog-home-stats strong { font-size: 16px; }
+body.siyuan-mode .note-rail .sidebar-tags,
+body.siyuan-mode .note-rail .sidebar-archives { margin-top: 10px; }
+
+/* 大纲卡：占满剩余高度，条目列表自己滚 */
+body.siyuan-mode .note-rail > .post-toc-wrap {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin: 0;
+  min-height: 190px;
+  overflow: hidden;
+  padding: 0;
+}
+body.siyuan-mode .note-rail > .post-toc-wrap .post-toc {
+  flex: 1 1 auto;
+  max-height: none;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+body.siyuan-mode .note-rail > .post-toc-wrap.is-empty { display: none; }
+
+/* --- 18.1 右栏卡片压缩 + 版心加宽 ---
+   右栏是 fixed 的 100vh 容器，头像卡(270) + 标签(134) + 归档(196) 就把 600px 占满，
+   47 条的大纲只剩 192px。这里把三张卡压薄，留出大纲的位置；
+   同时把左侧文档树 300 → 272、右栏 320 → 304，正文可用宽度从 794 提到 838。 */
+@media (min-width: 992px) {
+  body.siyuan-mode .siyuan-tree-panel { width: 272px; }
+  body.siyuan-mode .main { padding-left: 288px; padding-right: 304px; }
+  body.siyuan-mode .sidebar { width: 304px; }
+}
+
+body.siyuan-mode .note-rail .blog-home-profile {
+  padding: 14px 16px 15px;
+}
+body.siyuan-mode .note-rail .blog-home-profile img {
+  border-width: 3px;
+  height: 64px;
+  width: 64px;
+}
+body.siyuan-mode .note-rail .blog-home-profile h2 {
+  font-size: 16px;
+  margin: 9px 0 3px;
+}
+body.siyuan-mode .note-rail .blog-home-profile p {
+  font-size: 11.5px;
+}
+body.siyuan-mode .note-rail .blog-home-stats {
+  margin-top: 11px;
+  padding-top: 9px;
+}
+body.siyuan-mode .note-rail .blog-home-stats strong { font-size: 15px; }
+body.siyuan-mode .note-rail .blog-home-stats span { font-size: 10.5px; }
+
+body.siyuan-mode .note-rail .blog-home-side-card {
+  padding: 12px 16px 13px;
+  text-align: left;
+}
+body.siyuan-mode .note-rail .blog-home-side-label {
+  display: block;
+  margin-bottom: 8px;
+  text-align: left;
+}
+body.siyuan-mode .note-rail .sidebar-tags { justify-content: flex-start; }
+body.siyuan-mode .note-rail .sidebar-archives { gap: 3px; margin-top: 0; }
+body.siyuan-mode .note-rail .sidebar-archive {
+  border-bottom: 0;
+  display: flex;
+  font-size: 12.5px;
+  justify-content: space-between;
+  line-height: 1.7;
+  padding: 1px 0;
+}
+body.siyuan-mode .note-rail .sidebar-archive:hover { border-bottom: 0; }

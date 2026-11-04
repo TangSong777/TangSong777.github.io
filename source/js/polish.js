@@ -236,6 +236,75 @@
     update();
   }
 
+  /* 笔记页右栏：改成和主页一样的卡片（头像 + 统计 + 标签 + 归档），下面接大纲。
+     NexT 的侧栏是「文章目录 / 站点概览」两个页签二选一，笔记页几乎只想看大纲，
+     切来切去很累。这里把两个面板拆开同时排出来：卡片在上、大纲卡在下并吃掉剩余高度，
+     页面怎么滚大纲都在视野里（侧栏本身是 position: fixed）。 */
+  function setupNoteRail() {
+    if (!document.body.classList.contains("siyuan-mode")) return;
+    var side = document.querySelector(".sidebar-inner");
+    if (!side || side.querySelector(".note-rail")) return;
+    var panel = side.querySelector(".sidebar-panel-container");
+    var tocCard = side.querySelector(".post-toc-wrap");
+    if (!panel || !tocCard) return;
+
+    var avatar = side.querySelector(".site-author-image");
+    var nameEl = side.querySelector(".site-author-name");
+    var descEl = side.querySelector(".site-description");
+    var tags = side.querySelector(".sidebar-tags");
+    var archives = side.querySelector(".sidebar-archives");
+    var stats = window.__SITE_STATS__ || {};
+
+    // 两个页签不再需要
+    var nav = side.querySelector(".sidebar-nav");
+    if (nav && nav.parentNode) nav.parentNode.removeChild(nav);
+
+    // 目录卡先摘出来，免得清空容器时被一起删掉；
+    // 同时去掉 sidebar-panel 类——那套 grid-area 叠层 + 二选一显隐的规则全在它上面。
+    if (tocCard.parentNode) tocCard.parentNode.removeChild(tocCard);
+    tocCard.className = "post-toc-wrap";
+
+    panel.className = "note-rail";
+    panel.innerHTML = "";
+
+    var profile = document.createElement("section");
+    profile.className = "blog-home-profile";
+    profile.innerHTML =
+      '<img src="' + (avatar ? avatar.getAttribute("src") : "/images/avatar-180.jpg") +
+      '" width="72" height="72" alt="YangHanLin">' +
+      "<h2>" + (nameEl ? nameEl.textContent.replace(/\s+/g, " ").trim() : "YangHanLin") + "</h2>" +
+      "<p>" + (descEl ? descEl.textContent.replace(/\s+/g, " ").trim() : "") + "</p>" +
+      '<div class="blog-home-stats">' +
+      '<a href="/archives/"><strong>' +
+      (typeof stats.articles === "number" ? stats.articles : "—") +
+      "</strong><span>文章</span></a>" +
+      '<a href="/siyuan/"><strong>' +
+      (typeof stats.notes === "number" ? stats.notes : "—") +
+      "</strong><span>笔记</span></a>" +
+      "</div>";
+    panel.appendChild(profile);
+
+    if (tags && tags.innerHTML.trim()) {
+      panel.insertAdjacentHTML(
+        "beforeend",
+        '<section class="blog-home-side-card"><span class="blog-home-side-label">标签</span>' +
+        '<div class="sidebar-tags">' + tags.innerHTML + "</div></section>"
+      );
+    }
+    if (archives && archives.innerHTML.trim()) {
+      panel.insertAdjacentHTML(
+        "beforeend",
+        '<section class="blog-home-side-card"><span class="blog-home-side-label">归档</span>' +
+        '<div class="sidebar-archives">' + archives.innerHTML + "</div></section>"
+      );
+    }
+
+    panel.appendChild(tocCard);
+
+    // 正文一个标题都没有时目录是空壳，收起来，别占着半屏空白
+    if (!tocCard.querySelector(".post-toc li")) tocCard.classList.add("is-empty");
+  }
+
   function setupReadingTime() {
     var body = document.querySelector('body.blog-post-mode .post-body');
     if (!body) return;
@@ -284,6 +353,7 @@
     setupCodeCopy();
     setupReadingTime();
     setupTocCard();
+    setupNoteRail();
     registerServiceWorker();
   });
 })();
