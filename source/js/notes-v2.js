@@ -115,7 +115,9 @@
     announce.innerHTML =
       '<div class="nv2-card-head">' + ICON.bell + '<span>公告</span></div>' +
       '<p>这里按主题整理长期笔记：计算机网络、命令行、Python、深度学习等。' +
-      '点左上角 ☰ 可以检索全部文档。</p>';
+      (document.body.classList.contains('is-knowledge-home')
+        ? '左侧就是全文档目录，可以逐级展开。'
+        : '点左上角 ☰ 可以打开全文档目录。') + '</p>';
 
     var toc = el('div', 'nv2-card');
     toc.id = 'nv2-toc';
