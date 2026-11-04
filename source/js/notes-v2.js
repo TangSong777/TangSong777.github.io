@@ -205,10 +205,10 @@
       if (link !== current) {
         if (current) {
           var old = current.parentNode;
-          if (old) old.classList.remove('active-current');
+          if (old) old.classList.remove('nv2-current');
         }
         current = link || null;
-        if (link && link.parentNode) link.parentNode.classList.add('active-current');
+        if (link && link.parentNode) link.parentNode.classList.add('nv2-current');
       }
 
       if (percentEl) {

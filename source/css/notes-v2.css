@@ -449,7 +449,17 @@ body.siyuan-mode #nv2-toc .nav-link {
   transition: background .16s ease, color .16s ease;
 }
 body.siyuan-mode #nv2-toc .nav-link:hover { background: var(--green-wash); color: var(--green-deep); }
+/* NexT 自带的 active / active-current 会同时点亮第二个条目（它的 scrollspy 还在跑），
+   目录搬到侧栏后统一交给 .nv2-current，别的类一律还原成普通条目 */
+body.siyuan-mode #nv2-toc .nav-item.active > .nav-link,
 body.siyuan-mode #nv2-toc .nav-item.active-current > .nav-link {
+  background: transparent;
+  color: var(--nv2-text);
+  font-weight: 400;
+}
+body.siyuan-mode #nv2-toc .nav-link { font-weight: 400; }
+
+body.siyuan-mode #nv2-toc .nav-item.nv2-current > .nav-link {
   background: var(--green-soft);
   color: var(--green-deep);
   font-weight: 600;
