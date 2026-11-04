@@ -114,6 +114,8 @@
     var link = document.createElement(node.url ? 'a' : 'span');
     link.className = 'nt-link';
     link.textContent = node.title;
+    /* 树宽 300px，长标题会被省略号截断，补 title 让悬停能看到全文 */
+    link.title = node.title;
     if (node.url) link.href = node.url;
     if (node.url && norm(node.url) === current) link.setAttribute('aria-current', 'page');
     row.appendChild(link);

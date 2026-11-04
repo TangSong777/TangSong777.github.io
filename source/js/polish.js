@@ -337,6 +337,43 @@
     window.setTimeout(run, 1200);
   }
 
+  /* 目录与标题锚点的跳转。
+     NexT 的 registerSidebarTOC() 用的是 `target.getBoundingClientRect().top + scrollY`，
+     它不知道页面顶部有 60px 的固定导航，点目录后标题会正好被盖住（实测 top 0）。
+     这里在捕获阶段接管：scrollIntoView 会遵守 CSS 的 scroll-margin-top（92px）。 */
+  function setupAnchorScroll() {
+    /* 固定顶栏 60px + 32px 呼吸缝，与 CSS 的 scroll-margin-top 一致 */
+    var OFFSET = 92;
+
+    function jump(target) {
+      var top = target.getBoundingClientRect().top + window.pageYOffset - OFFSET;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+      /* 文章页图片是懒加载的：滚动过程中上方图片撑开会把目标往下推，
+         平滑滚动按开始时的坐标停下来就会「停短」，这里补一次校正。 */
+      window.setTimeout(function () {
+        var drift = target.getBoundingClientRect().top - OFFSET;
+        if (Math.abs(drift) > 12) {
+          window.scrollTo({ top: window.pageYOffset + drift, behavior: 'auto' });
+        }
+      }, 700);
+    }
+
+    document.addEventListener('click', function (event) {
+      var link = event.target && event.target.closest ? event.target.closest('a[href^="#"]') : null;
+      if (!link) return;
+      if (!link.classList.contains('nav-link') && !link.classList.contains('headerlink')) return;
+      var raw = (link.getAttribute('href') || '').slice(1);
+      if (!raw) return;
+      var target = null;
+      try { target = document.getElementById(decodeURIComponent(raw)); } catch (err) { target = null; }
+      if (!target) return;
+      event.preventDefault();
+      event.stopPropagation();
+      jump(target);
+      if (history.pushState) history.pushState(null, document.title, link.href);
+    }, true);
+  }
+
   /* Service Worker：把静态资源缓存到本地，二次打开不再重新下载 CSS/JS。
     只在 https（或 localhost）下注册，失败静默忽略，不影响其它功能。 */
   function registerServiceWorker() {
@@ -353,6 +390,7 @@
     setupCodeCopy();
     setupReadingTime();
     setupTocCard();
+    setupAnchorScroll();
     setupNoteRail();
     registerServiceWorker();
   });
