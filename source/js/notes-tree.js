@@ -210,13 +210,38 @@
   overlay.type = 'button';
   overlay.setAttribute('aria-label', '关闭学习笔记目录');
 
+  /* 首页在宽屏上目录是常驻栏，不能因为「没打开抽屉」就把它设成 inert；
+     其余页面（窄屏抽屉、或非首页的桌面抽屉）收起时要把内部链接移出 Tab 序列，
+     否则键盘 Tab 会钻进一屏外看不见的目录里。 */
+  function railIsPermanent() {
+    return document.body.classList.contains('is-knowledge-home')
+      && window.matchMedia('(min-width: 1101px)').matches;
+  }
+
+  function syncInert() {
+    var open = panel.classList.contains('is-open');
+    panel.inert = !open && !railIsPermanent();
+  }
+
+  var lastFocus = null;
+
   function setOpen(open) {
     panel.classList.toggle('is-open', open);
     overlay.classList.toggle('is-open', open);
     document.body.classList.toggle('siyuan-tree-open', open);
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? '关闭学习笔记目录' : '打开学习笔记目录');
-    if (open) window.requestAnimationFrame(revealCurrent);
+    syncInert();
+    if (open) {
+      lastFocus = document.activeElement;
+      window.requestAnimationFrame(function () {
+        revealCurrent();
+        var first = panel.querySelector('.siyuan-tree-search input, .siyuan-tree-search, .nt-link');
+        if (first) { try { first.focus(); } catch (e) {} }
+      });
+    } else if (lastFocus && document.contains(lastFocus)) {
+      try { lastFocus.focus(); } catch (e) {}
+    }
   }
 
   toggle.addEventListener('click', function () { setOpen(!panel.classList.contains('is-open')); });
@@ -226,6 +251,9 @@
   });
   document.body.appendChild(overlay);
   document.body.appendChild(toggle);
+  syncInert();
+  var mq = window.matchMedia('(min-width: 1101px)');
+  (mq.addEventListener ? mq.addEventListener('change', syncInert) : mq.addListener(syncInert));
 
   /* ── 8. 悬停预取：整页跳转也能很快 ───────────────────────────────────── */
   var prefetched = {};

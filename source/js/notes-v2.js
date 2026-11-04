@@ -70,7 +70,7 @@
       if (drill) drill.click();
     });
 
-    var brand = el('a', 'nv2-brand', '<span class="nv2-logo">学</span><span>学习笔记</span>');
+    var brand = el('a', 'nv2-brand', '<span class="nv2-logo" aria-hidden="true">学</span><span>学习笔记</span>');
     brand.href = '/siyuan/';
 
     var menu = el('div', 'nv2-menu');
