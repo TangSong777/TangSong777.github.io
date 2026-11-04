@@ -110,9 +110,11 @@ body.is-scrolled .header {
   to   { background-position: 220% 50%; }
 }
 
+/* 原来位移 ±5% / 缩放 1.15 / 透明度 .55→.85 / 20s，白光在整块 hero 上来回扫，
+   一眼就能看出「有东西在动」。改成小幅度、低透明度、慢周期，只留一点呼吸感。 */
 @keyframes hero-drift {
-  0%   { transform: translate3d(-4%, -3%, 0) scale(1); opacity: .55; }
-  100% { transform: translate3d(6%, 4%, 0) scale(1.15); opacity: .85; }
+  0%   { transform: translate3d(-1.6%, -1%, 0) scale(1); opacity: .26; }
+  100% { transform: translate3d(1.6%, 1%, 0) scale(1.03); opacity: .40; }
 }
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
@@ -123,13 +125,13 @@ body.is-scrolled .header {
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      animation: hero-flow 16s linear infinite;
+      animation: hero-flow 36s linear infinite;
     }
   }
 }
 
 body.blog-home-mode .blog-home-hero::after {
-  background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, .18), transparent 52%);
+  background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, .12), transparent 52%);
   content: '';
   inset: -30%;
   pointer-events: none;
@@ -137,7 +139,7 @@ body.blog-home-mode .blog-home-hero::after {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  body.blog-home-mode .blog-home-hero::after { animation: hero-drift 20s ease-in-out infinite alternate; }
+  body.blog-home-mode .blog-home-hero::after { animation: hero-drift 48s ease-in-out infinite alternate; }
 }
 
 /* 轨道环：让外圈两道虚线慢慢转 */
