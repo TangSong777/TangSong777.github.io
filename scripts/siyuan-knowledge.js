@@ -84,23 +84,40 @@ hexo.extend.injector.register('body_end', knowledge, 'page');
 // 学习笔记页的组件层（对标 yhblogs.cn 文章页）：只在 page 类型注入，
 // 规则全部限定 body.siyuan-mode，首页/文章页/归档页不受影响。
 hexo.extend.injector.register('head_end', notesStyle, 'page');
-/* 笔记页的整套版式都挂在 body.siyuan-mode 下，而这个类原本由
-   site-shell.js 在 body_end 才加 —— 首帧会先画一遍 NexT 的旧布局
-   （顶栏、侧栏、正文位置），随后整块挪位，实测 CLS 0.17。
-   这里在 <body> 一打开就同步加类，样式从第一帧就生效。 */
-/* 笔记版式全部挂在 body.siyuan-mode 下，这个类必须<b>首帧就有</b>：
-   等到 body_end 的 site-shell.js 再加，会先画一遍 NexT 旧布局再整块挪位（CLS 0.17）。
-   学习笔记首页还要额外挂 is-knowledge-home —— 左侧目录改成常驻栏、
-   版心右移 300px 全靠它，晚加一次就是一次整页横移。 */
-const notesModeClass = '<script>(function(){'
-  + 'var p=location.pathname;'
-  + 'if(p!=="/siyuan"&&p.indexOf("/siyuan/")!==0)return;'
-  + 'document.body.className+=" siyuan-mode";'
-  + 'var rest=p.slice(8);'
-  + 'if(rest===""||rest==="/"||rest==="index.html"||rest==="/index.html"){'
-  + 'document.body.className+=" is-knowledge-home";}'
-  + '})();</script>';
-hexo.extend.injector.register('body_begin', notesModeClass, 'page');
+/* ── 页面模式类：构建期写进 <body>，而不是等 JS 运行时再加 ─────────────
+   站点有四套版式，全靠 body 上的模式类切换：
+     blog-home-mode / blog-post-mode / archive-mode / siyuan-mode（+ is-knowledge-home）
+   这些类原来分别由 site-shell.js、siyuan-knowledge.js 在 body_end 才加，
+   于是浏览器先把 NexT 的旧布局画一遍，类名到位后再整块挪位：
+   实测首页版心宽度会先按 1280px 画一次再变成 1180px（CLS 0.16），
+   归档页顶栏先只有品牌带、导航解析完再顶下来 68px（CLS 0.19）。
+   这里在构建期就把类写进 <body>，样式从第一帧就是最终形态。 */
+hexo.extend.filter.register('after_render:html', (html, locals) => {
+  if (!locals || !locals.path) return html;
+  const page = locals.page || {};
+  const p = '/' + String(locals.path).replace(/index\.html$/, '').replace(/^\/+|\/+$/g, '');
+  const cls = [];
+
+  if (/^\/(archives|tags|categories)(\/|$)/.test(p)) {
+    cls.push('archive-mode');
+  } else if (/^\/siyuan(\/|$)/.test(p)) {
+    cls.push('siyuan-mode');
+    if (p === '/siyuan') cls.push('is-knowledge-home');
+  } else if (p === '/') {
+    cls.push('blog-home-mode');
+  } else if (page.layout === 'post') {
+    cls.push('blog-post-mode');
+  }
+  if (!cls.length) return html;
+
+  const names = cls.join(' ');
+  return html.replace(/<body\b([^>]*)>/i, (match, attrs) => {
+    if (/\sclass\s*=\s*"[^"]*"/i.test(attrs)) {
+      return match.replace(/\sclass\s*=\s*"([^"]*)"/i, (m, old) => ` class="${old} ${names}"`);
+    }
+    return `<body${attrs} class="${names}">`;
+  });
+});
 
 hexo.extend.injector.register('body_end', notesScript, 'page');
 // 左侧全文档目录（重写版）：纯链接 + 整页跳转，不再做前端路由

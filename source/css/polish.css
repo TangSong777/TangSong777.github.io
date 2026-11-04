@@ -1,3 +1,13 @@
+/* 始终为滚动条留出位置：很多页面首屏刚好不满一屏，内容（侧栏、目录、
+   卡片动画）一长出来滚动条才出现，整页会横向抖 5~10px —— 实测归档页
+   CLS 0.19、首页 0.16 都出自这一次横向重排。 */
+html {
+  scrollbar-gutter: stable;
+}
+@supports not (scrollbar-gutter: stable) {
+  html { overflow-y: scroll; }
+}
+
 /* ─────────────────────────────────────────────────────────────
    视觉润色层（polish）
    动效、悬浮、玻璃质感与若干细节。单独成文件，出问题删掉这一条
@@ -505,6 +515,13 @@ body.siyuan-mode .post-body tbody td:first-child {
     transform: translateY(-96px);
     box-shadow: 0 10px 26px rgba(35, 66, 58, .10);
   }
+
+  /* 顶栏 = 品牌带 96 + 导航 68。导航在 HTML 里排在品牌带之后，
+     首帧偶尔只画出了品牌带，等导航解析完再把整页往下顶 68px
+     （归档页实测 CLS 0.19）。这里先把两段高度预留出来，晚到的内容不再引起位移。 */
+  body.blog-home-mode .header,
+  body.blog-post-mode .header,
+  body.archive-mode .header { min-height: 164px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -887,3 +904,25 @@ body.siyuan-mode .note-rail .sidebar-archive {
   padding: 1px 0;
 }
 body.siyuan-mode .note-rail .sidebar-archive:hover { border-bottom: 0; }
+
+
+/* ── 19. 侧栏占位不等 JS ────────────────────────────────────────────────
+   文章页/归档页的右侧固定侧栏宽 320，NexT 用 body.sidebar-active 给 .main
+   加 padding-right —— 但这个类是 next-boot.js 运行时才加的，首帧正文先按
+   「无侧栏」居中、加类后整块左移 160px（归档页实测 CLS 0.085~0.11）。
+   这里对确定有固定侧栏的两种模式无条件预留，首次绘制就是最终位置。 */
+@media (min-width: 992px) {
+  /* reserve-sidebar */
+  body.blog-post-mode .main,
+  body.archive-mode .main {
+    box-sizing: border-box;
+    padding-right: 320px;
+  }
+}
+
+
+@media (min-width: 992px) {
+  /* sidebar-static-width */
+  body.blog-post-mode .sidebar,
+  body.archive-mode .sidebar { width: 320px !important; }
+}
