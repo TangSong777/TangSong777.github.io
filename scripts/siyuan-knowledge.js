@@ -128,7 +128,12 @@ function countSiteStats() {
           walk(full);
         } else if (entry.name === 'index.md') {
           const relative = path.relative(siyuanRoot, full).split(path.sep).join('/');
-          if (relative.startsWith('daily-note/')) stats.daily += 1;
+          /* 日记只算「按天」的那层：daily-note/2026/08/2026-08-03/index.md。
+             daily-note/、daily-note/2026/、daily-note/2026/08/ 是目录枢纽页，
+             算进「日记文档」会让首页数字比实际日记条数多。 */
+          const isDatedDiary = /^daily-note\/(?:\d{4}\/)?(?:\d{2}\/)?\d{4}-\d{2}-\d{2}\/index\.md$/.test(relative);
+          if (isDatedDiary) stats.daily += 1;
+          else if (relative.startsWith('daily-note/')) stats.dailyHubs = (stats.dailyHubs || 0) + 1;
           else stats.notes += 1;
         }
       }
