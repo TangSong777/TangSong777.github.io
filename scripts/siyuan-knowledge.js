@@ -84,6 +84,13 @@ hexo.extend.injector.register('body_end', knowledge, 'page');
 // 学习笔记页的组件层（对标 yhblogs.cn 文章页）：只在 page 类型注入，
 // 规则全部限定 body.siyuan-mode，首页/文章页/归档页不受影响。
 hexo.extend.injector.register('head_end', notesStyle, 'page');
+/* 笔记页的整套版式都挂在 body.siyuan-mode 下，而这个类原本由
+   site-shell.js 在 body_end 才加 —— 首帧会先画一遍 NexT 的旧布局
+   （顶栏、侧栏、正文位置），随后整块挪位，实测 CLS 0.17。
+   这里在 <body> 一打开就同步加类，样式从第一帧就生效。 */
+const notesModeClass = '<script>if(location.pathname.indexOf("/siyuan/")===0){document.body.className+=" siyuan-mode";}</script>';
+hexo.extend.injector.register('body_begin', notesModeClass, 'page');
+
 hexo.extend.injector.register('body_end', notesScript, 'page');
 // 左侧全文档目录（重写版）：纯链接 + 整页跳转，不再做前端路由
 hexo.extend.injector.register('body_end', treeScript, 'page');

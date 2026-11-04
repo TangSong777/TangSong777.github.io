@@ -116,18 +116,23 @@ body.siyuan-mode .main > .column { display: none !important; }
 /* 版心里只留「文章卡 + 侧栏」，面包屑不再显示 */
 body.siyuan-mode .main-inner > .breadcrumb { display: none !important; }
 /* 旧样式表给 .main-inner 写了 max-width/width 的 !important，这里必须同样加重 */
+/* 用 grid 而不是 flex：侧栏这一列在 CSS 里就预留好 304px，
+   脚本注入 #aside-content 时文章不会再横移（实测 flex 版 CLS 0.10）。
+   align-items: stretch 让侧栏跟着文章一起长高，目录卡才能整篇吸顶。 */
 body.siyuan-mode .main-inner {
-  /* 侧栏要「跟着文章一起长高」，目录卡才能在整个正文范围内吸顶；
-     用 flex-start 的话侧栏只有三张卡的高度，滚过卡片区目录就被带走了。 */
   align-items: stretch;
   box-sizing: border-box;
-  display: flex !important;
+  display: grid !important;
   gap: 15px;
+  grid-template-columns: minmax(0, 866px) 304px;
+  justify-content: center;
   margin: 0 auto !important;
   max-width: 1200px !important;
   padding: 40px 0 0 !important;
   width: 1200px !important;
 }
+body.siyuan-mode .main-inner > .post-block { grid-column: 1; grid-row: 1; }
+body.siyuan-mode .main-inner > #aside-content { grid-column: 2; grid-row: 1; }
 @media (max-width: 1240px) {
   body.siyuan-mode .main-inner {
     max-width: none !important;
@@ -135,6 +140,10 @@ body.siyuan-mode .main-inner {
     padding-right: 15px !important;
     width: 100% !important;
   }
+}
+@media (max-width: 1180px) {
+  /* 侧栏隐藏时不要继续占那一列 */
+  body.siyuan-mode .main-inner { grid-template-columns: minmax(0, 1fr); }
 }
 
 body.siyuan-mode .post-block {
@@ -657,6 +666,7 @@ body.siyuan-mode .siyuan-tree-overlay.is-open { opacity: 1; pointer-events: auto
 @media (max-width: 1180px) {
   body.siyuan-mode #aside-content { display: none; }
   body.siyuan-mode .post-block { max-width: none; }
+  body.siyuan-mode .main-inner { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 767px) {
   #nv2-nav { padding: 0 16px; }

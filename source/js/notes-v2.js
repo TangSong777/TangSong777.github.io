@@ -86,7 +86,14 @@
     nav.appendChild(toggle);
     nav.appendChild(brand);
     nav.appendChild(menu);
-    document.body.appendChild(nav);
+    /* 顶栏虽然 position: fixed，但顺序上要排在正文之前 ——
+       否则键盘用户得 Tab 过整篇文章才轮得到导航。 */
+    var skip = document.querySelector('.site-skip-link');
+    if (skip && skip.parentNode === document.body) {
+      document.body.insertBefore(nav, skip.nextSibling);
+    } else {
+      document.body.insertBefore(nav, document.body.firstChild);
+    }
   }
 
   /* ── 侧栏：信息卡 / 公告卡 / 目录卡 ──────────────────────────────────── */
@@ -264,63 +271,6 @@
   }
 
   /* ── 文章尾：版权卡 + 标签 ───────────────────────────────────────────── */
-  /* 目录型的「空壳页」补一份子文档清单。
-     例：daily note 的 2026/、2026/08/ 在思源里是没有正文的目录文档，
-     换算成网页就是只有面包屑的死胡同。这里在正文几乎为空时，
-     按 SiYuanKnowledgeData 的路径深度列出直属子文档。 */
-  function buildChildIndex() {
-    var data = window.SiyuanKnowledgeData;
-    if (!data || !data.documents || !data.documents.length) return;
-    var body = document.querySelector('.post-body');
-    if (!body) return;
-
-    var hereParts = location.pathname.replace(/index\.html$/, '').split('/').filter(Boolean);
-    if (!hereParts.length) return;
-
-    var probe = body.cloneNode(true);
-    var ref = probe.querySelector('.siyuan-references');
-    if (ref) ref.parentNode.removeChild(ref);
-    if ((probe.textContent || '').replace(/\s+/g, '').length > 40) return;
-
-    var kids = data.documents.filter(function (doc) {
-      var parts = String(doc.url || '').split('/').filter(Boolean);
-      if (parts.length !== hereParts.length + 1) return false;
-      for (var i = 0; i < hereParts.length; i++) {
-        if (parts[i] !== hereParts[i]) return false;
-      }
-      return true;
-    });
-    if (!kids.length) return;
-
-    var box = el('section', 'nv2-children');
-    var head = el('div', 'nv2-children-head');
-    head.appendChild(el('span', 'nv2-children-title', '本目录下的文档'));
-    head.appendChild(el('span', 'nv2-children-count', kids.length + ' 篇'));
-    box.appendChild(head);
-
-    var list = el('ul', 'nv2-children-list');
-    kids.forEach(function (doc) {
-      var li = el('li', 'nv2-children-item');
-      var a = el('a', 'nv2-children-link');
-      a.href = doc.url;
-      var isDaily = /^\d{4}-\d{2}-\d{2}$/.test(doc.title || '');
-      var icon = el('span', 'nv2-children-icon', isDaily ? '📅' : '📁');
-      a.appendChild(icon);
-      a.appendChild(el('span', 'nv2-children-text', doc.title || doc.url));
-      if (doc.daily) a.appendChild(el('span', 'nv2-children-tag', '日记'));
-      li.appendChild(a);
-      list.appendChild(li);
-    });
-    box.appendChild(list);
-
-    var refsBlock = body.querySelector('.siyuan-references');
-    if (refsBlock && refsBlock.parentNode) {
-      refsBlock.parentNode.insertBefore(box, refsBlock);
-    } else {
-      body.appendChild(box);
-    }
-  }
-
   function buildTail() {
     var body = document.querySelector('.post-body');
     if (!body) return;
@@ -390,7 +340,6 @@
       var percent = toc.querySelector('.nv2-percent');
       bindToc(percent);
     }
-    buildChildIndex();
     buildTail();
     buildRightside();
   }
