@@ -500,36 +500,28 @@ body.siyuan-mode .post-body tbody td:first-child {
 
 /* ── 13. 吸顶后的顶栏收紧 ─────────────────────────────────────
    首页/文章页的 header 是「品牌带 96px + 导航 68px」两段共 164px，
-   吸顶后一直占掉六分之一屏高。滚动后把品牌带折起来，只留导航条，
-   回到顶部再展开——和参考站那种「滚动时导航变窄」是同一件事。 */
+   吸顶后一直占掉六分之一屏高。滚动后把整条顶栏上移 96px，只留导航条。
+   注意：这里必须用 transform 位移，不能用 max-height / height 折叠品牌带——
+   折叠会让文档高度突变 96px，滚到顶部附近时 scrollY 与折叠状态互相触发
+   （塌陷→内容上移→scrollY 变化→展开→内容下移），顶栏就会来回抽搐。 */
 @media (min-width: 992px) {
-  body.blog-home-mode .site-brand-container,
-  body.blog-post-mode .site-brand-container,
-  body.archive-mode .site-brand-container,
-  body.siyuan-mode .site-brand-container {
-    max-height: 96px;
-    overflow: hidden;
+  body.blog-home-mode .header,
+  body.blog-post-mode .header,
+  body.archive-mode .header,
+  body.siyuan-mode .header {
     transition:
-      max-height var(--polish-base) var(--polish-ease),
-      opacity var(--polish-base) var(--polish-ease),
-      padding var(--polish-base) var(--polish-ease);
-  }
-
-  body.is-scrolled .site-brand-container {
-    max-height: 0;
-    opacity: 0;
-    padding-bottom: 0;
-    padding-top: 0;
-    pointer-events: none;
+      transform var(--polish-base) var(--polish-ease),
+      box-shadow var(--polish-base) var(--polish-ease);
   }
 
   body.is-scrolled .header {
+    transform: translateY(-96px);
     box-shadow: 0 10px 26px rgba(35, 66, 58, .10);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body .site-brand-container { transition: none !important; }
+  body .header { transition: none !important; }
 }
 
 /* ── 14. 首页卡片内部间距收紧 ─────────────────────────────────
