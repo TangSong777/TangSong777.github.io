@@ -195,11 +195,17 @@
     var links = [].slice.call(document.querySelectorAll('#nv2-toc .nav-link'));
     if (!heads.length || !links.length) return;
 
-    var byId = {};
-    links.forEach(function (a) {
-      var id = decodeURIComponent((a.getAttribute('href') || '').replace(/^#/, ''));
-      if (id) byId[id] = a;
-    });
+    /* 目录链接每次现查：TOC 会被其它脚本搬动、裁剪，
+       缓存下来的节点一旦脱离文档，加在上面的高亮就看不见了。 */
+    function linkForHeading(head) {
+      if (!head || !head.id) return null;
+      var all = document.querySelectorAll('#nv2-toc .nav-link');
+      for (var i = 0; i < all.length; i++) {
+        var id = decodeURIComponent((all[i].getAttribute('href') || '').replace(/^#/, ''));
+        if (id === head.id) return all[i];
+      }
+      return null;
+    }
 
     var current = null;
     var ticking = false;
@@ -208,9 +214,11 @@
       var line = 120;
       var active = null;
       for (var i = 0; i < heads.length; i++) {
-        if (heads[i].getBoundingClientRect().top <= line) active = heads[i];
+        // 只认目录里存在的标题：文末「文档关系 / 本文引用 / 反向引用」会被
+        // pruneReferenceToc() 摘掉，若把它们当候选，滚到页底时高亮会整个消失。
+        if (heads[i].getBoundingClientRect().top <= line && linkForHeading(heads[i])) active = heads[i];
       }
-      var link = active && byId[active.id];
+      var link = active ? linkForHeading(active) : null;
       if (link !== current) {
         if (current) {
           var old = current.parentNode;
@@ -234,6 +242,14 @@
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
+    // 正文高度会自己变：图片懒加载、MathJax 排版完成、引用区块被裁剪……
+    // 这些都没有 scroll 事件，靠 ResizeObserver 补一次重算，
+    // 否则「一进页面就跳到页底」时算出来没有任何高亮项，之后也不会自愈。
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(onScroll);
+      ro.observe(body);
+    }
+    window.addEventListener('load', onScroll);
     update();
   }
 
