@@ -17,6 +17,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Hexo 用「进程时区」格式化文章日期：_config.yml 的 timezone 只决定怎么解析
+    # front-matter，真正写进 /2026/10/25/ 这种永久链接时用的是 TZ。
+    # 不设的话 CI（UTC）会把 00:20 发布的文章落到前一天，本地预览与线上 URL 对不上。
+    env:
+      TZ: Asia/Shanghai
     steps:
       - uses: actions/checkout@v4
 
