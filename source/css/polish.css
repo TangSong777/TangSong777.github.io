@@ -671,6 +671,34 @@ body.blog-post-mode .post-body mjx-container[display="true"] {
   padding: 2px 0;
 }
 
+/* 行内公式在窄屏上也会超宽（实测 390px 下某个式子宽 344px，卡片内容区只有
+   322px）。卡片是 overflow: hidden，超出部分会被直接裁掉、页面又不产生滚动条，
+   等于内容丢了。
+   注意 mjx-container 的行内形态是 display: inline，对 inline 元素设 overflow
+   无效（clientWidth 恒为 0），所以窄屏下改成 inline-block 才能变成滚动容器。 */
+@media (max-width: 767px) {
+  body.siyuan-mode .post-body mjx-container,
+  body.blog-post-mode .post-body mjx-container {
+    display: inline-block;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    vertical-align: middle;
+  }
+}
+
+/* 公式的横向滚动条在正文里就是一条突兀的灰杠（块级公式下面尤其明显），
+   能滚就行、不显示条：Chrome 走 ::-webkit-scrollbar，Firefox 走 scrollbar-width。 */
+body.siyuan-mode .post-body mjx-container,
+body.blog-post-mode .post-body mjx-container {
+  scrollbar-width: none;
+}
+body.siyuan-mode .post-body mjx-container::-webkit-scrollbar,
+body.blog-post-mode .post-body mjx-container::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
 /* --- 15.5 首页头像悬浮旋转（参考 yhblogs.cn 的 .avatar-img img:hover） --- */
 .blog-home-profile img {
   border-radius: 50%;
