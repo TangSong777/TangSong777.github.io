@@ -268,11 +268,22 @@
     window.setTimeout(run, 1200);
   }
 
+  /* Service Worker：把静态资源缓存到本地，二次打开不再重新下载 CSS/JS。
+    只在 https（或 localhost）下注册，失败静默忽略，不影响其它功能。 */
+  function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
+    window.setTimeout(function () {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
+    }, 1500);
+  }
+
   ready(function () {
     setupReveal();
     setupStickyHeader();
     setupCodeCopy();
     setupReadingTime();
     setupTocCard();
+    registerServiceWorker();
   });
 })();
