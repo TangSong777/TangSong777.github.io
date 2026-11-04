@@ -1134,3 +1134,12 @@ body.siyuan-mode .note-rail .sidebar-archive:hover { border-bottom: 0; }
   .post-block::before,
   .post-block::after { display: none !important; }
 }
+
+/* ── 21. 正文标题旁的 # 锚点链接 ──────────────────────────────────────
+   NexT 给每个标题后面挂了一个 `.headerlink`（鼠标移上去才显形的小链接），
+   读者基本不会点它，却在标题右侧留出一块悬空位、还会把行尾挤断。
+   这里直接收掉；标题的 id 仍然保留，目录跳转、外链锚点都不受影响。 */
+body .post-body .headerlink,
+body .post-title .headerlink {
+  display: none !important;
+}
