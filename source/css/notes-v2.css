@@ -437,7 +437,14 @@ body.siyuan-mode #nv2-toc .nv2-toc-content::-webkit-scrollbar-thumb {
   background: var(--line-strong);
   border-radius: 5px;
 }
-body.siyuan-mode #nv2-toc .post-toc { font-size: 13.5px; padding: 0; }
+/* polish.css 给 .post-toc 本身设了 max-height + overflow:auto，
+   搬进卡片后会出现「卡内一层滚动条 + 外层再一层」的双滚动条，这里交回外层。 */
+body.siyuan-mode #nv2-toc .post-toc {
+  font-size: 13.5px;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+}
 body.siyuan-mode #nv2-toc .post-toc ol { list-style: none; margin: 0; padding: 0; }
 body.siyuan-mode #nv2-toc .nav-item { line-height: 1.55; overflow: visible; }
 body.siyuan-mode #nv2-toc .nav-link {
@@ -767,3 +774,82 @@ body.siyuan-mode .nt-row.is-current .nt-link { color: var(--green-deep); font-we
 body.siyuan-mode .nt-kids { margin-left: 14px; padding-left: 8px; border-left: 1px solid var(--sy-line); }
 body.siyuan-mode .nt-kids[hidden] { display: none; }
 body.siyuan-mode .nt-item[hidden] { display: none; }
+
+/* ── 13. 正文里的「文档链接」列表与文末引用区块 ──────────────────────── */
+/* polish.css 给所有 li 加了 padding-left: .1em，把 doc-link 自己留的 18px
+   图标位挤成 1.6px —— 文档图标直接压在第一个字上，整行看起来像没有项目符号。
+   这里补回图标位，并让整行有 hover 反馈。 */
+body.siyuan-mode .post-body li.doc-link {
+  list-style: none;
+  margin: 2px 0;
+  padding-left: 22px;
+  position: relative;
+}
+body.siyuan-mode .post-body li.doc-link::before {
+  height: 13px;
+  left: 3px;
+  top: .42em;
+  width: 11px;
+}
+body.siyuan-mode .post-body li.doc-link a {
+  border-bottom: 0;
+  color: var(--nv2-text);
+  display: inline-block;
+  padding: 2px 6px 2px 0;
+}
+body.siyuan-mode .post-body li.doc-link:hover a { color: var(--nv2-accent); }
+
+/* 「文档关系 / 本文引用 / 反向引用」：原来是一大块浅绿底，
+   短文档里比正文还抢眼；改成一条虚线分隔 + 小号灰标签。 */
+body.siyuan-mode .siyuan-references {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  border-top: 1px dashed var(--nv2-line);
+  margin-top: 42px;
+  padding: 22px 0 0;
+}
+body.siyuan-mode .siyuan-references h2,
+body.siyuan-mode .siyuan-references h3 {
+  border: 0;
+  color: var(--nv2-muted);
+  font-weight: 700;
+  letter-spacing: .1em;
+  margin: 0 0 6px;
+  padding-left: 0;
+}
+body.siyuan-mode .siyuan-references h2 { font-size: 12.5px; }
+body.siyuan-mode .siyuan-references h3 { font-size: 12.5px; font-weight: 600; margin-top: 16px; }
+body.siyuan-mode .siyuan-references h2::before,
+body.siyuan-mode .siyuan-references h3::before { display: none; }
+body.siyuan-mode .siyuan-references .headerlink { display: none; }
+body.siyuan-mode .siyuan-references ul {
+  list-style: none;
+  margin: 2px 0 0;
+  padding-left: 0;
+}
+body.siyuan-mode .siyuan-references li {
+  color: var(--nv2-muted);
+  font-size: 13.5px;
+  line-height: 1.9;
+  margin: 0;
+}
+body.siyuan-mode .siyuan-references a {
+  border-bottom: 0;
+  color: var(--nv2-text);
+}
+body.siyuan-mode .siyuan-references a:hover { color: var(--nv2-accent); }
+
+/* 宽表格：NexT 的 .table-container 默认 overflow:visible，表格比正文宽时直接
+   撑出卡片。改成横向滚动，首列冻结（sticky）方便对照。 */
+body.siyuan-mode .post-body .table-container {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+body.siyuan-mode .post-body .table-container::-webkit-scrollbar { height: 6px; }
+body.siyuan-mode .post-body .table-container::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 6px;
+}
+body.siyuan-mode .post-body .table-container table { margin-bottom: 0; }
