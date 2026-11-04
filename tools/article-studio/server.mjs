@@ -80,7 +80,10 @@ function send(res, status, body, contentType = 'application/json; charset=utf-8'
     'Referrer-Policy': 'no-referrer',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
     'Cross-Origin-Opener-Policy': 'same-origin',
-    'Content-Security-Policy': "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src 'self'; connect-src 'self'",
+    // index.html 里有一段内联的 /api/config 预取脚本（提前并行发出，省一次往返）。
+    // CSP 只放行 'self' 时它会被静默拦掉并在控制台报错，这里按内容哈希放行；
+    // 改动那段内联脚本必须同步更新这个 sha256（对脚本正文算，不含 <script> 标签）。
+    'Content-Security-Policy': "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-6Xn2+Rak8nbPG+FsxONe1jZI2LFvARGpYvwGjT+SbkU='; frame-src 'self'; connect-src 'self'",
     ...extraHeaders,
   });
   res.end(contentType.startsWith('application/json') ? JSON.stringify(body) : body);
