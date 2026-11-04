@@ -861,3 +861,65 @@ body.siyuan-mode .post-body li.emoji-link {
   padding-left: 2px;
 }
 body.siyuan-mode .post-body li.emoji-link > p { margin: 0; }
+
+/* ── 14. 空壳目录页的子文档清单 ────────────────────────────────────────
+   daily note 的 2026/、2026/08/ 在思源里是没有正文的目录文档，
+   换算成网页原本只有面包屑。buildChildIndex() 会补一份清单。 */
+body.siyuan-mode .nv2-children {
+  border-top: 1px dashed var(--nv2-line);
+  margin-top: 8px;
+  padding-top: 18px;
+}
+body.siyuan-mode .nv2-children-head {
+  align-items: baseline;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+body.siyuan-mode .nv2-children-title {
+  color: var(--nv2-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+body.siyuan-mode .nv2-children-count { color: var(--nv2-muted); font-size: 12.5px; }
+body.siyuan-mode .nv2-children-list {
+  display: grid;
+  gap: 8px 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+body.siyuan-mode .nv2-children-link {
+  align-items: center;
+  background: var(--green-wash);
+  border-bottom: 0;
+  border-radius: 8px;
+  color: var(--green-deep);
+  display: flex;
+  gap: 8px;
+  padding: 9px 12px;
+  transition: background .16s ease, transform .16s ease;
+}
+body.siyuan-mode .nv2-children-link:hover {
+  background: var(--green-soft);
+  transform: translateX(2px);
+}
+body.siyuan-mode .nv2-children-icon { font-size: 14px; line-height: 1; }
+body.siyuan-mode .nv2-children-text {
+  flex: 1 1 auto;
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.siyuan-mode .nv2-children-tag {
+  background: rgba(255, 255, 255, .7);
+  border-radius: 999px;
+  color: var(--nv2-muted);
+  font-size: 11px;
+  padding: 1px 7px;
+}
+@media (max-width: 767px) {
+  body.siyuan-mode .nv2-children-list { grid-template-columns: 1fr; }
+}
