@@ -61,6 +61,9 @@
     if (document.getElementById('nv2-nav')) return;
     var nav = el('div');
     nav.id = 'nv2-nav';
+    // 地标语义：读屏用户可以直接跳到「站点导航」，不用把整页 Tab 一遍
+    nav.setAttribute('role', 'navigation');
+    nav.setAttribute('aria-label', '站点导航');
 
     var toggle = el('button', 'nv2-toggle', ICON.menu);
     toggle.type = 'button';
@@ -128,6 +131,8 @@
 
     var toc = el('div', 'nv2-card');
     toc.id = 'nv2-toc';
+    toc.setAttribute('role', 'navigation');
+    toc.setAttribute('aria-label', '文章目录');
     toc.innerHTML =
       '<div class="nv2-card-head">' + ICON.stream + '<span>目录</span><span class="nv2-percent">0%</span></div>' +
       '<div class="nv2-toc-content"></div>';

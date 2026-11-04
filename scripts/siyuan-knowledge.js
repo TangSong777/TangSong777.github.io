@@ -104,6 +104,22 @@ hexo.extend.filter.register('after_render:html', html => {
   });
 });
 
+/* 思源导出的图片很多没写 alt（markdown 里是 ![](url)），
+   读屏会念出一长串文件名。这里把正文里缺 alt 的图片显式标成装饰图，
+   顺带在构建日志里报一行，提醒回思源补一句图片说明。 */
+hexo.extend.filter.register('after_render:html', (html, locals) => {
+  const p = (locals && locals.path) || '';
+  if (!p.startsWith('siyuan/') && !/^\d{4}\//.test(p)) return html;
+  let missing = 0;
+  const replaced = html.replace(/<img\b([^>]*)>/gi, (tag, attrs) => {
+    if (/\balt\s*=/.test(attrs)) return tag;
+    missing++;
+    return '<img' + attrs + ' alt="">';
+  });
+  if (missing) hexo.log.debug('[a11y] ' + p + ' 有 ' + missing + ' 张图片没有 alt，已按装饰图处理');
+  return replaced;
+});
+
 hexo.extend.filter.register('after_render:html', (html, locals) => {
   if (!locals || !locals.path) return html;
   const page = locals.page || {};
