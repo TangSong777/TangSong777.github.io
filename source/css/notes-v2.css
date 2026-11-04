@@ -621,6 +621,8 @@ body.siyuan-mode .siyuan-tree-panel {
   z-index: 500;
 }
 body.siyuan-mode .siyuan-tree-panel.is-open { transform: none; }
+/* 收起时连阴影一起收掉：面板只移出 -102%，阴影仍会从左边漏出一条深色边 */
+body.siyuan-mode .siyuan-tree-panel:not(.is-open) { box-shadow: none; }
 body.siyuan-mode .siyuan-tree-overlay {
   background: rgba(20, 34, 31, .42);
   border: 0;
@@ -640,6 +642,9 @@ body.siyuan-mode .siyuan-tree-overlay.is-open { opacity: 1; pointer-events: auto
 }
 @media (max-width: 767px) {
   #nv2-nav { padding: 0 16px; }
+  /* 手机上 meta 会折行，竖线分隔符跟着换行会很难看，直接去掉 */
+  body.siyuan-mode .post-header .nv2-meta-sep { display: none; }
+  body.siyuan-mode .post-header .nv2-meta { gap: 0 14px; }
   #nv2-nav .nv2-menu { display: none; }
   body.siyuan-mode { --nv2-nav-h: 54px; }
   body.siyuan-mode .main-inner { padding-top: 20px !important; }
