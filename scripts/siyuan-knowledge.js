@@ -248,6 +248,32 @@ function loadDuplicateTitles() {
   return duplicateTitleMap;
 }
 
+/**
+ * 社交卡片：NexT 默认只输出 og:title/description，没有配图，
+ * 于是微信、Telegram、Twitter 抓到的都是纯文字卡片。
+ * 这里给全站补一张 1200×630 的封面（source/images/og-cover.jpg，
+ * 由首页 hero 的配色渲染而来），并把 twitter:card 升成大图模式。
+ */
+hexo.extend.filter.register('after_render:html', html => {
+  if (!html.includes('</head>') || html.includes('property="og:image"')) return html;
+  const image = `${hexo.config.url.replace(/\/$/, '')}${siteRoot}images/og-cover.jpg`;
+  const tags = [
+    `<meta property="og:image" content="${image}">`,
+    '<meta property="og:image:type" content="image/jpeg">',
+    '<meta property="og:image:width" content="1200">',
+    '<meta property="og:image:height" content="630">',
+    '<meta property="og:image:alt" content="学习与思考 · 个人博客与学习笔记知识库">',
+    `<meta name="twitter:image" content="${image}">`,
+  ].join('');
+  const withImage = html.replace('</head>', tags + '</head>');
+  // NexT 已经写过 <meta name="twitter:card" content="summary">，
+  // 带图时应当是大图卡片，直接改值而不是再塞一个重复标签。
+  return withImage.replace(
+    /<meta name="twitter:card" content="[^"]*">/,
+    '<meta name="twitter:card" content="summary_large_image">'
+  );
+});
+
 hexo.extend.filter.register('after_render:html', (html, locals) => {
   const p = (locals && locals.path) || '';
   if (p.indexOf('siyuan/') !== 0) return html;
