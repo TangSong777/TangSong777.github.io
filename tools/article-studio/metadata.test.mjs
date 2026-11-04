@@ -39,6 +39,23 @@ test('没有 YAML 时可以创建文章信息且保留正文', () => {
     title: '新文章', date: '2026-09-10T08:00:00', updated: '', categories: '', tags: '', description: '',
   });
   assert.match(updated, /^---\ntitle: "新文章"\ndate: 2026-09-10 08:00:00/);
-  assert.match(updated, /categories: \[\]/);
+  // 可选字段为空时不写进 front-matter：update() 的约定是「用户清空的可选字段整块删掉」，
+  // 新建文章也一样，写 `categories: []` 只会给每篇文章多留一行噪声。
+  assert.doesNotMatch(updated, /categories:/);
+  assert.doesNotMatch(updated, /tags:/);
+  assert.doesNotMatch(updated, /description:/);
   assert.match(updated, /---\n\n只有正文。\n$/);
+});
+
+test('清空已存在的分类写成空列表，未知字段原样保留', () => {
+  const content = `---\ntitle: Old\ndate: 2026-01-01 00:00:00\npermalink: custom/path/\ncategories:\n  - 旧分类\n---\n\n正文。\n`;
+  const updated = metadata.update(content, {
+    title: 'Old', date: '2026-01-01T00:00:00', updated: '', categories: '', tags: '', description: '',
+  });
+  // 列表字段被清空时写 `categories: []`（显式的「没有分类」），而不是删掉整行——
+  // 只有 updated / description 这类标量字段清空才整块删。
+  assert.match(updated, /categories: \[\]/);
+  assert.doesNotMatch(updated, /旧分类/);
+  assert.match(updated, /permalink: custom\/path\//);
+  assert.match(updated, /\n\n正文。\n$/);
 });
