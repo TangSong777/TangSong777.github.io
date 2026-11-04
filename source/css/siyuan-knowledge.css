@@ -388,13 +388,6 @@ body.blog-home-mode .blog-home-feed .post-body::after { background: linear-gradi
 .blog-home-site-info dt { color: var(--sy-muted); font-size: 12px; }
 .blog-home-site-info dd { color: var(--sy-ink); font-size: 12px; font-weight: 700; margin: 0; }
 
-.blog-home-knowledge { margin-top: 36px; }
-.blog-home-note-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.blog-home-note-card { background: white; border: 1px solid var(--sy-line) !important; border-radius: 13px; color: var(--sy-ink) !important; display: grid; min-height: 98px; padding: 17px; text-decoration: none !important; }
-.blog-home-note-card:hover { border-color: var(--green-line) !important; box-shadow: 0 9px 24px rgba(46,74,65,.08); transform: translateY(-2px); }
-.blog-home-note-index { color: var(--sy-warm); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
-.blog-home-note-card strong { align-self: end; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.blog-home-note-card small { color: var(--sy-muted); font-size: 10px; margin-top: 4px; }
 
 @media (max-width: 900px) {
   .blog-home-orbit { display: none; }
@@ -409,7 +402,7 @@ body.blog-home-mode .blog-home-feed .post-body::after { background: linear-gradi
   body.blog-home-mode .footer-inner { width: calc(100% - 24px) !important; }
   .blog-home-hero { border-radius: 16px; min-height: 250px; padding: 32px 24px; }
   .blog-home-hero h1 { font-size: 32px; }
-  .blog-home-rail, .blog-home-note-grid { grid-template-columns: 1fr; }
+  .blog-home-rail { grid-template-columns: 1fr; }
   body.blog-home-mode .blog-home-feed > .post-block { padding: 28px 22px; }
 }
 

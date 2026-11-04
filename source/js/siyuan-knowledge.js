@@ -73,10 +73,6 @@
     var documents = data.documents.filter(function (doc) {
       return !doc.daily && doc.url !== '/siyuan/' && doc.parts && doc.parts.length <= 2;
     });
-    var featuredTitles = ['Python笔记', '计算机网络', '命令行', '嵌入式'];
-    var featured = featuredTitles.map(function (title) {
-      return documents.find(function (doc) { return doc.title === title; });
-    }).filter(Boolean);
     var dailyCount = data.documents.filter(function (doc) { return doc.daily; }).length;
     var stats = window.__SITE_STATS__ || null;
     // 构建期注入的真实数量优先；拿不到（例如脚本被单独打开）才退回数据快照。
@@ -108,19 +104,6 @@
         block.appendChild(readmore);
       }
     });
-
-    var knowledge = document.createElement('section');
-    knowledge.className = 'blog-home-knowledge';
-    knowledge.innerHTML = '<header class="blog-home-section-title"><div><span>KNOWLEDGE BASE</span><h2>学习笔记精选</h2></div><a href="/siyuan/">完整目录 →</a></header><div class="blog-home-note-grid"></div>';
-    var noteGrid = knowledge.querySelector('.blog-home-note-grid');
-    featured.forEach(function (doc, index) {
-      var card = document.createElement('a');
-      card.className = 'blog-home-note-card';
-      card.href = doc.url;
-      card.innerHTML = '<span class="blog-home-note-index">0' + (index + 1) + '</span><strong>' + doc.title + '</strong><small>' + (doc.parts[0] || '学习笔记').replace(/-/g, ' ') + '</small>';
-      noteGrid.appendChild(card);
-    });
-    feed.appendChild(knowledge);
 
     var tagsNode = document.querySelector('.sidebar-tags');
     var archivesNode = document.querySelector('.sidebar-archives');

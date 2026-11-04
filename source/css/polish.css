@@ -186,7 +186,6 @@ body.blog-home-mode .blog-home-feed > .post-block {
   }
 }
 
-body.blog-home-mode .blog-home-note-card,
 body.blog-home-mode .blog-home-side-card {
   transition:
     transform var(--polish-base) var(--polish-ease),
@@ -195,20 +194,10 @@ body.blog-home-mode .blog-home-side-card {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  body.blog-home-mode .blog-home-note-card:hover,
   body.blog-home-mode .blog-home-side-card:hover {
     box-shadow: 0 18px 38px rgba(38, 63, 55, .13);
     transform: translateY(-3px);
   }
-
-  body.blog-home-mode .blog-home-note-card:hover .blog-home-note-index {
-    transform: scale(1.1) rotate(-4deg);
-  }
-}
-
-body.blog-home-mode .blog-home-note-index {
-  display: inline-block;
-  transition: transform var(--polish-base) var(--polish-ease);
 }
 
 /* 「阅读全文 →」的箭头在悬停时右移一点 */
@@ -389,7 +378,7 @@ body.archive-mode .post-block {
   }
 }
 
-/* ── 9. 首页分区标题：加一条渐变短线，让「最近文章 / 学习笔记精选」有个起点 ── */
+/* ── 9. 首页分区标题：加一条渐变短线，让「最近文章」有个起点 ── */
 .blog-home-section-title h2 {
   position: relative;
   padding-bottom: 8px;
@@ -407,8 +396,7 @@ body.archive-mode .post-block {
   transition: width var(--polish-base) var(--polish-ease);
 }
 
-.blog-home-feed:hover .blog-home-section-title h2::after,
-.blog-home-knowledge:hover .blog-home-section-title h2::after {
+.blog-home-feed:hover .blog-home-section-title h2::after {
   width: 56px;
 }
 
