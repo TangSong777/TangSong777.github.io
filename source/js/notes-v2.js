@@ -240,6 +240,39 @@
   /* ── 文章头：面包屑提到标题上方，meta 换成「发表于 / 字数 / 阅读约」 ─── */
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
+  /* 主题的面包屑用 `{{ name | upper }}` 输出，于是「Python笔记」变成「PYTHON笔记」、
+     「PathLib专项」变成「PATHLIB专项」，和目录树、正文标题对不上。
+     这里按 SiyuanKnowledgeData 里的真实文档标题还原每一段。 */
+  function fixCrumbNames(crumb, header) {
+    var docs = (window.SiyuanKnowledgeData && window.SiyuanKnowledgeData.documents) || [];
+    var byUrl = {};
+    docs.forEach(function (doc) {
+      if (!doc || !doc.url) return;
+      var u;
+      try { u = decodeURIComponent(doc.url); } catch (_) { u = doc.url; }
+      byUrl[u.replace(/\/+$/, '')] = doc.title;
+    });
+
+    function nameFor(href) {
+      var u;
+      try { u = decodeURIComponent(href); } catch (_) { u = href; }
+      u = u.replace(/index\.html$/, '').replace(/\/+$/, '');
+      return byUrl[u] || '';
+    }
+
+    var links = crumb.querySelectorAll('a[href]');
+    for (var i = 0; i < links.length; i++) {
+      var name = nameFor(links[i].getAttribute('href'));
+      if (name) links[i].textContent = name;
+    }
+
+    var title = header.querySelector('.post-title');
+    var last = crumb.querySelector('li:last-child');
+    if (last && title && !last.querySelector('a')) {
+      last.textContent = title.textContent.trim();
+    }
+  }
+
   function buildHeader() {
     var header = document.querySelector('.post-header');
     if (!header || header.querySelector('.nv2-meta')) return;
@@ -248,6 +281,7 @@
     if (crumb) {
       crumb.className = 'nv2-crumb';
       header.insertBefore(crumb, header.firstChild);
+      fixCrumbNames(crumb, header);
     }
 
     var box = header.querySelector('.post-meta-container');
