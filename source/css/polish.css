@@ -505,16 +505,20 @@ body.siyuan-mode .post-body tbody td:first-child {
    折叠会让文档高度突变 96px，滚到顶部附近时 scrollY 与折叠状态互相触发
    （塌陷→内容上移→scrollY 变化→展开→内容下移），顶栏就会来回抽搐。 */
 @media (min-width: 992px) {
+  /* 注意：这里不能带 body.siyuan-mode —— 笔记页的 header 被
+     siyuan-knowledge.css 的 `body.siyuan-mode header.header` 写死成 relative（比本规则特异度高），
+     它不是吸顶元素，上移 96px 只会让导航条凭空跳一下，没有任何收益。 */
   body.blog-home-mode .header,
   body.blog-post-mode .header,
-  body.archive-mode .header,
-  body.siyuan-mode .header {
+  body.archive-mode .header {
     transition:
       transform var(--polish-base) var(--polish-ease),
       box-shadow var(--polish-base) var(--polish-ease);
   }
 
-  body.is-scrolled .header {
+  body.blog-home-mode.is-scrolled .header,
+  body.blog-post-mode.is-scrolled .header,
+  body.archive-mode.is-scrolled .header {
     transform: translateY(-96px);
     box-shadow: 0 10px 26px rgba(35, 66, 58, .10);
   }
