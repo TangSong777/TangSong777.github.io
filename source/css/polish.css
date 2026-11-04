@@ -970,3 +970,179 @@ body.siyuan-mode .note-rail .sidebar-archive:hover { border-bottom: 0; }
   body.blog-post-mode .footer,
   body.archive-mode .footer { position: static !important; }
 }
+/* ── 20. 打印 / 导出 PDF ────────────────────────────────────────────────
+   站点的版式是「固定顶栏 + 吸顶目录 + 侧栏卡片」，直接打印会出现：
+   第 1 页被导航条压住、每页右侧都拖着侧栏、卡片阴影与圆角一起进纸。
+   这里把屏幕上的装饰全部退场，只留正文与标题层级。 */
+@media print {
+  #nv2-nav,
+  .header,
+  .site-brand-container,
+  .sidebar,
+  .sidebar-toggle,
+  .sidebar-dimmer,
+  .siyuan-tree-panel,
+  .siyuan-tree-toggle,
+  .siyuan-tree-overlay,
+  #aside-content,
+  #nv2-toc,
+  #nv2-rightside,
+  #rightside,
+  .back-to-top,
+  .reading-progress-bar,
+  .post-toc,
+  .post-nav,
+  .note-nav-wrap,
+  .code-copy-btn,
+  .footer,
+  .toggle,
+  .site-overlay {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+  }
+
+  /* 版心：屏幕上是「1200 居中 = 866 正文 + 304 侧栏」，打印时全部拉直 */
+  .main,
+  .main > .column,
+  .main-inner,
+  .main-inner > .post-block,
+  .post-block {
+    background: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    margin: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
+    position: static !important;
+    transform: none !important;
+    width: auto !important;
+  }
+
+  .post-block { padding: 0 0 8pt !important; }
+
+  .post-title {
+    color: #000 !important;
+    font-size: 20pt !important;
+    line-height: 1.3 !important;
+  }
+
+  .post-meta-container {
+    border-color: #999 !important;
+    color: #333 !important;
+    font-size: 9pt !important;
+  }
+
+  .post-body {
+    color: #000 !important;
+    font-size: 11pt !important;
+    line-height: 1.65 !important;
+  }
+
+  .post-body h1,
+  .post-body h2,
+  .post-body h3,
+  .post-body h4 {
+    break-after: avoid;
+    color: #000 !important;
+    page-break-after: avoid;
+  }
+
+  /* 屏幕上标题左侧的竖条 / 小方块是装饰，纸面上只剩噪点 */
+  .post-body h1::before,
+  .post-body h2::before { display: none !important; }
+
+  .post-body a {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+
+  .post-body blockquote,
+  .post-body .siyuan-references {
+    background: none !important;
+    border-left: 2pt solid #999 !important;
+    color: #333 !important;
+    padding: 0 0 0 8pt !important;
+  }
+
+  .post-body pre,
+  .post-body table,
+  .post-body img,
+  .post-body figure,
+  .post-body .table-container {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .post-body pre {
+    border: 1px solid #ccc !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+  }
+
+  .post-body img {
+    box-shadow: none !important;
+    max-width: 100% !important;
+  }
+
+  .post-body table { width: 100% !important; }
+  .post-body thead { display: table-header-group; }
+
+  .nv2-copyright,
+  .nv2-tags,
+  .nv2-children { display: none !important; }
+}
+
+/* 禁用 JavaScript 时的兜底提示（首页的文章列表靠脚本渲染） */
+.noscript-hint {
+  background: #fff8e1;
+  border: 1px solid #f0d79a;
+  border-radius: 8px;
+  color: #6b4e12;
+  display: block;
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 16px auto;
+  max-width: 1200px;
+  padding: 14px 18px;
+  text-align: center;
+}
+
+.noscript-hint a {
+  border-bottom: 1px solid currentColor;
+  color: #8a5a00;
+  font-weight: 600;
+}
+
+/* 打印时还有两处遗留：NexT 的 .headband（3px 渐变条，固定在文档顶端）
+   和主题自带的红底「Theme NexT works best with JavaScript enabled」提示条
+   （我们已经用 .noscript-hint 给了更具体的入口提示，双份提示很吵）。 */
+@media print {
+  .headband { display: none !important; }
+}
+
+.noscript-warning { display: none !important; }
+
+/* 页面底色是 body::before 画的一层纸纹渐变（左侧那条深绿竖边就是它），
+   纸面上不需要，一并去掉。 */
+@media print {
+  body::before,
+  body::after { display: none !important; }
+}
+
+/* 正文卡片左侧那条 4px 竖条（.post-block::before 的渐变装饰）在屏幕上
+   是和卡片圆角配套的，打印时它落在纸边，看着像一条莫名的绿边。 */
+@media print {
+  .post-block::before,
+  .post-block::after { display: none !important; }
+}

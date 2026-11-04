@@ -92,6 +92,18 @@ hexo.extend.injector.register('head_end', notesStyle, 'page');
    实测首页版心宽度会先按 1280px 画一次再变成 1180px（CLS 0.16），
    归档页顶栏先只有品牌带、导航解析完再顶下来 68px（CLS 0.19）。
    这里在构建期就把类写进 <body>，样式从第一帧就是最终形态。 */
+/* 关掉 JavaScript 时：首页列表、笔记的目录树、侧栏卡片都不出现，
+   正文虽然还在，但页面上没有任何可点的入口。这里塞一段纯 HTML 的提示。 */
+const noScriptHint = '<noscript class="noscript-hint">本站的目录与文章列表由脚本渲染，'
+  + '开启 JavaScript 可获得完整体验；也可以直接浏览 <a href="/archives/">文章归档</a>、'
+  + '<a href="/siyuan/">学习笔记</a>、<a href="/tags/">标签</a>。</noscript>';
+hexo.extend.filter.register('after_render:html', html => {
+  if (html.includes('noscript-hint')) return html;
+  return html.replace(/<body([^>]*)>/i, function (m, attrs) {
+    return '<body' + attrs + '>' + noScriptHint;
+  });
+});
+
 hexo.extend.filter.register('after_render:html', (html, locals) => {
   if (!locals || !locals.path) return html;
   const page = locals.page || {};
