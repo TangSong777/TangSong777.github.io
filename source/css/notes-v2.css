@@ -690,6 +690,22 @@ body.siyuan-mode .siyuan-tree-overlay.is-open { opacity: 1; pointer-events: auto
   body.siyuan-mode .post-body h1 { font-size: 21px; }
 }
 
+/* ── 15. 宽表的横向滚动提示 ───────────────────────────────────────────
+   窄屏下 5 列的表格装不进 320px 的卡片，只能横向滚；但卡片边缘没有任何提示，
+   读者会以为右边那句就是结尾。用 background-attachment: local / scroll
+   的经典组合做「滚到头自动消失」的阴影，不需要 JS 跟踪滚动位置。 */
+body.siyuan-mode .post-body .table-container.is-scrollable,
+body.blog-post-mode .post-body .table-container.is-scrollable {
+  background:
+    linear-gradient(90deg, #fff 42%, rgba(255, 255, 255, 0)) left center,
+    linear-gradient(270deg, #fff 42%, rgba(255, 255, 255, 0)) right center,
+    radial-gradient(farthest-side at 0 50%, rgba(35, 66, 58, .15), transparent) left center,
+    radial-gradient(farthest-side at 100% 50%, rgba(35, 66, 58, .15), transparent) right center;
+  background-attachment: local, local, scroll, scroll;
+  background-repeat: no-repeat;
+  background-size: 44px 100%, 44px 100%, 13px 100%, 13px 100%;
+}
+
 /* ── 11. 学习笔记首页：左侧全文档目录常驻 ──────────────────────────────
    首页（/siyuan/）进门就该看见「有哪些文档」，所以把目录从抽屉改成常驻栏，
    版心和顶栏整体右移 300px；其它笔记页仍然是 ☰ 抽屉。

@@ -212,6 +212,24 @@
       return null;
     }
 
+    /* 目录卡自己会滚（长文档 47 条塞不进 660px 高的卡片），
+       正文滚到一半以后高亮项就跑出卡片可视区了，读者再也看不出「我在第几节」。
+       这里只调整目录卡内部滚动，绝不动页面滚动位置。 */
+    function revealInToc(link) {
+      var box = document.querySelector('#nv2-toc .nv2-toc-content');
+      if (!box || !link || !link.parentNode) return;
+      var b = box.getBoundingClientRect();
+      var c = link.getBoundingClientRect();
+      var pad = 18;
+      if (c.top >= b.top + pad && c.bottom <= b.bottom - pad) return;
+      /* 用 offsetTop 算「把这一条摆中间」需要的滚动量，再夹到可滚范围内：
+         页底那几条上面还有整段子目录，按矩形差计算会停在半截上。 */
+      var li = link.parentNode;
+      var max = box.scrollHeight - box.clientHeight;
+      var target = li.offsetTop - (box.clientHeight - li.offsetHeight) / 2;
+      box.scrollTop = Math.max(0, Math.min(max, target));
+    }
+
     var current = null;
     var ticking = false;
     function update() {
@@ -230,7 +248,10 @@
           if (old) old.classList.remove('nv2-current');
         }
         current = link || null;
-        if (link && link.parentNode) link.parentNode.classList.add('nv2-current');
+        if (link && link.parentNode) {
+          link.parentNode.classList.add('nv2-current');
+          revealInToc(link);
+        }
       }
 
       if (percentEl) {
@@ -385,6 +406,7 @@
     var p = location.pathname.replace(/\/index\.html$/, '/');
     if (p === '/siyuan/' || p === '/siyuan') document.body.classList.add('is-knowledge-home');
   }
+
 
   function run() {
     markKnowledgeHome();

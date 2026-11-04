@@ -328,6 +328,27 @@
      而首页的 hero / 卡片是 siyuan-knowledge.js（下一个 defer 脚本）才拼出来的；
      直接跑会一条都匹配不到，所以统一等 DOMContentLoaded（此前的 defer 都已执行）。
      另挂 window.load 与超时兜底，防止脚本被异步加载时 DCL 已经错过。 */
+  /* 宽表在窄屏上要横向滚动，可卡片边缘没有任何提示，读者不知道右边还有内容。
+     这里只负责标出「谁真的能滚」，视觉提示交给 CSS 的渐变阴影
+     （background-attachment: local / scroll，滚到最右自动消失）。 */
+  function markScrollableTables() {
+    var boxes = document.querySelectorAll('.post-body .table-container');
+    Array.prototype.forEach.call(boxes, function (box) {
+      if (box.closest('figure.highlight')) return;
+      if (box.scrollWidth > box.clientWidth + 1) box.classList.add('is-scrollable');
+      else box.classList.remove('is-scrollable');
+    });
+  }
+
+  var tableTimer = null;
+  window.addEventListener('resize', function () {
+    window.clearTimeout(tableTimer);
+    tableTimer = window.setTimeout(markScrollableTables, 180);
+  });
+  window.addEventListener('load', function () {
+    window.setTimeout(markScrollableTables, 200);
+  });
+
   function ready(fn) {
     if (document.readyState === 'complete') { fn(); return; }
     var done = false;
@@ -390,6 +411,7 @@
     setupCodeCopy();
     setupReadingTime();
     setupTocCard();
+    markScrollableTables();
     setupAnchorScroll();
     setupNoteRail();
     registerServiceWorker();
