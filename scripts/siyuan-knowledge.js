@@ -39,6 +39,10 @@ const polishCssVersion = hashOf('source/css/polish.css');
 const polishJsVersion = hashOf('source/js/polish.js');
 const polishStyle = `<link rel="stylesheet" href="${siteRoot}css/polish.css?v=${polishCssVersion}">`;
 const polishScript = `<script src="${siteRoot}js/polish.js?v=${polishJsVersion}" defer></script>`;
+const notesCssVersion = hashOf('source/css/notes-v2.css');
+const notesJsVersion = hashOf('source/js/notes-v2.js');
+const notesStyle = `<link rel="stylesheet" href="${siteRoot}css/notes-v2.css?v=${notesCssVersion}">`;
+const notesScript = `<script src="${siteRoot}js/notes-v2.js?v=${notesJsVersion}" defer></scr` + 'ipt>';
 const shell = `<script src="${siteRoot}js/site-shell.js?v=${shellVersion}" defer></script>`;
 const knowledge = `<script src="${siteRoot}js/siyuan-data.js?v=${dataVersion}" defer></script><script src="${siteRoot}js/siyuan-knowledge.js?v=${knowledgeVersion}" defer></script>`;
 
@@ -74,6 +78,11 @@ const navEnhance = [
 // 回归教训：按页裁剪脚本前，先确认被裁掉的脚本里没有其它页面的初始化逻辑。
 hexo.extend.injector.register('body_end', knowledge, 'home');
 hexo.extend.injector.register('body_end', knowledge, 'page');
+
+// 学习笔记页的组件层（对标 yhblogs.cn 文章页）：只在 page 类型注入，
+// 规则全部限定 body.siyuan-mode，首页/文章页/归档页不受影响。
+hexo.extend.injector.register('head_end', notesStyle, 'page');
+hexo.extend.injector.register('body_end', notesScript, 'page');
 
 // 给主题自己输出的 main.css 补上同样的缓存指纹（NexT 模板不改，只在渲染结果里替换）。
 hexo.extend.filter.register('after_render:html', html => html.replace(

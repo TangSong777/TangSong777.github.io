@@ -1,0 +1,649 @@
+/* ==========================================================================
+   学习笔记页面组件（对标 yhblogs.cn 文章页的 Butterfly 版式）
+   所有规则都限定在 body.siyuan-mode 下，不影响首页/文章页/归档页。
+   组件：顶栏 #nv2-nav · 文章卡 .post-block · 侧栏 #aside-content
+        （信息卡 / 公告卡 / 目录卡）· 文章尾（版权、标签、上下篇）· 页脚 · 右下角
+   ========================================================================== */
+
+body.siyuan-mode {
+  --nv2-nav-h: 60px;
+  --nv2-ink: #1f2d3d;
+  --nv2-text: #4c4948;
+  --nv2-muted: #78818a;
+  --nv2-line: #eaedf0;
+  --nv2-card: rgba(255, 255, 255, .92);
+  --nv2-radius: 8px;
+  --nv2-shadow: 0 3px 8px 6px rgba(7, 17, 27, .03);
+  --nv2-accent: var(--green);
+  padding-top: var(--nv2-nav-h);
+}
+
+/* 旧页面组件全部退场：NexT 的顶栏、右侧 tab 栏、回顶按钮、阅读进度条、
+   文档树浮动按钮。笔记页只保留「顶栏 + 文章卡 + 侧栏」三件套。 */
+body.siyuan-mode header.header,
+body.siyuan-mode .site-brand-container,
+body.siyuan-mode > .sidebar,
+body.siyuan-mode .back-to-top,
+body.siyuan-mode .reading-progress-bar,
+body.siyuan-mode .siyuan-tree-toggle,
+body.siyuan-mode .post-eof,
+body.siyuan-mode .pagination {
+  display: none !important;
+}
+
+/* ── 1. 顶栏 ────────────────────────────────────────────────────────────── */
+#nv2-nav {
+  align-items: center;
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  background: rgba(255, 255, 255, .82);
+  box-shadow: 0 1px 0 rgba(35, 66, 58, .06), 0 8px 24px rgba(35, 66, 58, .05);
+  display: flex;
+  gap: 10px;
+  height: var(--nv2-nav-h);
+  left: 0;
+  padding: 0 36px;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 400;
+}
+#nv2-nav .nv2-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--nv2-text);
+  cursor: pointer;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  margin-right: 2px;
+  width: 34px;
+}
+#nv2-nav .nv2-toggle:hover { background: var(--green-wash); color: var(--green-deep); }
+#nv2-nav .nv2-toggle svg { height: 18px; width: 18px; }
+
+#nv2-nav .nv2-brand {
+  align-items: center;
+  border-bottom: 0;
+  color: var(--nv2-ink);
+  display: flex;
+  font-size: 18px;
+  font-weight: 700;
+  gap: 10px;
+  letter-spacing: .01em;
+}
+#nv2-nav .nv2-logo {
+  align-items: center;
+  background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-raw) 70%, var(--pop-amber-deep) 100%);
+  border-radius: 9px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  line-height: 1;
+  width: 30px;
+}
+#nv2-nav .nv2-menu {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+#nv2-nav .nv2-menu a {
+  border-bottom: 0;
+  border-radius: 8px;
+  color: var(--nv2-text);
+  font-size: 14px;
+  padding: 9px 14px;
+  transition: background .18s ease, color .18s ease;
+  white-space: nowrap;
+}
+#nv2-nav .nv2-menu a:hover { background: var(--green-wash); color: var(--green-deep); }
+#nv2-nav .nv2-menu a.is-active {
+  background: var(--green-soft);
+  color: var(--green-deep);
+  font-weight: 600;
+}
+
+/* ── 2. 版心：1200 居中 = 文章 866 + 间距 15 + 侧栏 304 ───────────────── */
+body.siyuan-mode .main { padding: 0 !important; }
+/* 旧的 .column 里只剩 NexT 顶栏和右侧 tab 栏，整列退场 */
+body.siyuan-mode .main > .column { display: none !important; }
+/* 版心里只留「文章卡 + 侧栏」，面包屑不再显示 */
+body.siyuan-mode .main-inner > .breadcrumb { display: none !important; }
+/* 旧样式表给 .main-inner 写了 max-width/width 的 !important，这里必须同样加重 */
+body.siyuan-mode .main-inner {
+  /* 侧栏要「跟着文章一起长高」，目录卡才能在整个正文范围内吸顶；
+     用 flex-start 的话侧栏只有三张卡的高度，滚过卡片区目录就被带走了。 */
+  align-items: stretch;
+  box-sizing: border-box;
+  display: flex !important;
+  gap: 15px;
+  margin: 0 auto !important;
+  max-width: 1200px !important;
+  padding: 40px 0 0 !important;
+  width: 1200px !important;
+}
+@media (max-width: 1240px) {
+  body.siyuan-mode .main-inner {
+    max-width: none !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    width: 100% !important;
+  }
+}
+
+body.siyuan-mode .post-block {
+  background: var(--nv2-card);
+  border-radius: var(--nv2-radius);
+  box-shadow: var(--nv2-shadow);
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  margin: 0 !important;
+  max-width: 866px;
+  min-width: 0;
+  padding: 50px 40px !important;
+}
+
+/* ── 3. 文章头：面包屑 / 标题 / meta（虚线上下边） ──────────────────── */
+body.siyuan-mode .post-header { text-align: left !important; }
+
+body.siyuan-mode .post-header .nv2-crumb {
+  color: var(--nv2-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  gap: 0 6px;
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+body.siyuan-mode .post-header .nv2-crumb li { align-items: center; display: inline-flex; }
+body.siyuan-mode .post-header .nv2-crumb li + li::before {
+  color: var(--line-strong);
+  content: "/";
+  margin-right: 6px;
+}
+body.siyuan-mode .post-header .nv2-crumb a { border-bottom: 0; color: var(--nv2-muted); }
+body.siyuan-mode .post-header .nv2-crumb a:hover { color: var(--nv2-accent); }
+
+body.siyuan-mode .post-header .nv2-meta {
+  align-items: center;
+  color: var(--nv2-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 0 10px;
+}
+body.siyuan-mode .post-header .nv2-meta-sep { color: var(--line-strong); }
+body.siyuan-mode .post-title {
+  color: var(--nv2-ink);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  line-height: 1.42;
+  margin: 0 0 18px !important;
+}
+body.siyuan-mode .post-meta-container {
+  border-bottom: 1px dashed var(--line);
+  border-top: 1px dashed var(--line);
+  color: var(--nv2-muted);
+  font-size: 13px;
+  margin: 0 0 32px;
+  padding: 11px 0;
+}
+body.siyuan-mode .post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  justify-content: flex-start;
+  line-height: 1.9;
+}
+body.siyuan-mode .post-meta-item { display: inline-flex; align-items: center; gap: 5px; }
+body.siyuan-mode .post-meta a { color: var(--nv2-muted); border-bottom: 0; }
+body.siyuan-mode .post-meta a:hover { color: var(--nv2-accent); }
+
+/* ── 4. 正文排版 ──────────────────────────────────────────────────────── */
+body.siyuan-mode .post-body {
+  color: var(--nv2-text);
+  font-size: 16px;
+  line-height: 1.82;
+}
+body.siyuan-mode .post-body p { margin: 0 0 16px; }
+
+body.siyuan-mode .post-body h1,
+body.siyuan-mode .post-body h2,
+body.siyuan-mode .post-body h3,
+body.siyuan-mode .post-body h4 {
+  color: var(--nv2-ink);
+  line-height: 1.45;
+  position: relative;
+}
+/* 一级小节：左侧竖条（对标参考站 h2 的装饰） */
+body.siyuan-mode .post-body h1 {
+  font-size: 24px;
+  margin: 40px 0 16px;
+  padding-left: 26px;
+}
+body.siyuan-mode .post-body h1::before {
+  background: var(--nv2-accent);
+  border-radius: 2px;
+  content: "";
+  height: 18px;
+  left: 6px;
+  position: absolute;
+  top: .42em;
+  width: 4px;
+}
+/* 二级小节：小方块 */
+body.siyuan-mode .post-body h2 {
+  font-size: 19px;
+  margin: 30px 0 12px;
+  padding-left: 20px;
+}
+body.siyuan-mode .post-body h2::before {
+  background: var(--nv2-accent);
+  border-radius: 2px;
+  content: "";
+  height: 9px;
+  left: 4px;
+  position: absolute;
+  top: .55em;
+  width: 9px;
+}
+body.siyuan-mode .post-body h3 { font-size: 17px; margin: 24px 0 10px; }
+body.siyuan-mode .post-body h4 { font-size: 16px; margin: 20px 0 8px; }
+
+body.siyuan-mode .post-body blockquote {
+  background: var(--green-wash);
+  border-left: 4px solid var(--nv2-accent);
+  border-radius: 6px;
+  color: var(--green-deep);
+  margin: 0 0 18px;
+  padding: 9px 16px;
+}
+body.siyuan-mode .post-body blockquote p:last-child { margin-bottom: 0; }
+
+body.siyuan-mode .post-body table {
+  border-collapse: separate;
+  border-radius: 6px;
+  border-spacing: 0;
+  font-size: 14px;
+  margin: 0 0 20px;
+  overflow: hidden;
+  width: 100%;
+}
+body.siyuan-mode .post-body thead th {
+  background: var(--green-wash);
+  border-bottom: 1px solid var(--line);
+  color: var(--green-deep);
+  font-weight: 700;
+  padding: 10px 12px;
+  text-align: left;
+}
+body.siyuan-mode .post-body tbody td { border-bottom: 1px solid var(--nv2-line); padding: 9px 12px; }
+body.siyuan-mode .post-body tbody tr:last-child td { border-bottom: 0; }
+body.siyuan-mode .post-body tbody tr:hover { background: var(--green-wash); }
+
+body.siyuan-mode .post-body code {
+  background: var(--green-wash);
+  border-radius: 4px;
+  color: var(--green-deep);
+  font-size: .9em;
+  padding: 2px 6px;
+}
+body.siyuan-mode .post-body pre,
+body.siyuan-mode .post-body figure.highlight {
+  border-radius: 8px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  margin: 0 0 20px;
+}
+body.siyuan-mode .post-body pre code { background: transparent; color: inherit; padding: 0; }
+
+body.siyuan-mode .post-body ul,
+body.siyuan-mode .post-body ol { margin: 0 0 16px; padding-left: 1.6em; }
+body.siyuan-mode .post-body li { margin: 5px 0; }
+body.siyuan-mode .post-body li > p { margin: 0; }
+body.siyuan-mode .post-body li > ul,
+body.siyuan-mode .post-body li > ol {
+  border-left: 2px solid var(--green-line);
+  margin: 5px 0 5px 4px;
+  padding-left: 14px;
+}
+body.siyuan-mode .post-body li::marker { color: var(--nv2-accent); }
+
+body.siyuan-mode .post-body img { border-radius: 8px; }
+
+/* 文末「文档关系 / 本文引用 / 反向引用」——保留，但做成低调的小块 */
+body.siyuan-mode .siyuan-references {
+  background: var(--green-wash);
+  border-radius: 8px;
+  font-size: 13.5px;
+  margin-top: 34px;
+  padding: 14px 18px;
+}
+body.siyuan-mode .siyuan-references h2,
+body.siyuan-mode .siyuan-references h3 {
+  font-size: 13px;
+  margin: 8px 0 6px;
+  padding-left: 0;
+}
+body.siyuan-mode .siyuan-references h2::before,
+body.siyuan-mode .siyuan-references h3::before { display: none; }
+
+/* ── 5. 侧栏卡片 ──────────────────────────────────────────────────────── */
+body.siyuan-mode #aside-content {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 304px;
+  flex-direction: column;
+  gap: 20px;
+  padding-left: 15px;
+  width: 304px;
+}
+body.siyuan-mode .nv2-card {
+  background: var(--nv2-card);
+  border-radius: var(--nv2-radius);
+  box-shadow: var(--nv2-shadow);
+  box-sizing: border-box;
+  padding: 20px 24px;
+}
+body.siyuan-mode .nv2-card-head {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  color: var(--nv2-ink);
+  display: flex;
+  font-size: 16px;
+  font-weight: 700;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 9px;
+}
+body.siyuan-mode .nv2-card-head svg { color: var(--nv2-accent); height: 16px; width: 16px; }
+
+/* 5.1 信息卡 */
+body.siyuan-mode #nv2-info { text-align: center; }
+body.siyuan-mode #nv2-info .nv2-avatar {
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(35, 66, 58, .14);
+  height: 106px;
+  object-fit: cover;
+  transition: transform .65s cubic-bezier(.34, 1.3, .64, 1);
+  width: 106px;
+}
+body.siyuan-mode #nv2-info .nv2-avatar:hover { transform: rotate(360deg); }
+body.siyuan-mode #nv2-info .nv2-name {
+  color: var(--nv2-ink);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 14px 0 6px;
+}
+body.siyuan-mode #nv2-info .nv2-desc { color: var(--nv2-muted); font-size: 13px; margin: 0; }
+body.siyuan-mode #nv2-info .nv2-data {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 18px;
+  padding-top: 14px;
+}
+body.siyuan-mode #nv2-info .nv2-data a { border-bottom: 0; color: inherit; }
+body.siyuan-mode #nv2-info .nv2-data .k {
+  color: var(--nv2-muted);
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+body.siyuan-mode #nv2-info .nv2-data .v {
+  color: var(--green-deep);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* 5.2 公告卡 */
+body.siyuan-mode #nv2-announce p {
+  color: var(--nv2-text);
+  font-size: 13.5px;
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* 5.3 目录卡：只有它吸顶，其它卡片随页面滚走（对齐参考站行为） */
+body.siyuan-mode #nv2-toc {
+  position: sticky;
+  top: calc(var(--nv2-nav-h) + 20px);
+}
+body.siyuan-mode #nv2-toc .nv2-percent {
+  color: var(--nv2-muted);
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+body.siyuan-mode #nv2-toc .nv2-toc-content {
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+body.siyuan-mode #nv2-toc .nv2-toc-content::-webkit-scrollbar { width: 5px; }
+body.siyuan-mode #nv2-toc .nv2-toc-content::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 5px;
+}
+body.siyuan-mode #nv2-toc .post-toc { font-size: 13.5px; padding: 0; }
+body.siyuan-mode #nv2-toc .post-toc ol { list-style: none; margin: 0; padding: 0; }
+body.siyuan-mode #nv2-toc .nav-item { line-height: 1.55; overflow: visible; }
+body.siyuan-mode #nv2-toc .nav-link {
+  border-bottom: 0;
+  border-radius: 6px;
+  color: var(--nv2-text);
+  display: block;
+  padding: 5px 10px;
+  transition: background .16s ease, color .16s ease;
+}
+body.siyuan-mode #nv2-toc .nav-link:hover { background: var(--green-wash); color: var(--green-deep); }
+body.siyuan-mode #nv2-toc .nav-item.active-current > .nav-link {
+  background: var(--green-soft);
+  color: var(--green-deep);
+  font-weight: 600;
+}
+body.siyuan-mode #nv2-toc .nav-level-2 > .nav-link { padding-left: 22px; }
+body.siyuan-mode #nv2-toc .nav-level-3 > .nav-link { color: var(--nv2-muted); padding-left: 34px; }
+body.siyuan-mode #nv2-toc .nav-level-4 > .nav-link { color: var(--nv2-muted); padding-left: 46px; }
+body.siyuan-mode #nv2-toc.is-empty { display: none; }
+
+/* ── 6. 文章尾：版权卡 / 标签 / 上下篇 ───────────────────────────────── */
+body.siyuan-mode .nv2-copyright {
+  border: 1px solid var(--nv2-line);
+  border-radius: 6px;
+  color: var(--nv2-text);
+  font-size: 13px;
+  line-height: 2;
+  margin-top: 44px;
+  padding: 11px 16px;
+  position: relative;
+}
+body.siyuan-mode .nv2-copyright::before,
+body.siyuan-mode .nv2-copyright::after {
+  border-radius: 50%;
+  border: 1px dashed var(--nv2-line);
+  content: "";
+  height: 10px;
+  position: absolute;
+  top: -5px;
+  width: 10px;
+}
+body.siyuan-mode .nv2-copyright::before { left: -5px; }
+body.siyuan-mode .nv2-copyright::after { right: -5px; }
+body.siyuan-mode .nv2-copyright .row { display: flex; gap: 6px; }
+body.siyuan-mode .nv2-copyright .k { color: var(--nv2-muted); flex: 0 0 auto; }
+body.siyuan-mode .nv2-copyright a { border-bottom: 0; color: var(--nv2-accent); word-break: break-all; }
+
+body.siyuan-mode .nv2-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+body.siyuan-mode .nv2-tags a {
+  background: var(--green-soft);
+  border-bottom: 0;
+  border-radius: 999px;
+  color: var(--green-deep);
+  font-size: 12.5px;
+  padding: 4px 12px;
+}
+body.siyuan-mode .nv2-tags a:hover { background: var(--nv2-accent); color: #fff; }
+
+/* 上下篇 + 返回上级：两张并排卡，下面一排小胶囊 */
+body.siyuan-mode .note-nav-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 34px;
+}
+body.siyuan-mode .note-nav { display: flex; gap: 12px; }
+body.siyuan-mode .note-nav-item {
+  background: #fff;
+  border: 1px solid var(--nv2-line);
+  border-bottom-width: 1px;
+  border-radius: 8px;
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 13px 18px 13px 22px;
+  transition: background .18s ease, border-color .18s ease;
+}
+body.siyuan-mode .note-nav-item::before {
+  background: var(--nv2-accent);
+  border-radius: 2px;
+  bottom: 14px;
+  left: 0;
+  top: 14px;
+  width: 3px;
+}
+body.siyuan-mode .note-nav-item.is-next { padding: 13px 22px 13px 18px; }
+body.siyuan-mode .note-nav-item.is-next::before { background: var(--nv2-accent); left: auto; right: 0; }
+body.siyuan-mode .note-nav-item.is-placeholder { background: transparent; border-color: transparent; }
+body.siyuan-mode .note-nav-item span {
+  color: var(--nv2-muted);
+  display: block;
+  font-size: 12px;
+}
+body.siyuan-mode .note-nav-item strong {
+  color: var(--green-deep);
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.siyuan-mode .note-nav-item:not(.is-placeholder):hover { background: var(--green-soft); }
+body.siyuan-mode .note-nav .is-next { text-align: right; }
+
+body.siyuan-mode .note-nav-up { display: flex; flex-wrap: wrap; gap: 10px; }
+body.siyuan-mode .note-nav-up a {
+  background: rgba(255, 255, 255, .75);
+  border: 1px solid var(--nv2-line);
+  border-radius: 999px;
+  color: var(--nv2-muted);
+  font-size: 13px;
+  padding: 7px 14px;
+}
+body.siyuan-mode .note-nav-up a:hover {
+  background: var(--green-wash);
+  border-color: var(--green-line);
+  color: var(--green-deep);
+}
+
+/* ── 7. 页脚 ──────────────────────────────────────────────────────────── */
+body.siyuan-mode .footer {
+  background: transparent !important;
+  border: 0;
+  margin-top: 36px;
+  padding: 0;
+}
+body.siyuan-mode .footer-inner {
+  color: var(--nv2-muted);
+  font-size: 13px;
+  padding: 26px 0 40px;
+  text-align: center;
+  width: 100%;
+}
+body.siyuan-mode .footer-inner a { border-bottom: 0; color: var(--nv2-muted); }
+body.siyuan-mode .footer-inner a:hover { color: var(--nv2-accent); }
+
+/* ── 8. 右下角按钮 ────────────────────────────────────────────────────── */
+#nv2-rightside {
+  bottom: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: fixed;
+  right: 24px;
+  z-index: 300;
+}
+#nv2-rightside button {
+  align-items: center;
+  background: var(--nv2-card);
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(35, 66, 58, .12);
+  color: var(--green-deep);
+  cursor: pointer;
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity .22s ease, transform .22s ease, background .18s ease;
+  width: 40px;
+}
+#nv2-rightside button svg { height: 18px; width: 18px; }
+#nv2-rightside button:hover { background: #fff; color: var(--nv2-accent); }
+body.is-scrolled #nv2-rightside button { opacity: 1; pointer-events: auto; transform: none; }
+
+/* ── 9. 全文档目录树 → 左侧抽屉（对标参考站的 #sidebar） ──────────────── */
+body.siyuan-mode .siyuan-tree-panel {
+  box-shadow: 0 10px 40px rgba(20, 40, 35, .18);
+  transform: translateX(-102%);
+  transition: transform .28s ease;
+  width: 300px;
+  z-index: 500;
+}
+body.siyuan-mode .siyuan-tree-panel.is-open { transform: none; }
+body.siyuan-mode .siyuan-tree-overlay {
+  background: rgba(20, 34, 31, .42);
+  border: 0;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: fixed;
+  transition: opacity .28s ease;
+  z-index: 450;
+}
+body.siyuan-mode .siyuan-tree-overlay.is-open { opacity: 1; pointer-events: auto; }
+
+/* ── 10. 响应式 ───────────────────────────────────────────────────────── */
+@media (max-width: 1180px) {
+  body.siyuan-mode #aside-content { display: none; }
+  body.siyuan-mode .post-block { max-width: none; }
+}
+@media (max-width: 767px) {
+  #nv2-nav { padding: 0 16px; }
+  #nv2-nav .nv2-menu { display: none; }
+  body.siyuan-mode { --nv2-nav-h: 54px; }
+  body.siyuan-mode .main-inner { padding-top: 20px !important; }
+  body.siyuan-mode .post-block { border-radius: 0; padding: 26px 18px !important; }
+  body.siyuan-mode .post-title { font-size: 24px; }
+  body.siyuan-mode .post-body h1 { font-size: 21px; }
+}
