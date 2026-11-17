@@ -1,7 +1,7 @@
 ---
 title: '学习笔记'
 date: '2026-06-23T16:54:27+08:00'
-updated: '2026-11-13T16:27:13+08:00'
+updated: '2026-11-17T17:42:01+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -16,6 +16,7 @@ categories:
 
 
 
+  - [反应性充血、内皮功能与 PPG·PAT 原理](/siyuan/待学习/反应性充血、内皮功能与-PPG·PAT-原理/)
 - [Python笔记](/siyuan/Python笔记/)
 
   - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
@@ -95,6 +96,7 @@ categories:
       - [2026-08-03](/siyuan/daily-note/2026/08/2026-08-03/)
 - [已归档](/siyuan/已归档/)
 
+  - [PPG与rPPG学习方案（旧版备份）](/siyuan/已归档/PPG与rPPG学习方案（旧版备份）/)
   - [从公网、局域网到 ZeroTier：构建属于自己的虚拟局域网（已归档）](/siyuan/已归档/从公网、局域网到-ZeroTier：构建属于自己的虚拟局域网（已归档）/)
   - [SSH学习（已归档）](/siyuan/已归档/SSH学习（已归档）/)
   - [Python 调用系统命令学习方案（已归档）](/siyuan/已归档/Python-调用系统命令学习方案（已归档）/)
