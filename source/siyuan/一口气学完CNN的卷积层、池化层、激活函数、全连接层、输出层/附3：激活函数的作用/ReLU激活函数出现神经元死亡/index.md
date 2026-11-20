@@ -1,7 +1,7 @@
 ---
 title: 'ReLU激活函数出现神经元死亡'
 date: '2026-06-03T15:18:53+08:00'
-updated: '2026-06-03T16:14:30+08:00'
+updated: '2026-11-20T10:23:17+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,6 +15,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>ReLU激活函数出现神经元死亡
+
+> **标题**：ReLU激活函数出现神经元死亡  
+> **类型**：教程笔记  
+> **状态**：已完成  
+> **标签**：​#文档/教程#​  
+> **创建**：2026-06-03  
+> **更新**：2026-06-03  
+> **来源**：整理
+
+# ReLU激活函数出现神经元死亡
 
 $\text{ReLU}(x) =  \begin{cases}  x  x \geq 0 \\  0  x < 0  \end{cases}$  
 

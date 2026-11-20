@@ -1,7 +1,7 @@
 ---
 title: 'CMD专项'
 date: '2026-08-25T09:11:52+08:00'
-updated: '2026-08-25T09:12:23+08:00'
+updated: '2026-11-20T10:24:21+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,6 +15,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>CMD专项
+
+> **标题**：CMD专项  
+> **类型**：笔记  
+> **状态**：已完成  
+> **标签**：​#文档/笔记#​  
+> **创建**：2026-08-25  
+> **更新**：2026-08-25  
+> **来源**：原创
+
+# CMD专项
 
 > CMD 是 Windows 传统命令解释器：**内部命令**（`dir`​/`copy`​/`del`​ 等，由 cmd.exe 内置）＋**外部命令**（`findstr`​/`ping`​ 等独立 exe，靠 PATH 调用）。本专项整理自《Windows命令行学习（已归档）》。相关专项：[PowerShell专项](/siyuan/其他笔记/命令行/PowerShell专项/)、[Linux专项](/siyuan/其他笔记/命令行/Linux专项/)。
 

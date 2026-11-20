@@ -1,7 +1,7 @@
 ---
 title: 'PathLib专项'
 date: '2026-08-18T14:06:29+08:00'
-updated: '2026-09-22T16:21:02+08:00'
+updated: '2026-11-20T10:24:20+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -14,6 +14,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>PathLib专项
+
+> **标题**：PathLib专项  
+> **类型**：笔记  
+> **状态**：已完成  
+> **标签**：​#文档/笔记#​  
+> **创建**：2026-08-18  
+> **更新**：2026-08-18  
+> **来源**：原创
+
+# PathLib专项
 
 > PathLib 是 Python 标准库 `pathlib`​ 的知识点专项：用面向对象的 `Path` 统一处理路径、目录与文件，替代手写字符串路径。当前能力：L2（能独立完成目录管理、文件遍历与批量读取）。
 >

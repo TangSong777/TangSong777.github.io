@@ -5,12 +5,13 @@ updated: '2026-11-17T17:38:58+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
-permalink: 'siyuan/待学习/反应性充血、内皮功能与-PPG·PAT-原理/'
-siyuan_source: '待学习/反应性充血、内皮功能与 PPG·PAT 原理.md'
+permalink: 'siyuan/待学习/P10086/反应性充血、内皮功能与-PPG·PAT-原理/'
+siyuan_source: '待学习/P10086/反应性充血、内皮功能与 PPG·PAT 原理.md'
 comments: false
 categories:
   - '学习笔记'
   - '待学习'
+  - 'P10086'
 ---
 
 # <span id="" style="display: none;"></span>反应性充血、内皮功能与 PPG·PAT 原理
@@ -519,5 +520,6 @@ sig = np.array(sig)
 
 ### 反向引用
 - [学习笔记](/siyuan/)
+- [P10086](/siyuan/待学习/P10086/)
 
 </section>

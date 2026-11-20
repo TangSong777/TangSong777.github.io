@@ -1,7 +1,7 @@
 ---
 title: 'STM32'
 date: '2025-04-12T17:31:19+08:00'
-updated: '2026-08-26T17:34:32+08:00'
+updated: '2026-11-20T10:23:09+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,6 +15,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>STM32
+
+> **标题**：STM32  
+> **类型**：目录  
+> **状态**：已完成  
+> **标签**：​#文档/目录#​  
+> **创建**：2025-04-12  
+> **更新**：2025-04-12  
+> **来源**：原创
+
+# STM32
 
 - 📄 [知识点大纲](/siyuan/其他笔记/嵌入式/STM32/知识点大纲/)
 - 📄 [STM32CubeMX配置](/siyuan/其他笔记/嵌入式/STM32/STM32CubeMX配置/)

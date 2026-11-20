@@ -1,7 +1,7 @@
 ---
 title: '2026-08-04'
 date: '2026-08-04T00:17:25+08:00'
-updated: '2026-08-06T02:18:47+08:00'
+updated: '2026-11-20T10:18:29+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -16,6 +16,14 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>2026-08-04
+
+> **标题**：2026-08-04  
+> **类型**：日记  
+> **状态**：已完成  
+> **标签**：​#文档/日记#​  
+> **创建**：2026-08-04  
+> **更新**：2026-08-06  
+> **来源**：原创
 
 # <span id="20260804001819-jo9ybpr" class="siyuan-block-anchor" aria-hidden="true"></span>力扣刷题：[283. 移动零](https://leetcode.cn/problems/move-zeroes/)
 

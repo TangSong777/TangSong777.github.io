@@ -1,7 +1,7 @@
 ---
 title: 'Prompt-基于OpenWrt与ZeroTier的个人组网'
 date: '2026-08-22T21:44:04+08:00'
-updated: '2026-08-22T22:13:29+08:00'
+updated: '2026-11-20T10:23:36+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -16,6 +16,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>Prompt-基于OpenWrt与ZeroTier的个人组网
+
+> **标题**：Prompt-基于OpenWrt与ZeroTier的个人组网  
+> **类型**：笔记  
+> **状态**：已完成  
+> **标签**：​#文档/笔记#​  
+> **创建**：2026-08-22  
+> **更新**：2026-08-22  
+> **来源**：原创
+
+# Prompt-基于OpenWrt与ZeroTier的个人组网
 
 我有一台 OpenWrt 路由器，需要设计一个双场景网络访问方案。
 

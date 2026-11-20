@@ -1,7 +1,7 @@
 ---
 title: 'Python笔记'
 date: '2026-08-02T00:01:29+08:00'
-updated: '2026-08-24T17:25:14+08:00'
+updated: '2026-11-20T10:24:19+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -14,6 +14,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>Python笔记
+
+> **标题**：Python笔记  
+> **类型**：笔记  
+> **状态**：已完成  
+> **标签**：​#文档/笔记#​  
+> **创建**：2026-08-02  
+> **更新**：2026-08-02  
+> **来源**：原创
+
+# Python笔记
 
 ## 学习索引
 
@@ -64,7 +74,7 @@ c = random.random()          # [0, 1) 的小数
 
 - `input()` 永远返回字符串；需要数字时先转换。
 - `a += 1`​ 等价于 `a = a + 1`。
-- Python 变量名背后也是“对象 + 地址”，与 C 的内存模型对应：[内存与地址基础](/siyuan/4-小时彻底掌握-C-指针/#20260626194149-wst5a8w)。
+- Python 变量名背后也是“对象 + 地址”，与 C 的内存模型对应：[一、内存与地址基础](/siyuan/4-小时彻底掌握-C-指针/#20260626194149-wst5a8w)。
 
 ## <span id="20260803024557-cgjgptb" class="siyuan-block-anchor" aria-hidden="true"></span>二、控制流：if、while、for
 
@@ -316,7 +326,7 @@ a, b = g()    # 元组拆包
 
 ### 边界与易错
 
-- 默认参数不要用可变对象（详见 [可变与不可变类型](/siyuan/Python笔记/数据结构专项/#20260817191520-5epv779) ）：`def f(x=[]):`​ 是经典坑，应写为 `def f(x=None):`。
+- 默认参数不要用可变对象（详见 [一、可变与不可变类型（核心概念）](/siyuan/Python笔记/数据结构专项/#20260817191520-5epv779) ）：`def f(x=[]):`​ 是经典坑，应写为 `def f(x=None):`。
 
 ## <span id="20260803024557-yzoa4y4" class="siyuan-block-anchor" aria-hidden="true"></span>五、贯穿案例：猜数字游戏
 
@@ -451,7 +461,7 @@ print(Dog("旺财"))      # Dog(旺财)
 - 实例化要加括号：`Dog(...)`​，不能只写 `Dog`。
 - `__init__`​ 里也不要使用可变默认参数：`def __init__(self, items=[]):`​ 是坑，应写 `items=None`。
 - 不要混淆类属性和实例属性：类属性用 `类名.属性`​ 访问，实例属性用 `self.属性`。
-- 相关知识点：[函数与参数](#20260803024557-dwyep6d)、详见 [可变与不可变类型](/siyuan/Python笔记/数据结构专项/#20260817191520-5epv779)。
+- 相关知识点：[函数与参数](#20260803024557-dwyep6d)、详见 [一、可变与不可变类型（核心概念）](/siyuan/Python笔记/数据结构专项/#20260817191520-5epv779)。
 
 ## <span id="20260824152757-jbz9nhd" class="siyuan-block-anchor" aria-hidden="true"></span>八、方法与函数的区别 & import 的对象（模块/包）
 

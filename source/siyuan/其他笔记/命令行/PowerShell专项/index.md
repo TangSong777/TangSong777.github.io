@@ -1,7 +1,7 @@
 ---
 title: 'PowerShell专项'
 date: '2026-08-25T09:11:52+08:00'
-updated: '2026-08-25T09:12:15+08:00'
+updated: '2026-11-20T10:24:21+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,6 +15,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>PowerShell专项
+
+> **标题**：PowerShell专项  
+> **类型**：笔记  
+> **状态**：已完成  
+> **标签**：​#文档/笔记#​  
+> **创建**：2026-08-25  
+> **更新**：2026-08-25  
+> **来源**：原创
+
+# PowerShell专项
 
 > PowerShell 是 Windows 面向对象的命令行与脚本环境，命令（cmdlet）为核心，管道传递**对象**而非文本。本专项整理自《Windows命令行学习（已归档）》，覆盖基础命令、与 CMD/Linux 命令的兼容机制（别名）、IP 与网络排查。相关专项：[CMD专项](/siyuan/其他笔记/命令行/CMD专项/)、[Linux专项](/siyuan/其他笔记/命令行/Linux专项/)。
 

@@ -1,7 +1,7 @@
 ---
 title: 'Sigmoid激活函数的梯度饱和效应'
 date: '2026-06-03T15:22:13+08:00'
-updated: '2026-06-03T16:14:28+08:00'
+updated: '2026-11-20T10:23:19+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,6 +15,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>Sigmoid激活函数的梯度饱和效应
+
+> **标题**：Sigmoid激活函数的梯度饱和效应  
+> **类型**：教程笔记  
+> **状态**：已完成  
+> **标签**：​#文档/教程#​  
+> **创建**：2026-06-03  
+> **更新**：2026-06-03  
+> **来源**：整理
+
+# Sigmoid激活函数的梯度饱和效应
 
 $Sigmoid\left(x\right)=\frac{1}{1+e^{-x}}$
 

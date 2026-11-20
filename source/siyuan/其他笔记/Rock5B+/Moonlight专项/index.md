@@ -1,7 +1,7 @@
 ---
 title: 'Moonlight专项'
 date: '2026-08-26T17:45:09+08:00'
-updated: '2026-08-26T17:46:40+08:00'
+updated: '2026-11-20T10:23:48+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,6 +15,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>Moonlight专项
+
+> **标题**：Moonlight专项  
+> **类型**：笔记  
+> **状态**：已完成  
+> **标签**：​#文档/笔记#​  
+> **创建**：2026-08-26  
+> **更新**：2026-08-26  
+> **来源**：原创
+
+# Moonlight专项
 
 #### 1. 先安装 ffmpeg-rockchip
 

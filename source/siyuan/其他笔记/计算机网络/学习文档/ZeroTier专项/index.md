@@ -1,7 +1,7 @@
 ---
 title: 'ZeroTier专项'
 date: '2026-08-19T15:09:18+08:00'
-updated: '2026-10-25T00:43:32+08:00'
+updated: '2026-11-20T10:28:52+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -16,6 +16,14 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>ZeroTier专项
+
+> **标题**：ZeroTier专项  
+> **类型**：笔记  
+> **状态**：已完成  
+> **标签**：​#文档/笔记#​  
+> **创建**：2026-08-19  
+> **更新**：2026-08-19  
+> **来源**：原创
 
 # ZeroTier 专项 · 知识笔记
 

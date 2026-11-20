@@ -1,7 +1,7 @@
 ---
 title: 'daily note'
 date: '2026-08-04T00:17:25+08:00'
-updated: '2026-11-01T02:04:41+08:00'
+updated: '2026-11-20T10:22:44+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -14,6 +14,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>daily note
+
+> **标题**：daily note  
+> **类型**：目录  
+> **状态**：已完成  
+> **标签**：​#文档/目录#​  
+> **创建**：2026-08-04  
+> **更新**：2026-08-04  
+> **来源**：原创
+
+# daily note
 
 - 📆 [2026](/siyuan/daily-note/2026/)
 

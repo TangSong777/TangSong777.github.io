@@ -1,7 +1,7 @@
 ---
 title: 'Linux专项'
 date: '2026-08-18T14:03:34+08:00'
-updated: '2026-08-27T10:45:21+08:00'
+updated: '2026-11-20T10:24:21+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -15,6 +15,14 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>Linux专项
+
+> **标题**：Linux专项  
+> **类型**：笔记  
+> **状态**：已完成  
+> **标签**：​#文档/笔记#​  
+> **创建**：2026-08-18  
+> **更新**：2026-08-18  
+> **来源**：原创
 
 # Linux 命令行核心知识
 

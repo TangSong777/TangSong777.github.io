@@ -1,7 +1,7 @@
 ---
 title: 'subprocess专项'
 date: '2026-08-27T11:58:16+08:00'
-updated: '2026-08-27T11:58:43+08:00'
+updated: '2026-11-20T10:24:21+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -14,6 +14,16 @@ categories:
 ---
 
 # <span id="" style="display: none;"></span>subprocess专项
+
+> **标题**：subprocess专项  
+> **类型**：笔记  
+> **状态**：已完成  
+> **标签**：​#文档/笔记#​  
+> **创建**：2026-08-27  
+> **更新**：2026-08-27  
+> **来源**：原创
+
+# subprocess专项
 
 > 在 Python 中运行系统命令（Linux/Windows）的标准做法：**首选标准库** **​`subprocess`​**​ **，尤其** **​`subprocess.run()`​** ​。本专项覆盖选型、参数详解、安全、跨平台、自动化封装与易错点。来源：《Python 调用系统命令学习方案（已归档）》。相关：[Python笔记](/siyuan/Python笔记/)、[Python笔记：8.4 从其他脚本导入函数](/siyuan/Python笔记/#20260827115231-aynpyzs)。
 
