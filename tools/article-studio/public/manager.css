@@ -65,7 +65,23 @@ a:hover { text-decoration: underline; }
   top: 0;
   z-index: 20;
 }
+/* 字标字体：造字工房悦黑（非商用）常规体，只子集了字标用到的 15 个字（2.3 KB）。
+   只作用于字标，正文一律不换字体。 */
+@font-face {
+  font-family: "YueHei Wordmark";
+  src: url("/fonts/yuehei-wordmark.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 .topbar .brand { color: var(--paper); font-size: 17px; font-weight: 700; letter-spacing: .1em; }
+.topbar .brand {
+  font-family: "YueHei Wordmark", "Microsoft YaHei UI", sans-serif;
+  font-weight: 400;
+  letter-spacing: .08em;
+}
+
 .topbar .brand span { color: var(--green-line); font-size: 12px; font-weight: 400; letter-spacing: .04em; margin-left: 8px; }
 .top-actions { display: flex; align-items: center; gap: 8px; }
 .top-btn { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: var(--green-soft); cursor: pointer; font-family: inherit; font-size: 12px; padding: 5px 13px; }

@@ -189,6 +189,16 @@ small { font-size: 12px; }
 
 .message { margin: 0; min-height: 18px; font-size: 13px; color: var(--bad); }
 
+/* 字标字体：造字工房悦黑（非商用）常规体，只子集了字标用到的 15 个字（2.3 KB）。
+   只作用于字标，正文一律不换字体。 */
+@font-face {
+  font-family: "YueHei Wordmark";
+  src: url("/fonts/yuehei-wordmark.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 .brand-mark {
   display: inline-grid;
   place-items: center;
@@ -201,6 +211,13 @@ small { font-size: 12px; }
   font-size: 15px;
   flex: none;
 }
+.brand-mark {
+  font-family: "YueHei Wordmark", "Microsoft YaHei UI", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0;
+  padding-top: 1px;
+}
+
 
 /* ---------------------------------------------------------------- 顶栏 */
 
