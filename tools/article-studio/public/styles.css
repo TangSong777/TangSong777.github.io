@@ -120,6 +120,7 @@ button { cursor: pointer; }
 }
 .brand-mark {
   font-family: "YueHei Wordmark", "Microsoft YaHei UI", sans-serif;
+  font-size: 19px;
   font-weight: 400;
   letter-spacing: 0;
   padding-top: 1px;
