@@ -41,13 +41,7 @@ categories:
 
 ## 子文档索引
 
-- [Docker学习方案](/siyuan/待学习/P10086/Docker学习方案/)
-- [OpenCV学习方案](/siyuan/待学习/P10086/OpenCV学习方案/)
-- [PyTorch与CNN基础学习方案](/siyuan/待学习/P10086/PyTorch与CNN基础学习方案/)
 - [反应性充血、内皮功能与 PPG·PAT 原理](/siyuan/待学习/P10086/反应性充血、内皮功能与-PPG·PAT-原理/)
-- [嵌入式控制算法PID专项](/siyuan/待学习/P10086/嵌入式控制算法PID专项/)
-- [思源笔记中写 LaTeX 公式](/siyuan/待学习/P10086/思源笔记中写-LaTeX-公式/)
-- [数据结构学习方案（CC++ 嵌入式）](/siyuan/待学习/P10086/数据结构学习方案（CC++-嵌入式）/)
 
 <section class="siyuan-references" aria-label="文档引用">
 
@@ -55,12 +49,6 @@ categories:
 
 ### 本文引用
 - [反应性充血、内皮功能与 PPG·PAT 原理](/siyuan/待学习/P10086/反应性充血、内皮功能与-PPG·PAT-原理/)
-- [嵌入式控制算法PID专项](/siyuan/待学习/P10086/嵌入式控制算法PID专项/)
-- [数据结构学习方案（CC++ 嵌入式）](/siyuan/待学习/P10086/数据结构学习方案（CC++-嵌入式）/)
-- [思源笔记中写 LaTeX 公式](/siyuan/待学习/P10086/思源笔记中写-LaTeX-公式/)
-- [Docker学习方案](/siyuan/待学习/P10086/Docker学习方案/)
-- [OpenCV学习方案](/siyuan/待学习/P10086/OpenCV学习方案/)
-- [PyTorch与CNN基础学习方案](/siyuan/待学习/P10086/PyTorch与CNN基础学习方案/)
 
 ### 反向引用
 - [学习笔记](/siyuan/)

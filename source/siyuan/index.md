@@ -22,12 +22,6 @@ categories:
   - [P10086](/siyuan/待学习/P10086/)
 
     - [反应性充血、内皮功能与 PPG·PAT 原理](/siyuan/待学习/P10086/反应性充血、内皮功能与-PPG·PAT-原理/)
-    - [PyTorch与CNN基础学习方案](/siyuan/待学习/P10086/PyTorch与CNN基础学习方案/)
-    - [OpenCV学习方案](/siyuan/待学习/P10086/OpenCV学习方案/)
-    - [数据结构学习方案（CC++ 嵌入式）](/siyuan/待学习/P10086/数据结构学习方案（CC++-嵌入式）/)
-    - [嵌入式控制算法PID专项](/siyuan/待学习/P10086/嵌入式控制算法PID专项/)
-    - [Docker学习方案](/siyuan/待学习/P10086/Docker学习方案/)
-    - [思源笔记中写 LaTeX 公式](/siyuan/待学习/P10086/思源笔记中写-LaTeX-公式/)
 - [Python笔记](/siyuan/Python笔记/)
 
   - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
