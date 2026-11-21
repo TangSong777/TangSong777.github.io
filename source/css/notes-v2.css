@@ -75,16 +75,6 @@ body.siyuan-mode .pagination {
   gap: 10px;
   letter-spacing: .01em;
 }
-/* 字标字体：造字工房悦黑（非商用）常规体，只子集了字标用到的 15 个字，
-   2.3 KB。只作用于左上角「学」方块，正文一律不换字体。 */
-@font-face {
-  font-family: "YueHei Wordmark";
-  src: url("/fonts/yuehei-wordmark.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 #nv2-nav .nv2-logo {
   align-items: center;
   background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-raw) 70%, var(--pop-amber-deep) 100%);
@@ -100,6 +90,7 @@ body.siyuan-mode .pagination {
 }
 #nv2-nav .nv2-logo {
   font-family: "YueHei Wordmark", "Microsoft YaHei UI", sans-serif;
+  font-size: 16px;
   font-weight: 400;
   letter-spacing: 0;
   padding-top: 1px;

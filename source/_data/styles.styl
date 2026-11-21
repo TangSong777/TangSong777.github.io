@@ -236,6 +236,17 @@ a:hover {
   text-shadow: 0 1px 2px rgba(12, 34, 30, .22);
 }
 
+// 字标字体：造字工房悦黑（非商用）常规体，只子集了字标用到的 15 个字（2.3 KB）。
+// 只作用于字标（首页/文章页/归档页的「学」方块、笔记页顶栏方块、各子站品牌），
+// 正文一律不换字体。
+@font-face {
+  font-family: "YueHei Wordmark";
+  src: url("/fonts/yuehei-wordmark.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 // 品牌标记：与工作台「文」、面板「板」同款渐变方块
 .site-title {
   display: inline-flex;
@@ -253,9 +264,11 @@ a:hover {
   color: var(--paper);
   background: rgba(255, 255, 255, .16);
   border: 1px solid rgba(255, 255, 255, .42);
-  font-size: 15px;
-  font-weight: 800;
+  font-family: "YueHei Wordmark", "Microsoft YaHei UI", sans-serif;
+  font-size: 17px;
+  font-weight: 400;
   line-height: 1;
+  padding-top: 1px;
 }
 
 .post-block,
