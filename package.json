@@ -40,7 +40,7 @@
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
     "@lezer/highlight": "^1.2.5",
-    "@toast-ui/editor": "^3.2.2",
+    "@toast-ui/editor": "^3.2.3",
     "hexo": "^8.0.0",
     "hexo-filter-mathjax": "^0.11.1",
     "hexo-generator-archive": "^2.0.0",
