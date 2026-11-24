@@ -518,7 +518,19 @@
     // 只收集 replace 装饰，供 atomicRanges 使用
     var atomicDecorations = [];
 
+    /* CodeMirror 规定：由插件提供的装饰不能跨行，否则抛
+       RangeError: Decorations that replace line breaks may not be specified via plugins。
+       思源/lezer 的块级节点（HorizontalRule、ListMark 等）有时会把行尾换行
+       也算进 node.to，直接拿来建 replace 装饰就会跨行。统一夹到行尾。 */
+    function clampToLine(from, to) {
+      if (to <= from) return to;
+      var line = state.doc.lineAt(from);
+      return to > line.to ? line.to : to;
+    }
+
     function hide(from, to) {
+      if (to <= from) return;
+      to = clampToLine(from, to);
       if (to <= from) return;
       var deco = Decoration.replace({}).range(from, to);
       decorations.push(deco);
@@ -626,7 +638,7 @@
                 if (aloneOnLine) {
                   var imageDeco = Decoration.replace({
                     widget: new ImageWidget(m[2], m[1]),
-                  }).range(node.from, node.to);
+                  }).range(node.from, clampToLine(node.from, node.to));
                   decorations.push(imageDeco);
                   atomicDecorations.push(imageDeco);
                   return false;
@@ -641,7 +653,7 @@
             if (!isActive) {
               var ruleDeco = Decoration.replace({
                 widget: new RuleWidget(),
-              }).range(node.from, node.to);
+              }).range(node.from, clampToLine(node.from, node.to));
               decorations.push(ruleDeco);
               atomicDecorations.push(ruleDeco);
               return false;
@@ -664,7 +676,7 @@
               }
               var bulletDeco = Decoration.replace({
                 widget: new BulletWidget(),
-              }).range(node.from, node.to);
+              }).range(node.from, clampToLine(node.from, node.to));
               decorations.push(bulletDeco);
               atomicDecorations.push(bulletDeco);
               return false;
@@ -698,9 +710,9 @@
                 widget: new TaskWidget(
                   taskMatch[1].toLowerCase() === 'x',
                   node.from,
-                  node.to,
+                  clampToLine(node.from, node.to),
                 ),
-              }).range(node.from, node.to);
+              }).range(node.from, clampToLine(node.from, node.to));
               decorations.push(taskDeco);
               atomicDecorations.push(taskDeco);
               return false;
@@ -784,7 +796,15 @@
     decorations.sort(function (a, b) { return a.from - b.from || a.to - b.to; });
     atomicDecorations.sort(function (a, b) { return a.from - b.from || a.to - b.to; });
     return {
-      all: Decoration.set(decorations),
+      all: Decoration.set((function () {
+        var safe = [];
+        for (var si = 0; si < decorations.length; si += 1) {
+          var sr = decorations[si];
+          if (sr.to > state.doc.lineAt(sr.from).to) continue;
+          safe.push(sr);
+        }
+        return safe;
+      })()),
       atomic: Decoration.set(atomicDecorations),
     };
   }
@@ -871,8 +891,14 @@
            过去每次都整棵重建装饰并替换 DOM —— 这正是「中文输入时字会跳、
            会重复、会吃字」的经典来源。组字期间只记一笔，等 compositionend
            之后的第一次 update（那时 view.composing 已经是 false）统一重建。 */
-        if (update.view.composing) { this.deferred = true; return; }
-        if (this.deferred) this.deferred = false;
+        /* 组字期间也必须重建：CodeMirror 会把插件装饰按变更映射到新文档上，
+           而映射后的区间可能跨过换行（例如 `*` 单独一行被识别成 HorizontalRule，
+           组字插入文本后区间被撑到 `*\n\n`），此时 CM 会抛
+           RangeError: Decorations that replace line breaks may not be specified via plugins，
+           随后整个编辑器崩掉（正文空白、行数塌到 1）。
+           重建只是重算装饰、不改文档，不会干扰输入法组字。 */
+        if (update.view.composing) this.deferred = true;
+        else if (this.deferred) this.deferred = false;
 
         /* 只在这两种情况下重建：
              docChanged      —— 内容变了，装饰当然要重算
