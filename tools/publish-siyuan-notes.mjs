@@ -130,14 +130,50 @@ async function pushPending() {
   return true;
 }
 
+// 自动推送本地提交前，先排除可能泄露原稿或凭据的路径。
+const forbiddenPushPaths = [
+  /^origin\//,
+  /(^|\/)siyuan-private-values\.txt$/,
+  /(^|\/)\.env($|\.)/,
+  /\.(pem|key|p12|pfx|ppk)$/i,
+  /(^|\/)id_(ed25519|rsa|ecdsa)(\.|$)/,
+  /(^|\/)\.ssh\//,
+];
+
+export function pushBlockersForNames(names) {
+  return names.filter(name=>forbiddenPushPaths.some(pattern=>pattern.test(name)));
+}
+
+async function changedNamesOfCommit(commit) {
+  const out=(await command('git',['diff-tree','--root','--no-commit-id','--name-only','-z','-r',commit],{capture:true})).stdout;
+  return out.split('\0').filter(Boolean);
+}
+
+// 本地提交没人推送时，自动发布会一直被 ahead 卡住，直到有人想起来。这里在确认
+// 提交不含原稿、隐私清单和私钥之后自动推送，让定时任务自己恢复。
+async function pushUnsyncedCommits(commits) {
+  const risky=[];
+  for(const commit of commits)risky.push(...pushBlockersForNames(await changedNamesOfCommit(commit)));
+  const unique=[...new Set(risky)];
+  if(unique.length)throw new Error(`本地有 ${commits.length} 个未推送提交，且包含不允许自动推送的路径（${unique.slice(0,5).join('、')}）；请人工处理后再自动发布`);
+  await git('push','origin','HEAD:main');
+  console.log(`[自动推送] 已把 ${commits.length} 个未推送的本地提交同步到远端`);
+}
+
 async function prepareGit() {
   if(await exists(transactionFile))throw new Error('上次安装过程曾中断，请按 install-in-progress.json 检查备份与工作区后恢复；禁止自动覆盖');
   await requireAuthorizedRepository();
   await git('fetch','--prune','origin','main');
   if(await pushPending())return;
-  const [behind,ahead]=(await git('rev-list','--left-right','--count','origin/main...HEAD')).split(/\s+/).map(Number);
-  if(ahead)throw new Error('存在未记录的本地提交；请人工处理后再自动发布');
-  if(behind)throw new Error('远端有新提交；请先更新 Rock 代码和依赖，避免运行中的发布器使用旧工具');
+  const behind=Number((await git('rev-list','--left-right','--count','origin/main...HEAD')).split(/\s+/)[0]);
+  if(behind) {
+    // 远端有新提交时先快进：只要别处推送过一次，定时任务就不该一直停摆。
+    const merged=await command('git',['merge','--ff-only','origin/main'],{capture:true,allowFailure:true});
+    if(merged.code!==0)throw new Error(`远端有新提交但无法快进（${(merged.stderr.trim().split('\n').pop()||'未知原因')}）；请先更新 Rock 代码和依赖`);
+    console.log(`[快进] 已快进 ${behind} 个远端提交`);
+  }
+  const ahead=(await git('rev-list','origin/main..HEAD')).split('\n').filter(Boolean);
+  if(ahead.length)await pushUnsyncedCommits(ahead);
   if(!await git('config','user.name') || !await git('config','user.email'))throw new Error('尚未配置 Git 提交身份');
 }
 
