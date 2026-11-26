@@ -177,6 +177,27 @@ async function prepareGit() {
   if(!await git('config','user.name') || !await git('config','user.email'))throw new Error('尚未配置 Git 提交身份');
 }
 
+const keepStagingRuns = 6;
+
+// 每次运行都会在 staging 留下约 145MB 的构建产物。定时发布频率提高后必须回收，
+// 否则历史运行会把磁盘吃满；backups 保留给回滚，不在这里清理。
+async function pruneOldRuns() {
+  const dir = path.join(baseDir, 'staging');
+  let entries;
+  try { entries = await fs.readdir(dir, {withFileTypes: true}); }
+  catch (e) { if (e.code === 'ENOENT') return; throw e; }
+  const runs = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith('notes-publish-')) continue;
+    const full = path.join(dir, entry.name);
+    try { runs.push({full, mtime: (await fs.stat(full)).mtimeMs}); } catch {}
+  }
+  runs.sort((a, b) => b.mtime - a.mtime);
+  for (const run of runs.slice(keepStagingRuns)) {
+    await fs.rm(run.full, {recursive: true, force: true});
+  }
+}
+
 async function makeStage(stage) {
   for(const name of ['source','scripts','themes','tools']) {
     const source=path.join(repo,name);
@@ -229,6 +250,7 @@ async function main() {
   await withRepositoryLock(async()=>{
     process.umask(0o077);
     if(publish)await prepareGit();
+    await pruneOldRuns();
     const head=await git('rev-parse','HEAD');
     const status=await git('status','--porcelain','--untracked-files=all');
     const originalManifest=await fileManifest(repo);
@@ -262,7 +284,8 @@ async function main() {
       }
       if(head!==await git('rev-parse','HEAD') || status!==await git('status','--porcelain','--untracked-files=all') || !equalManifests(originalManifest,await fileManifest(repo)))throw new Error('构建期间仓库发生变化，停止安装生成物');
       if(equalManifests(originalManifest,expectedManifest)) {
-        report.status='unchanged';console.log('[无变化] 公开内容一致，不创建空提交');return;
+        report.status='unchanged';console.log('[无变化] 公开内容一致，不创建空提交');
+        await fs.rm(stage,{recursive:true,force:true});return;
       }
       report.stage='install';
       const backup=path.join(baseDir,'backups',path.basename(runDir));
