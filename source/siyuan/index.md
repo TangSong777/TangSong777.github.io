@@ -16,12 +16,8 @@ categories:
 
 
 
-  - [P0](/siyuan/待学习/P0/)
 
-    - [Transformer学习方案](/siyuan/待学习/P0/Transformer学习方案/)
-  - [P10086](/siyuan/待学习/P10086/)
 
-    - [反应性充血、内皮功能与 PPG·PAT 原理](/siyuan/待学习/P10086/反应性充血、内皮功能与-PPG·PAT-原理/)
 - [Python笔记](/siyuan/Python笔记/)
 
   - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
