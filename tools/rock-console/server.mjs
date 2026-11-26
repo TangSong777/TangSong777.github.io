@@ -585,6 +585,17 @@ const server = createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, status: readSnapshot() });
     }
 
+    // 自动发布只在定时任务里跑，失败时只写 journal 和 state 文件；这里把它暴露出来，
+    // 登录控制台就能确认「最近一次发布成功没有」。
+    if (pathname === '/api/publish' && req.method === 'GET') {
+      if (!requireSession(req, res)) return true;
+      let publish = null;
+      try {
+        publish = JSON.parse(await readFile('/srv/blog/state/last-run.json', 'utf8'));
+      } catch {}
+      return sendJson(res, 200, { ok: true, publish });
+    }
+
     if (pathname === '/api/stream' && req.method === 'GET') {
       if (!requireSession(req, res)) return true;
       res.writeHead(200, {
