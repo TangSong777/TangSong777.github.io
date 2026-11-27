@@ -1,7 +1,7 @@
 ---
 title: '学习笔记'
 date: '2026-06-23T16:54:27+08:00'
-updated: '2026-11-20T11:39:11+08:00'
+updated: '2026-11-27T10:13:00+08:00'
 layout: page
 type: siyuan-note
 notebook: '学习笔记'
@@ -20,11 +20,11 @@ categories:
 
 - [Python笔记](/siyuan/Python笔记/)
 
+  - [算法专项](/siyuan/Python笔记/算法专项/)
   - [NumPy专项](/siyuan/Python笔记/NumPy专项/)
   - [PathLib专项](/siyuan/Python笔记/PathLib专项/)
   - [subprocess专项](/siyuan/Python笔记/subprocess专项/)
   - [数据结构专项](/siyuan/Python笔记/数据结构专项/)
-  - [算法专项](/siyuan/Python笔记/算法专项/)
 - [其他笔记](/siyuan/其他笔记/)
 
   - [命令行](/siyuan/其他笔记/命令行/)
